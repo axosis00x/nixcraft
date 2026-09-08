@@ -158,8 +158,9 @@ hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = tr
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), { locked = true })
 
-hl.bind(mainMod .. " + minus", hl.dsp.window.move({ workspace = "special" }))
-hl.bind(mainMod .. " + equal", hl.dsp.workspace.toggle_special())
+
+-- hl.bind(mainMod .. " + G", hl.dsp.window.move({ workspace = "special" }))
+-- hl.bind(mainMod .. " + SHIFT + G", hl.dsp.workspace.toggle_special())
 
 hl.bind("XF86KbdLightOnOff", hl.dsp.exec_cmd("brightnessctl -s rgb:kbd_backlight set 0"))
 hl.bind("XF86KbdLightOnOff", hl.dsp.exec_cmd("brightnessctl -s rgb:kbd_backlight set 1"))
@@ -185,7 +186,6 @@ local function zoom_reset()
     set_zoom(MIN_ZOOM)
 end
 
--- SUPER + Z to reset back to 1x
 hl.bind("SUPER + X", zoom_reset)
 
 -- optional: keyboard zoom

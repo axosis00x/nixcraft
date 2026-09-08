@@ -34,7 +34,6 @@ in
       tmux
       ripgrep
       yazi
-      superfile
       herdr
       fetch
     ];

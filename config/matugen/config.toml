@@ -1,0 +1,44 @@
+# Material Design 3 palette generation for the "dynamic" theme (see
+# config/themes/dynamic). Invoked explicitly with `--config` by
+# apply-theme.sh, so this never touches or depends on ~/.config/matugen.
+[config]
+
+[templates.quickshell]
+input_path = "templates/quickshell.js.template"
+output_path = "~/.config/themes/dynamic/quickshell.js"
+
+[templates.hyprland]
+input_path = "templates/hyprland.lua.template"
+output_path = "~/.config/themes/dynamic/hyprland.lua"
+
+[templates.kitty]
+input_path = "templates/kitty.conf.template"
+output_path = "~/.config/themes/dynamic/kitty.conf"
+
+[templates.gtk3]
+input_path = "templates/gtk.css.template"
+output_path = "~/.config/themes/dynamic/gtk-3.css"
+
+[templates.gtk4]
+input_path = "templates/gtk.css.template"
+output_path = "~/.config/themes/dynamic/gtk-4.css"
+
+[templates.tmux]
+input_path = "templates/tmux.conf.template"
+output_path = "~/.config/themes/dynamic/tmux.conf"
+
+[templates.cava]
+input_path = "templates/cava.ini.template"
+output_path = "~/.config/themes/dynamic/cava.ini"
+
+[templates.yazi]
+input_path = "templates/yazi-flavor.toml.template"
+output_path = "~/.config/themes/dynamic/yazi-flavor.toml"
+
+[templates.neovim]
+input_path = "templates/neovim.lua.template"
+output_path = "~/.config/themes/dynamic/neovim.lua"
+
+[templates.nvim_colorscheme]
+input_path = "templates/nvim-colorscheme.lua.template"
+output_path = "~/.config/nvim/colors/matugen-dynamic.lua"

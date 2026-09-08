@@ -18,6 +18,7 @@ Item {
     property var launcher: null
     property var controlCenter: null
     property var powerMenu: null
+    property var themeService: null
 
     property string wallpapersRoot: Quickshell.env("HOME") + "/Pictures/wallpapers"
     property string activeTheme: ""
@@ -246,6 +247,15 @@ Item {
 
     function setWallpaper(path) {
         root.currentWallpaper = path;
+
+        // The dynamic theme's whole palette is derived from its wallpaper,
+        // so picking a new one has to go through wallust (via apply-theme.sh)
+        // rather than just swapping the image.
+        if (root.activeTheme === "dynamic" && root.themeService) {
+            root.themeService.apply("dynamic", path);
+            return;
+        }
+
         setWallpaperProcess.command = ["awww", "img", path, "--transition-type", "center", "--transition-duration", "0.7", "--transition-fps", "60"];
 
         setWallpaperProcess.running = true;

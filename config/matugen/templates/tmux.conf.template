@@ -1,0 +1,17 @@
+set -gq @catppuccin_flavour                "dynamic"
+
+set -g status-bg                          "{{colors.surface.default.hex}}"
+set -gq @thm_bar_bg                       "{{colors.surface.default.hex}}"
+
+set -gq @thm_bg                           "{{colors.surface.default.hex}}"
+set -gq @thm_fg                           "{{colors.on_surface.default.hex}}"
+set -gq @thm_primary                      "{{colors.primary.default.hex}}"
+set -gq @thm_inverse_primary              "{{colors.surface_container_high.default.hex}}"
+set -gq @thm_surface_low                  "{{colors.surface_container_low.default.hex}}"
+set -gq @thm_surface                      "{{colors.surface.default.hex}}"
+set -gq @thm_surface_variant              "{{colors.surface_container_high.default.hex}}"
+set -gq @thm_outline                      "{{colors.outline_variant.default.hex}}"
+set -gq @thm_text_variant                 "{{colors.on_surface_variant.default.hex}}"
+
+set -g status-style                       "bg=#{@thm_bg},fg=#{@thm_fg}"
+set -g window-active-style                "bg=#{@thm_bg},fg=#{@thm_fg}"

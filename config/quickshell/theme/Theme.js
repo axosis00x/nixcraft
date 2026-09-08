@@ -5,8 +5,8 @@
 
 const bg = "#1b1b1b"
 const surface = "#1b1b1b"
-const surfaceContainerLow = "#212121"
-const surfaceContainer = "#292929"
+const surfaceContainerLow = "#292929"
+const surfaceContainer = "#212121"
 const surfaceContainerHigh = "#323232"
 const surfaceContainerHighest = "#454545"
 const surfaceTint = "#ebdbb2"
@@ -17,6 +17,7 @@ const onAccent = "#292929"
 const info = "#83a598"
 const warning = "#fe8019"
 const success = "#b8bb26"
+const error = "#fb4934"
 const accentLight = "#2a241e"
 const primaryContainer = "#323232"
 const onPrimaryContainer = "#fe8019"
@@ -35,7 +36,7 @@ const surfaceTintOpacity = 0.015
 
 // ── Typography ──
 const fontMono  = "SF Mono "
-const fontIcons = "Material Symbols Rounded"
+const fontIcons = "Material Symbols Rounded "
 
 // ── Shape ──
 const radiusSmall = 10

@@ -30,6 +30,7 @@ in
       hyprshade
       zenity
       wallust
+      matugen
     ]) ++ [
       (pkgs.callPackage ./hyprglass.nix { })
     ];

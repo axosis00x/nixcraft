@@ -1,0 +1,6 @@
+return {
+    outline = { colors = { "rgb({{colors.primary.default.hex_stripped}})", "rgb({{colors.secondary.default.hex_stripped}})" }, angle = 45 },
+    outline_variant = "rgba({{colors.outline_variant.default.hex_stripped}}66)",
+    primary = "rgb({{colors.primary.default.hex_stripped}})",
+    tertiary = "rgb({{colors.tertiary.default.hex_stripped}})",
+}

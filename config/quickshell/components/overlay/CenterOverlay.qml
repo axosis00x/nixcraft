@@ -367,6 +367,7 @@ PanelWindow {
             launcher: launcherItem
             controlCenter: controlCenterItem
             powerMenu: powerMenuItem
+            themeService: themeService
         }
     }
 

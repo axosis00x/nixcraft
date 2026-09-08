@@ -55,7 +55,7 @@
   "buffer_font_size": 16.0,
   "theme": {
     "mode": "dark",
-    "light": "Gruvbox Dark",
-    "dark": "Gruvbox Dark",
+    "light": "One Dark Pro Max",
+    "dark": "One Dark Pro Max",
   },
 }

@@ -10,7 +10,7 @@ hl.animation({ leaf = "layers", enabled = false })
 
 -- Which edge the bar lives on decides which way workspace switches slide.
 -- barorientation.lua is rewritten by
--- quickshell/scripts/apply-bar-orientation.sh whenever the bar's layout
+-- quickshell/scripts/bar-style.sh whenever the bar's layout
 -- picker (Super+Shift+B) changes it.
 local orientation = dofile(os.getenv("HOME") .. "/.config/hypr/barorientation.lua")
 if orientation == "horizontal" then

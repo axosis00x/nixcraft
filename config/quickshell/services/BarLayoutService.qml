@@ -17,7 +17,7 @@ Item {
         stateFile.writeAdapter();
         // Keeps Hyprland's workspace-slide direction (vertAni.lua vs
         // horizAni.lua) in sync with the bar's edge.
-        applyOrientation.exec([Quickshell.env("HOME") + "/.config/quickshell/scripts/apply-bar-orientation.sh", value ? "vertical" : "horizontal"]);
+        applyOrientation.exec([Quickshell.env("HOME") + "/.config/quickshell/scripts/bar-style.sh", value ? "vertical" : "horizontal"]);
     }
 
     Process {

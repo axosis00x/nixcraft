@@ -1,8 +1,22 @@
 #!/usr/bin/env bash
-# Build Theme.js from the active theme's quickshell.js
-# Called by theme-switcher or manually to apply theme colors.
+# Theme palette helper, two modes:
+#   build-theme.sh              regenerate Theme.js from the active theme
+#   build-theme.sh rows THEME   emit THEME's quickshell.js as key<TAB>value rows
+#                               (used by ThemeService for preview/live apply)
+set -uo pipefail
 
-THEME_DIR=$(grep "dofile" "$HOME/.config/hypr/theme.lua" | sed 's/dofile("\(.*\)")/\1/')
+if [ "${1:-}" = "rows" ]; then
+    theme_name=${2:?usage: build-theme.sh rows THEME}
+    case "$theme_name" in ""|*/*|.*) exit 2 ;; esac
+
+    source_file="$HOME/.config/themes/$theme_name/quickshell.js"
+    [ -f "$source_file" ] || exit 2
+
+    sed -n 's/^const \([A-Za-z][A-Za-z0-9]*\) = "\(.*\)"$/\1\t\2/p' "$source_file"
+    exit 0
+fi
+
+THEME_DIR=$(sed -n 's/.*dofile("\(.*\)").*/\1/p' "$HOME/.config/hypr/theme.lua" | head -n1)
 SOURCE="${THEME_DIR%/*}/quickshell.js"
 DEST="$HOME/.config/quickshell/theme/Theme.js"
 

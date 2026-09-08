@@ -17,23 +17,29 @@ Item {
         themeList.running = true;
     }
 
-    function apply(themeName) {
+    function apply(themeName, wallpaperPath) {
         if (themes.indexOf(themeName) === -1)
             return;
         pendingTheme = themeName;
-        // Quickshell owns this singleton, so repaint it first. The system
-        // script can then update Hyprland and other applications independently.
+        // Quickshell owns this singleton, so repaint it first with whatever
+        // palette is on disk. For static themes that's already correct; the
+        // "dynamic" theme rewrites its palette from the wallpaper on every
+        // apply, so it gets a second, authoritative read once the script
+        // below (and wallust within it) has actually finished.
         activeTheme = themeName;
         readPalette(themeName);
         applied(themeName);
-        applyTheme.exec([Quickshell.env("HOME") + "/.config/quickshell/scripts/apply-theme.sh", themeName]);
+        var cmd = [Quickshell.env("HOME") + "/.config/quickshell/scripts/apply-theme.sh", themeName];
+        if (wallpaperPath)
+            cmd.push(wallpaperPath);
+        applyTheme.exec(cmd);
     }
 
     property string pendingTheme: ""
 
     function readPalette(themeName) {
         if (themeName !== "")
-            paletteRead.exec([Quickshell.env("HOME") + "/.config/quickshell/scripts/read-theme-values.sh", themeName]);
+            paletteRead.exec([Quickshell.env("HOME") + "/.config/quickshell/scripts/build-theme.sh", "rows", themeName]);
     }
 
     Process {
@@ -89,6 +95,9 @@ Item {
         onExited: function (exitCode, exitStatus) {
             if (exitCode === 0 && root.pendingTheme !== "") {
                 root.activeTheme = root.pendingTheme;
+                // Re-read now that the script (and, for "dynamic", wallust)
+                // has finished writing the palette this apply used.
+                root.readPalette(root.activeTheme);
             }
             root.pendingTheme = "";
         }

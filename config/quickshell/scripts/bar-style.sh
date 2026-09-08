@@ -5,7 +5,7 @@
 # whenever the bar layout picker changes orientation.
 set -uo pipefail
 
-orientation=${1:?usage: apply-bar-orientation.sh vertical|horizontal}
+orientation=${1:?usage: bar-style.sh vertical|horizontal}
 
 case "$orientation" in
     vertical|horizontal) ;;

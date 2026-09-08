@@ -35,13 +35,13 @@ Item {
     property bool showVolumeOsdOnRead: false
     property bool showBrightnessOsdOnRead: false
     property bool showMicOsdOnRead: false
-    property bool dndEnabled: false
+    readonly property bool dndEnabled: toggleState.dnd
     // Purely a mirror of toggleState.hyprsunset (readonly, never assigned
     // directly) so it can't fall out of sync with what's on disk — the
     // same pattern services/BarLayoutService.qml uses for `vertical`.
     readonly property bool hyprsunsetEnabled: toggleState.hyprsunset
     property string powerProfilePending: ""
-    readonly property bool keepAwake: idleService ? idleService.keepAwake : false
+    readonly property bool keepAwake: toggleState.keepAwake
 
     readonly property real minLevel: 0.05
     readonly property var notifications: notificationCenter ? notificationCenter.notifications : []
@@ -70,6 +70,22 @@ Item {
         JsonAdapter {
             id: toggleState
             property bool hyprsunset: false
+            property bool keepAwake: false
+            property bool dnd: false
+        }
+    }
+
+    Component.onCompleted: {
+        readPowerProfile();
+        if (toggleState.keepAwake && root.idleService)
+            root.idleService.keepAwake = true;
+        if (toggleState.dnd) {
+            if (root.notificationCenter)
+                root.notificationCenter.setDnd(true);
+            setExternalDnd(true);
+        }
+        if (toggleState.hyprsunset) {
+            hyprsunsetSet.exec(["hyprctl", "hyprsunset", "temperature", "2800"]);
         }
     }
 
@@ -444,15 +460,16 @@ Item {
     }
 
     function syncDnd() {
-        if (root.notificationCenter)
-            dndEnabled = root.notificationCenter.doNotDisturb;
+        if (root.notificationCenter && typeof root.notificationCenter.setDnd === "function")
+            root.notificationCenter.setDnd(toggleState.dnd);
     }
 
     function toggleDnd() {
-        dndEnabled = !dndEnabled;
+        toggleState.dnd = !toggleState.dnd;
+        toggleStateFile.writeAdapter();
         if (root.notificationCenter && typeof root.notificationCenter.setDnd === "function")
-            root.notificationCenter.setDnd(dndEnabled);
-        setExternalDnd(dndEnabled);
+            root.notificationCenter.setDnd(toggleState.dnd);
+        setExternalDnd(toggleState.dnd);
     }
 
     function setExternalDnd(enabled) {
@@ -499,8 +516,10 @@ Item {
     }
 
     function toggleKeepAwake() {
+        toggleState.keepAwake = !toggleState.keepAwake;
+        toggleStateFile.writeAdapter();
         if (root.idleService)
-            root.idleService.toggleKeepAwake();
+            root.idleService.keepAwake = toggleState.keepAwake;
     }
 
     function keepAwakeIcon() {

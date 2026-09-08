@@ -227,7 +227,13 @@ PanelWindow {
         slabHeight: panel ? panel.implicitHeight : root.barSlabHeight
         opacity: panel ? 1 : 0
 
+        // barSlabHeight/barSlabWidth are seeded from barLayout.vertical, which
+        // briefly holds its declared default before the persisted bar-layout
+        // file finishes loading on shell startup/reload. Without this guard,
+        // that transient flip plays the OutBack overshoot below — visible as
+        // the idle notch "wobbling" as the bar's real edge resolves.
         Behavior on slabWidth {
+            enabled: !root.barLayout || root.barLayout.loaded
             NumberAnimation {
                 duration: 240
                 easing.type: Easing.OutBack
@@ -235,6 +241,7 @@ PanelWindow {
             }
         }
         Behavior on slabHeight {
+            enabled: !root.barLayout || root.barLayout.loaded
             NumberAnimation {
                 duration: 240
                 easing.type: Easing.OutBack

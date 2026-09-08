@@ -11,6 +11,13 @@ Item {
     visible: false
 
     readonly property bool vertical: state.vertical
+    // Lets consumers tell a genuine layout change from the transient
+    // default-then-loaded resolution on startup/reload: shell.qml defers
+    // constructing Bar until this is true (its anchors bind to `vertical`
+    // directly, with nothing to animate away a wrong-then-right flip), and
+    // CenterOverlay's idle notch (seeded from `vertical`) uses it to skip
+    // animating that same transient.
+    readonly property bool loaded: stateFile.loaded
 
     function setVertical(value) {
         state.vertical = value;

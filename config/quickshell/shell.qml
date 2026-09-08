@@ -29,7 +29,7 @@ ShellRoot {
     CenterOverlay {
         id: overlay
         notificationCenter: notificationCenter
-        bar: mainBar
+        bar: barLoader.item
         idleService: idleService
         barLayout: barLayoutService
         widgetsService: widgetsService
@@ -91,21 +91,33 @@ ShellRoot {
             Quickshell.reload(false);
         }
     }
-    Bar {
-        id: mainBar
-        osd: mainOsd
-        barLayout: barLayoutService
-        workspacesService: workspacesService
-        launcher: overlay.launcher
-        controlCenter: overlay.controlCenter
-        powerMenu: overlay.powerMenu
-        themePicker: overlay.themePicker
-        clipboard: overlay.clipboard
-        mediaPanel: overlay.mediaPanel
-        toolMenu: overlay.toolMenu
-        emojiPicker: overlay.emojiPicker
-        ensureControlCenter: function () {
-            return overlay.controlCenter;
+    // Deferred behind barLayoutService.loaded: BarLayoutService's persisted
+    // "vertical" value briefly holds its declared default before the
+    // JSON file underneath it actually resolves, and the bar's anchors bind
+    // to that value directly with no QML Behavior to smooth it over — so a
+    // wrong-then-right flip on reload isn't an animation to suppress, it's
+    // the compositor reacting to two real geometry changes. Not
+    // constructing the bar at all until the real value is in means it only
+    // ever gets built once, with the right one.
+    Loader {
+        id: barLoader
+        active: barLayoutService.loaded
+
+        sourceComponent: Bar {
+            osd: mainOsd
+            barLayout: barLayoutService
+            workspacesService: workspacesService
+            launcher: overlay.launcher
+            controlCenter: overlay.controlCenter
+            powerMenu: overlay.powerMenu
+            themePicker: overlay.themePicker
+            clipboard: overlay.clipboard
+            mediaPanel: overlay.mediaPanel
+            toolMenu: overlay.toolMenu
+            emojiPicker: overlay.emojiPicker
+            ensureControlCenter: function () {
+                return overlay.controlCenter;
+            }
         }
     }
 }

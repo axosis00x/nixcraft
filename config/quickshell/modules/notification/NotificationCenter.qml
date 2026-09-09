@@ -91,6 +91,7 @@ Scope {
             body: notification.body || "",
             urgency: notification.urgency,
             resident: notification.resident,
+            receivedAt: Date.now(),
             live: true
         });
 

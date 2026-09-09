@@ -7,10 +7,15 @@ Rectangle {
 
     required property string label
     property bool active: false
+    // Overridable so callers in tighter spaces (e.g. notification action
+    // chips) can shrink the chip without forking the whole component.
+    property real chipHeight: 28
+    property int fontPixelSize: 11
+    property int horizontalPadding: 20
     signal clicked
 
-    implicitHeight: 28
-    implicitWidth: chipText.implicitWidth + 20
+    implicitHeight: root.chipHeight
+    implicitWidth: chipText.implicitWidth + root.horizontalPadding
     radius: height / 2
     color: root.active ? Palette.Theme.primaryContainer : (actionMouse.containsMouse ? Palette.Theme.secondaryContainerHover : Palette.Theme.secondaryContainer)
 
@@ -43,7 +48,7 @@ Rectangle {
         text: root.label
         color: root.active ? Palette.Theme.primaryText : Palette.Theme.secondaryText
         font.family: Palette.Theme.fontMono
-        font.pixelSize: 11
+        font.pixelSize: root.fontPixelSize
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
 

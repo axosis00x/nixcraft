@@ -25,12 +25,37 @@ Surface {
         if (card.canDismiss && card.actionTarget)
             card.actionTarget.dismiss();
     }
+    // Notification history records carry a receivedAt (ms since epoch) set
+    // when captured; the live toast passes the raw Notification object
+    // instead, which has no such field, so it just shows nothing.
+    function timeAgo(receivedAt) {
+        if (!receivedAt)
+            return "";
+        var diffSec = Math.max(0, (Date.now() - receivedAt) / 1000);
+        if (diffSec < 60)
+            return "now";
+        if (diffSec < 3600)
+            return Math.floor(diffSec / 60) + "m ago";
+        if (diffSec < 86400)
+            return Math.floor(diffSec / 3600) + "h ago";
+        return Math.floor(diffSec / 86400) + "d ago";
+    }
     height: implicitHeight
     implicitHeight: content.implicitHeight + 22
     radius: Palette.Theme.radiusMedium
-    color: Palette.Theme.surfaceContainerHigh
+    color: Palette.Theme.surfaceContainer
     tint: notification && notification.urgency === NotificationUrgency.Critical ? Palette.Theme.accent : Palette.Theme.surfaceTint
     tintOpacity: notification && notification.urgency === NotificationUrgency.Critical ? 0.16 : 0.04
+
+    // Keeps the "Xm ago" label advancing while the panel stays open, rather
+    // than freezing at whatever it read on first render.
+    Timer {
+        interval: 30000
+        running: card.notification && card.notification.receivedAt
+        repeat: true
+        triggeredOnStart: false
+        onTriggered: timeAgoText.text = card.timeAgo(card.notification.receivedAt)
+    }
 
     Rectangle {
         anchors.fill: parent
@@ -70,7 +95,12 @@ Surface {
             radius: 16
             color: Palette.Theme.surfaceContainerHigh
             clip: true
-            Layout.alignment: Qt.AlignVCenter
+            // Top-aligned rather than centered on the row: a bulky body
+            // (long text, action chips) makes the text column taller than
+            // the fixed 56px icon, and centering it against that height
+            // would float the icon away from the app name/title it belongs
+            // next to.
+            Layout.alignment: Qt.AlignTop
             Image {
                 id: icon
                 anchors.fill: parent
@@ -92,7 +122,7 @@ Surface {
             Text {
                 anchors.centerIn: parent
                 visible: icon.status !== Image.Ready
-                text: "\ue7f4"
+                text: ""
                 color: Palette.Theme.textSecondary
                 font.family: Palette.Theme.fontIcons
                 font.pixelSize: 26
@@ -120,6 +150,14 @@ Surface {
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                 }
+                Text {
+                    id: timeAgoText
+                    text: card.notification ? card.timeAgo(card.notification.receivedAt) : ""
+                    color: Palette.Theme.textMuted
+                    font.family: Palette.Theme.fontMono
+                    font.pixelSize: 10
+                    visible: text !== ""
+                }
             }
             Text {
                 text: card.notification ? (card.notification.summary || "Notification") : ""
@@ -144,43 +182,22 @@ Surface {
             }
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 6
+                Layout.topMargin: 2
+                spacing: 8
                 visible: card.actionTarget && card.actionTarget.actions.length > 0
-                Item {
-                    Layout.fillWidth: true
-                }
                 Repeater {
                     model: card.actionTarget ? card.actionTarget.actions : []
-                    delegate: Item {
+                    delegate: ActionChip {
                         required property var modelData
-                        implicitWidth: actionText.implicitWidth
-                        // Keeps roughly 4px of breathing room above and below
-                        // the 11px link text without making a separate footer.
-                        implicitHeight: 22
-                        Text {
-                            id: actionText
-                            anchors.centerIn: parent
-                            text: card.actionLabel(modelData)
-                            color: actionMouse.containsMouse ? Palette.Theme.textPrimary : Palette.Theme.info
-                            font.family: Palette.Theme.fontMono
-                            font.pixelSize: 11
-                            font.underline: true
-
-                            Behavior on color {
-                                ColorAnimation { duration: 120 }
-                            }
-                        }
-                        MouseArea {
-                            id: actionMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                modelData.invoke();
-                                card.activated();
-                                if (card.canDismiss && card.actionTarget && !card.actionTarget.resident)
-                                    card.dismissNotification();
-                            }
+                        label: card.actionLabel(modelData)
+                        chipHeight: 22
+                        fontPixelSize: 10
+                        horizontalPadding: 14
+                        onClicked: {
+                            modelData.invoke();
+                            card.activated();
+                            if (card.canDismiss && card.actionTarget && !card.actionTarget.resident)
+                                card.dismissNotification();
                         }
                     }
                 }
@@ -188,7 +205,7 @@ Surface {
         }
     }
     IconButton {
-        icon: ""
+        icon: "\u{e5cd}"
         implicitWidth: 28
         implicitHeight: 28
         anchors {

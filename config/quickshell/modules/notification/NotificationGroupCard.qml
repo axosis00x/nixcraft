@@ -32,7 +32,7 @@ ColumnLayout {
                 }
                 height: topCard.implicitHeight
                 radius: Palette.Theme.radiusMedium
-                color: Palette.Theme.surfaceContainerHigh
+                color: Palette.Theme.surfaceContainer
                 opacity: 0.5 - depth * 0.15
                 z: -depth
             }

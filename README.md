@@ -1,6 +1,6 @@
 ## nixcraft
 
-Curiosity brought me here. These is nixcraft, a NixOS configuration for my personal desktop with hyprland.
+Curiosity brought me here. This is nixcraft, a NixOS configuration for my desktop with hyprland.
 
 ## Showcase
 

@@ -29,7 +29,6 @@ in
       libnotify
       hyprshade
       zenity
-      wallust
       matugen
     ]) ++ [
       (pkgs.callPackage ./hyprglass.nix { })

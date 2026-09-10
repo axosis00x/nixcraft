@@ -20,7 +20,7 @@
     ../../modules/system/sddm
   ];
   config = {
-    boot.kernelPackages = pkgs.linuxKernel.packages.linux_7_1;
+    boot.kernelPackages = pkgs.linuxPackages_latest;
 
     systemSettings.users = [ "axosis" ];
     systemSettings.services.enable = true;

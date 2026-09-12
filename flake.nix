@@ -25,6 +25,10 @@
       url = "github:uiriansan/SilentSDDM";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    momoi-say = {
+      url = "github:haruki-nikaidou/momoisay-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs =
     inputs@{

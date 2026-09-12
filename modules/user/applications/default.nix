@@ -23,12 +23,10 @@ in
 
     home.packages = with pkgs; [
       vesktop
-      foliate
       switcheroo
       localsend
       obs-studio
       mission-center
-      figma-linux
       proton-authenticator
       proton-vpn
       wireguard-tools

@@ -20,7 +20,7 @@ in
       gsettings-desktop-schemas
       vips
       util-linux
-      libsecret # provides secret-tool
+      libsecret
     ];
   };
 }

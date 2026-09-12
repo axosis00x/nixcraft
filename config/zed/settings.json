@@ -39,7 +39,7 @@
       "default_config_options": {
         "mode": "auto",
         "model": "sonnet",
-        "effort": "high",
+        "effort": "default",
         "fast": false,
       },
       "type": "registry",

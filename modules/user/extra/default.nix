@@ -1,5 +1,11 @@
 # modules/user/extra/default.nix
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
 let
   cfg = config.userSettings.extra;
 in {
@@ -23,6 +29,7 @@ in {
       nitch
       peaclock
       cbonsai
+      inputs.momoi-say.packages.${pkgs.system}.momoisay
     ];
   };
 }

@@ -35,11 +35,11 @@ ShellRoot {
         widgetsService: widgetsService
     }
     WorkspacesService {
-        id: workspacesService
+        id: workspacesServiceInstance
     }
     WorkspaceOverview {
         id: workspaceOverview
-        service: workspacesService
+        service: workspacesServiceInstance
     }
     Osd {
         id: mainOsd
@@ -106,7 +106,7 @@ ShellRoot {
         sourceComponent: Bar {
             osd: mainOsd
             barLayout: barLayoutService
-            workspacesService: workspacesService
+            workspacesService: workspacesServiceInstance
             launcher: overlay.launcher
             controlCenter: overlay.controlCenter
             powerMenu: overlay.powerMenu

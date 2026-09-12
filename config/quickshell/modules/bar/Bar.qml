@@ -471,6 +471,7 @@ PanelWindow {
             Workspaces {
                 id: workspaces
                 anchors.centerIn: parent
+                service: bar.workspacesService
             }
         }
 
@@ -617,6 +618,7 @@ PanelWindow {
                 id: workspacesV
                 vertical: true
                 anchors.centerIn: parent
+                service: bar.workspacesService
             }
         }
 

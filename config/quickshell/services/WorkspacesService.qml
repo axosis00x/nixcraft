@@ -43,6 +43,14 @@ Item {
         root.selected = index;
     }
 
+    // Bar dots call this directly: unlike step(), which always moves
+    // relative to whatever's currently focused, this opens the overview
+    // already parked on the exact workspace that was clicked.
+    function openAt(index) {
+        root.selectIndex(index);
+        root.active = true;
+    }
+
     // Bound to releasing ALT, which is what actually commits the selection.
     function confirm() {
         if (root.active)

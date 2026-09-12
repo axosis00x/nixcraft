@@ -12,6 +12,9 @@ GridLayout {
     // vertical workspace-switch animation already used at the Hyprland
     // compositor level (config/hypr/modules/vertAni.lua's "slidevert").
     property bool vertical: false
+    // Set by Bar.qml so each dot can open the overview parked on the
+    // workspace it represents instead of one relative to whatever's focused.
+    property var service: null
 
     columns: vertical ? 1 : 999
     rowSpacing: 3
@@ -58,6 +61,18 @@ GridLayout {
                 NumberAnimation {
                     duration: 300
                     easing.type: Easing.OutCubic
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                // Dots are small (10-45px); grow the hit area so they're
+                // easy to click without touching the surrounding capsule.
+                anchors.margins: -4
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    if (root.service)
+                        root.service.openAt(index);
                 }
             }
         }

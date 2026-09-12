@@ -14,7 +14,7 @@ hl.animation({ leaf = "layers", enabled = false })
 -- picker (Super+Shift+B) changes it.
 local orientation = dofile(os.getenv("HOME") .. "/.config/hypr/barorientation.lua")
 if orientation == "horizontal" then
-    require("modules.horizAni")
+    require("modules.animations.horizontal")
 else
-    require("modules.vertAni")
+    require("modules.animations.vertical")
 end

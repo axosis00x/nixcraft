@@ -1,25 +1,10 @@
--- ┌─┐┌┐┌┬┌┬┐┌─┐┌┬┐┬┌─┐┌┐┌┌─┐
--- ├─┤│││││││├─┤ │ ││ ││││└─┐
--- ┴ ┴┘└┘┴┴ ┴┴ ┴ ┴ ┴└─┘┘└┘└─┘
--- name "Vertical | Fast"
+-- -- ┌─┐┌┐┌┬┌┬┐┌─┐┌┬┐┬┌─┐┌┐┌┌─┐
+-- -- ├─┤│││││││├─┤ │ ││ ││││└─┐
+-- -- ┴ ┴┘└┘┴┴ ┴┴ ┴ ┴ ┴└─┘┘└┘└─┘
 
-hl.curve("overshot", {
-    type = "bezier",
-    points = { { 0.05, 0.9 }, { 0.1, 1.05 } }
-})
-hl.curve("smoothOut", {
-    type = "bezier",
-    points = { { 0.36, 0 }, { 0.66, -0.56 } }
-})
-hl.curve("smoothIn", {
-    type = "bezier",
-    points = { { 0.25, 1 }, { 0.5, 1 } }
-})
-
-hl.curve("smoothSlide", {
-    type = "bezier",
-    points = { { 0.4, 0 }, { 0.2, 1 } }
-})
+hl.curve("overshot", { type = "bezier", points = { { 0.05, 0.9 }, { 0.1, 1.05 } } })
+hl.curve("smoothOut", { type = "bezier", points = { { 0.36, 0 }, { 0.66, -0.56 } } })
+hl.curve("smoothIn", { type = "bezier", points = { { 0.25, 1 }, { 0.5, 1 } } })
 
 hl.config({ animations = { enabled = true } })
 
@@ -65,13 +50,13 @@ hl.animation({
     leaf = "workspaces",
     enabled = true,
     speed = 3,
-    bezier = "smoothSlide",
-    style = "slidefadevert 20%"
+    bezier = "default",
+    style = "slidevert"
 })
 hl.animation({
     leaf = "specialWorkspace",
     enabled = true,
-    speed = 3,
-    bezier = "smoothSlide",
-    style = "slidefadevert 20%"
+    speed = 4,
+    bezier = "default",
+    style = "slidevert 20%"
 })

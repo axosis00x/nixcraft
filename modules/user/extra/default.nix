@@ -29,7 +29,7 @@ in {
       nitch
       peaclock
       cbonsai
-      inputs.momoi-say.packages.${pkgs.system}.momoisay
+      inputs.momoi-say.packages.${pkgs.stdenv.hostPlatform.system}.momoisay
     ];
   };
 }

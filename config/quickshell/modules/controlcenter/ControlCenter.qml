@@ -32,6 +32,10 @@ Item {
     property string pendingBluetoothAddress: ""
     property bool wifiScanning: false
     property bool bluetoothScanning: false
+    property string wifiAuthSsid: ""
+    property bool wifiAuthVisible: false
+    property bool wifiAuthFailed: false
+    property bool wifiAuthBusy: false
     property bool showVolumeOsdOnRead: false
     property bool showBrightnessOsdOnRead: false
     property bool showMicOsdOnRead: false
@@ -197,16 +201,55 @@ Item {
             if (wifiNetworkModel.get(i).ssid === ssid)
                 return;
         }
-        wifiNetworkModel.append({
-            active: parts[0] === "*",
+        var active = parts[0] === "*";
+        var entry = {
+            active: active,
             ssid: ssid,
             security: parts[2] === "" ? "Open" : parts[2],
-            signal: parts[3]
-        });
+            signal: parts[3],
+            sectionLabel: active ? "Connected" : "Available"
+        };
+        // Only one network can be active, so putting it at the front is
+        // always enough to keep the "Connected" section contiguous.
+        if (active)
+            wifiNetworkModel.insert(0, entry);
+        else
+            wifiNetworkModel.append(entry);
     }
 
-    function connectWifi(ssid) {
-        wifiConnect.exec(["nmcli", "dev", "wifi", "connect", ssid]);
+    function disconnectWifi(ssid) {
+        wifiDisconnect.exec(["nmcli", "con", "down", "id", ssid]);
+    }
+
+    function connectWifi(ssid, password) {
+        var command = ["nmcli", "dev", "wifi", "connect", ssid];
+        if (password)
+            command = command.concat(["password", password]);
+        wifiConnect.exec(command);
+    }
+
+    // Secured networks that aren't already connected need a password —
+    // shown as a GNOME-polkit-style prompt instead of silently failing.
+    function requestWifiAuth(ssid) {
+        wifiAuthSsid = ssid;
+        wifiAuthFailed = false;
+        wifiAuthBusy = false;
+        wifiAuthVisible = true;
+    }
+
+    function submitWifiAuth(password) {
+        if (password === "")
+            return;
+        wifiAuthBusy = true;
+        wifiAuthFailed = false;
+        connectWifi(wifiAuthSsid, password);
+    }
+
+    function cancelWifiAuth() {
+        wifiAuthVisible = false;
+        wifiAuthSsid = "";
+        wifiAuthFailed = false;
+        wifiAuthBusy = false;
     }
 
     function readPowerProfile() {
@@ -285,13 +328,58 @@ Item {
         }
         bluetoothDeviceModel.append({
             address: match[1],
-            name: match[2]
+            name: match[2],
+            connected: false,
+            sectionLabel: "Available"
         });
+    }
+
+    // "bluetoothctl devices" (used above) only lists paired devices, not
+    // which of them are currently connected — that needs a separate query,
+    // then a re-sort so the connected ones end up contiguous at the top.
+    function readConnectedBluetoothDevices() {
+        bluetoothConnectedRead.exec(["bluetoothctl", "devices", "Connected"]);
+    }
+
+    function parseBluetoothConnected(data) {
+        var match = data.match(/^Device\s+([0-9A-Fa-f:]+)\s+(.+)$/);
+        if (!match || match.length < 3)
+            return;
+        for (var i = 0; i < bluetoothDeviceModel.count; i++) {
+            if (bluetoothDeviceModel.get(i).address === match[1]) {
+                bluetoothDeviceModel.setProperty(i, "connected", true);
+                bluetoothDeviceModel.setProperty(i, "sectionLabel", "Connected");
+                break;
+            }
+        }
+    }
+
+    function reorderBluetoothConnectedFirst() {
+        var entries = [];
+        for (var i = 0; i < bluetoothDeviceModel.count; i++) {
+            var row = bluetoothDeviceModel.get(i);
+            // Copy into a plain object — passing the ListModel row wrapper
+            // straight back to append() silently drops all of its roles.
+            entries.push({
+                address: row.address,
+                name: row.name,
+                connected: row.connected,
+                sectionLabel: row.sectionLabel
+            });
+        }
+        entries.sort((a, b) => (b.connected ? 1 : 0) - (a.connected ? 1 : 0));
+        bluetoothDeviceModel.clear();
+        for (var j = 0; j < entries.length; j++)
+            bluetoothDeviceModel.append(entries[j]);
     }
 
     function pairBluetooth(address) {
         pendingBluetoothAddress = address;
         bluetoothPair.exec(["bluetoothctl", "pair", address]);
+    }
+
+    function disconnectBluetooth(address) {
+        bluetoothDisconnect.exec(["bluetoothctl", "disconnect", address]);
     }
 
     function readEthernet() {
@@ -585,6 +673,21 @@ Item {
 
     Process {
         id: wifiConnect
+        onExited: (exitCode) => {
+            if (root.wifiAuthVisible) {
+                root.wifiAuthBusy = false;
+                if (exitCode === 0)
+                    root.cancelWifiAuth();
+                else
+                    root.wifiAuthFailed = true;
+            }
+            root.readWifi();
+            root.scanWifi(false);
+        }
+    }
+
+    Process {
+        id: wifiDisconnect
         onExited: {
             root.readWifi();
             root.scanWifi(false);
@@ -642,6 +745,19 @@ Item {
             splitMarker: "\n"
             onRead: data => root.parseBluetoothDevice(data)
         }
+
+        onExited: root.readConnectedBluetoothDevices()
+    }
+
+    Process {
+        id: bluetoothConnectedRead
+
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => root.parseBluetoothConnected(data)
+        }
+
+        onExited: root.reorderBluetoothConnectedFirst()
     }
 
     Process {
@@ -650,6 +766,11 @@ Item {
             if (root.pendingBluetoothAddress !== "")
                 bluetoothConnect.exec(["bluetoothctl", "connect", root.pendingBluetoothAddress]);
         }
+    }
+
+    Process {
+        id: bluetoothDisconnect
+        onExited: root.scanBluetooth()
     }
 
     Process {
@@ -798,6 +919,7 @@ Item {
                                 shapeRadius: 22
                                 accentColor: Palette.Theme.accent
                                 iconGlyph: root.networkIcon()
+                                iconSize: 20
                                 title: "Network"
                                 subtitle: root.networkSubtitle()
                                 active: root.networkActive()
@@ -814,6 +936,7 @@ Item {
                                 shapeRadius: 22
                                 accentColor: Palette.Theme.accent
                                 iconGlyph: root.bluetoothIcon()
+                                iconSize: 20
                                 title: "Bluetooth"
                                 subtitle: root.bluetoothSubtitle()
                                 active: root.bluetoothLoaded && root.bluetoothEnabled
@@ -1021,33 +1144,6 @@ Item {
                         Layout.fillWidth: true
                         spacing: 8
 
-                        Rectangle {
-                            implicitWidth: 28
-                            implicitHeight: 28
-                            radius: 14
-                            color: Palette.Theme.surfaceContainerHigh
-                            Layout.alignment: Qt.AlignVCenter
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: root.detailMode === "wifi" ? root.wifiIcon() : root.bluetoothIcon()
-                                color: Palette.Theme.info
-                                font.family: Palette.Theme.fontIcons
-                                font.pixelSize: 17
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-                        }
-
-                        Text {
-                            text: root.detailMode === "wifi" ? "Wi-Fi networks" : "Bluetooth devices"
-                            color: Palette.Theme.textPrimary
-                            font.family: Palette.Theme.fontMono
-                            font.pixelSize: 12
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
-
                         IconButton {
                             icon: "\ue5c4"
                             implicitWidth: 28
@@ -1055,21 +1151,28 @@ Item {
                             onClicked: root.closeDetailWindow(true)
                         }
 
-                        IconButton {
-                            icon: "\ue5d5"
-                            implicitWidth: 28
-                            implicitHeight: 28
-                            onClicked: {
+                        Text {
+                            text: root.detailMode === "wifi" ? "Wi-Fi" : "Bluetooth"
+                            color: Palette.Theme.textPrimary
+                            font.family: Palette.Theme.fontMono
+                            font.pixelSize: 12
+                            font.weight: Font.DemiBold
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                        }
+
+                        ToggleSwitch {
+                            Layout.alignment: Qt.AlignVCenter
+                            checked: root.detailMode === "wifi" ? root.wifiEnabled : root.bluetoothEnabled
+                            onToggled: {
                                 if (root.detailMode === "wifi")
-                                    root.scanWifi(true);
+                                    root.toggleWifi();
                                 else
-                                    root.scanBluetooth();
+                                    root.toggleBluetooth();
                             }
                         }
-                    }
-
-                    Divider {
-                        Layout.fillWidth: true
                     }
 
                     Item {
@@ -1095,6 +1198,20 @@ Item {
                             reuseItems: true
                             cacheBuffer: 240
 
+                            section.property: "sectionLabel"
+                            section.criteria: ViewSection.FullString
+                            section.delegate: Text {
+                                required property string section
+                                text: section
+                                color: Palette.Theme.textMuted
+                                font.family: Palette.Theme.fontMono
+                                font.pixelSize: 10
+                                font.weight: Font.DemiBold
+                                topPadding: 10
+                                bottomPadding: 4
+                                leftPadding: 4
+                            }
+
                             delegate: DeviceRow {
                                 required property var modelData
 
@@ -1102,12 +1219,205 @@ Item {
                                 iconGlyph: root.detailMode === "wifi" ? root.wifiIcon() : root.bluetoothIcon()
                                 title: root.detailMode === "wifi" ? modelData.ssid : modelData.name
                                 subtitle: root.detailMode === "wifi" ? (modelData.security + "  " + modelData.signal + "%") : modelData.address
-                                active: root.detailMode === "wifi" ? modelData.active : false
-                                onClicked: {
-                                    if (root.detailMode === "wifi")
-                                        root.connectWifi(modelData.ssid);
-                                    else
-                                        root.pairBluetooth(modelData.address);
+                                active: root.detailMode === "wifi" ? modelData.active : modelData.connected
+                                actionLabel: root.detailMode === "wifi" ? (modelData.active ? "Disconnect" : "Connect") : (modelData.connected ? "Disconnect" : "Connect")
+                                onActionClicked: {
+                                    if (root.detailMode === "wifi") {
+                                        if (modelData.active)
+                                            root.disconnectWifi(modelData.ssid);
+                                        else if (modelData.security !== "Open")
+                                            root.requestWifiAuth(modelData.ssid);
+                                        else
+                                            root.connectWifi(modelData.ssid);
+                                    } else {
+                                        if (modelData.connected)
+                                            root.disconnectBluetooth(modelData.address);
+                                        else
+                                            root.pairBluetooth(modelData.address);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // GNOME-polkit-style password prompt for secured networks
+                // that aren't already connected/saved.
+                Item {
+                    anchors.fill: parent
+                    visible: root.wifiAuthVisible
+                    z: 10
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 18
+                        color: Qt.rgba(0, 0, 0, 0.55)
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: root.cancelWifiAuth()
+                    }
+
+                    Surface {
+                        anchors.centerIn: parent
+                        width: Math.min(240, parent.width - 32)
+                        implicitHeight: authColumn.implicitHeight + 28
+                        radius: 16
+                        color: Palette.Theme.surfaceContainerHigh
+                        outlineWidth: 0
+
+                        MouseArea {
+                            // Swallows clicks so the scrim behind doesn't
+                            // treat interacting with the card as "cancel".
+                            anchors.fill: parent
+                        }
+
+                        ColumnLayout {
+                            id: authColumn
+                            anchors.fill: parent
+                            anchors.margins: 14
+                            spacing: 10
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+
+                                Rectangle {
+                                    implicitWidth: 26
+                                    implicitHeight: 26
+                                    radius: 13
+                                    color: Palette.Theme.surfaceContainerHighest
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: ""
+                                        color: Palette.Theme.info
+                                        font.family: Palette.Theme.fontIcons
+                                        font.pixelSize: 15
+                                    }
+                                }
+
+                                Text {
+                                    text: "Authentication required"
+                                    color: Palette.Theme.textPrimary
+                                    font.family: Palette.Theme.fontMono
+                                    font.pixelSize: 12
+                                    font.weight: Font.DemiBold
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                }
+                            }
+
+                            Text {
+                                text: "Enter the password for \"" + root.wifiAuthSsid + "\""
+                                color: Palette.Theme.textMuted
+                                font.family: Palette.Theme.fontMono
+                                font.pixelSize: 10
+                                wrapMode: Text.WordWrap
+                                Layout.fillWidth: true
+                            }
+
+                            Surface {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 34
+                                radius: 10
+                                color: authPasswordInput.activeFocus ? Palette.Theme.surfaceContainerHigh : Palette.Theme.surfaceContainer
+                                outlineWidth: 0
+
+                                TextInput {
+                                    id: authPasswordInput
+                                    anchors.fill: parent
+                                    anchors.margins: 4
+                                    verticalAlignment: TextInput.AlignVCenter
+                                    echoMode: TextInput.Password
+                                    color: Palette.Theme.textPrimary
+                                    font.family: Palette.Theme.fontMono
+                                    font.pixelSize: 12
+                                    selectByMouse: true
+                                    readOnly: root.wifiAuthBusy
+                                    focus: root.wifiAuthVisible
+
+                                    Keys.onEscapePressed: root.cancelWifiAuth()
+                                    onAccepted: root.submitWifiAuth(text)
+                                }
+
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 8
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "Password"
+                                    color: Palette.Theme.textMuted
+                                    font.family: Palette.Theme.fontMono
+                                    font.pixelSize: 11
+                                    visible: authPasswordInput.text.length === 0
+                                }
+                            }
+
+                            Text {
+                                visible: root.wifiAuthFailed
+                                text: "Incorrect password. Try again."
+                                color: Palette.Theme.errorColor
+                                font.family: Palette.Theme.fontMono
+                                font.pixelSize: 10
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Layout.topMargin: 2
+                                spacing: 8
+
+                                Item {
+                                    Layout.fillWidth: true
+                                }
+
+                                Rectangle {
+                                    implicitWidth: cancelText.implicitWidth + 16
+                                    implicitHeight: 24
+                                    radius: 12
+                                    color: cancelMouse.containsMouse ? Palette.Theme.surfaceContainerHighest : "transparent"
+
+                                    Text {
+                                        id: cancelText
+                                        anchors.centerIn: parent
+                                        text: "Cancel"
+                                        color: Palette.Theme.textSecondary
+                                        font.family: Palette.Theme.fontMono
+                                        font.pixelSize: 10
+                                    }
+
+                                    MouseArea {
+                                        id: cancelMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.cancelWifiAuth()
+                                    }
+                                }
+
+                                Rectangle {
+                                    implicitWidth: connectText.implicitWidth + 20
+                                    implicitHeight: 24
+                                    radius: 12
+                                    color: Palette.Theme.accent
+                                    opacity: authPasswordInput.text.length > 0 ? 1 : 0.4
+
+                                    Text {
+                                        id: connectText
+                                        anchors.centerIn: parent
+                                        text: root.wifiAuthBusy ? "Connecting…" : "Connect"
+                                        color: "#000000"
+                                        font.family: Palette.Theme.fontMono
+                                        font.pixelSize: 10
+                                        font.weight: Font.DemiBold
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        enabled: authPasswordInput.text.length > 0 && !root.wifiAuthBusy
+                                        onClicked: root.submitWifiAuth(authPasswordInput.text)
+                                    }
                                 }
                             }
                         }

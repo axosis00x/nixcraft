@@ -52,7 +52,7 @@ Item {
         text: root.icon
         color: root.iconColor
         font.family: Palette.Theme.fontIcons
-        font.pixelSize: 19
+        font.pixelSize: 17
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
     }

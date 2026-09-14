@@ -9,6 +9,7 @@ Item {
     property string subtitle: ""
     property string iconSource: ""
     property string iconGlyph: ""
+    property int iconSize: 26
     property bool active: false
     property bool compact: false
     property bool iconOnly: false
@@ -27,8 +28,8 @@ Item {
     signal clicked()
     signal rightClicked()
 
-    implicitWidth: root.iconOnly ? 62 : 180
-    implicitHeight: root.iconOnly ? 62 : (root.compact ? 76 : 82)
+    implicitWidth: root.iconOnly ? 54 : 180
+    implicitHeight: root.iconOnly ? 54 : (root.compact ? 76 : 82)
 
     SequentialAnimation {
         id: toggleBounce
@@ -89,7 +90,7 @@ Item {
         text: root.iconGlyph
         color: root.active ? root.activeIconColor : Palette.Theme.textMuted
         font.family: Palette.Theme.fontIcons
-        font.pixelSize: 22
+        font.pixelSize: 19
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
 
@@ -136,7 +137,7 @@ Item {
             text: root.iconGlyph
             color: root.active ? root.activeIconColor : Palette.Theme.textPrimary
             font.family: Palette.Theme.fontIcons
-            font.pixelSize: 26
+            font.pixelSize: root.iconSize
 
             Behavior on color {
                 ColorAnimation { duration: 120 }

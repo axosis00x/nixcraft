@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "../../components/material"
 import "../../theme" as Palette
 
 Item {
@@ -10,7 +11,10 @@ Item {
     property string title: ""
     property string subtitle: ""
     property bool active: false
-    signal clicked
+    // Label for the row's action button (e.g. "Connect" / "Disconnect").
+    // Empty hides the button entirely.
+    property string actionLabel: ""
+    signal actionClicked
 
     implicitWidth: 1
     implicitHeight: 46
@@ -88,13 +92,20 @@ Item {
                 visible: text !== ""
             }
         }
+
+        ActionChip {
+            visible: root.actionLabel !== ""
+            label: root.actionLabel
+            active: root.active
+            Layout.alignment: Qt.AlignVCenter
+            onClicked: root.actionClicked()
+        }
     }
 
     MouseArea {
         id: rowMouse
         anchors.fill: parent
         hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.clicked()
+        acceptedButtons: Qt.NoButton
     }
 }

@@ -44,7 +44,7 @@ QtObject {
     readonly property int radiusMedium: 16
     readonly property int radiusLarge: 22
     readonly property int radiusExtraLarge: 28
-    readonly property int iconButtonSize: 32
+    readonly property int iconButtonSize: 28
 
     function apply(values) {
         var paletteKeys = ["bg", "surface", "surfaceContainerLow", "surfaceContainer", "surfaceContainerHigh", "surfaceContainerHighest", "surfaceTint", "outlineVariant", "border", "accent", "accentText", "info", "warning", "success", "errorColor", "accentLight", "primaryContainer", "primaryText", "secondaryContainer", "secondaryContainerHover", "secondaryText", "wsInactive", "textPrimary", "textTitle", "textSecondary", "textMuted", "textDisabled"];

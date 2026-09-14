@@ -9,9 +9,9 @@ Rectangle {
     property bool active: false
     // Overridable so callers in tighter spaces (e.g. notification action
     // chips) can shrink the chip without forking the whole component.
-    property real chipHeight: 28
-    property int fontPixelSize: 11
-    property int horizontalPadding: 20
+    property real chipHeight: 24
+    property int fontPixelSize: 10
+    property int horizontalPadding: 16
     signal clicked
 
     implicitHeight: root.chipHeight

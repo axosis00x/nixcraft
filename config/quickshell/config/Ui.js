@@ -6,7 +6,6 @@
 const themeOverlayWidth = 560
 const clipboardOverlayWidth = 468
 const wayclickOverlayWidth = 560
-const gridSpacing = 8
 
 // Width of the vertical bar/dock (when active — see services/BarLayoutService.qml,
 // which owns the live-toggleable, persisted top/left choice). The clock is

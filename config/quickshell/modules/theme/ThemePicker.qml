@@ -117,8 +117,8 @@ Item {
     ColumnLayout {
         id: content
         anchors.fill: parent
-        anchors.margins: 12
-        spacing: 4
+        anchors.margins: 16
+        spacing: 10
 
             RowLayout {
                 Layout.fillWidth: true
@@ -129,29 +129,33 @@ Item {
                     font.pixelSize: 16
                     font.weight: Font.DemiBold
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
                 }
                 Text {
                     text: service.activeTheme
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontMono
                     font.pixelSize: 11
+                    Layout.alignment: Qt.AlignVCenter
                 }
             }
 
             GridLayout {
                 columns: 3
-                columnSpacing: Ui.gridSpacing
-                rowSpacing: Ui.gridSpacing
+                columnSpacing: 10
+                rowSpacing: 10
                 Layout.fillWidth: true
 
                 Repeater {
                     model: root.themes
                     delegate: Rectangle {
+                        id: card
                         required property string modelData
                         required property int index
+                        readonly property bool isActive: modelData === service.activeTheme
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 88
-                        radius: 13
+                        Layout.preferredHeight: 92
+                        radius: 14
                         color: index === root.selected ? Palette.Theme.surfaceContainerHigh : Palette.Theme.surfaceContainerLow
                         border.width: index === root.selected ? 2 : 0
                         border.color: root.accentFor(modelData)
@@ -167,30 +171,30 @@ Item {
                             }
                         }
 
-                        Rectangle {
+                        Row {
                             anchors.left: parent.left
                             anchors.top: parent.top
-                            anchors.margins: 12
-                            width: 42
-                            height: 16
-                            radius: 8
-                            color: root.accentFor(modelData)
-                            opacity: 0.18
-                        }
-                        Repeater {
-                            model: 3
-                            delegate: Rectangle {
-                                width: 15
-                                height: 5
-                                radius: 3
-                                x: 14 + index * 18
-                                y: 18
-                                color: index === 0 ? root.accentFor(modelData) : Qt.lighter(root.accentFor(modelData), 1 + index * 0.18)
+                            anchors.margins: 14
+                            spacing: 6
+
+                            Repeater {
+                                model: 4
+                                delegate: Rectangle {
+                                    required property int index
+                                    width: 16
+                                    height: 16
+                                    radius: 5
+                                    color: root.accentFor(card.modelData)
+                                    opacity: 1 - index * 0.24
+                                }
                             }
                         }
+
                         Text {
                             anchors.left: parent.left
+                            anchors.right: parent.right
                             anchors.leftMargin: 14
+                            anchors.rightMargin: 14
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: 14
                             text: modelData.replace(/-/g, " ")
@@ -199,17 +203,27 @@ Item {
                             font.pixelSize: 11
                             font.weight: index === root.selected ? Font.DemiBold : Font.Normal
                             elide: Text.ElideRight
-                            width: parent.width - 28
                         }
-                        Text {
+
+                        Rectangle {
+                            anchors.top: parent.top
                             anchors.right: parent.right
-                            anchors.rightMargin: 12
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 15
-                            text: modelData === service.activeTheme ? "●" : ""
-                            color: root.accentFor(modelData)
-                            font.pixelSize: 10
+                            anchors.margins: 10
+                            width: 18
+                            height: 18
+                            radius: 9
+                            visible: card.isActive
+                            color: root.accentFor(card.modelData)
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "✓"
+                                color: Palette.Theme.bg
+                                font.pixelSize: 10
+                                font.bold: true
+                            }
                         }
+
                         MouseArea {
                             anchors.fill: parent
                             hoverEnabled: true

@@ -105,11 +105,6 @@ PanelWindow {
     property alias barLayoutPicker: barLayoutPickerItem
     property alias wallpaperPicker: wallpaperPickerItem
 
-    // The launcher and control center are meant to feel like an extension of
-    // the desktop, so they don't dim it; the rest are more like modal
-    // utilities and darken the backdrop behind them.
-    readonly property bool activeDims: powerMenuItem.visible || themePickerItem.visible || clipboardItem.visible || serviceManagerItem.visible || mediaPanelItem.visible || toolMenuItem.visible || emojiPickerItem.visible || barLayoutPickerItem.visible || wallpaperPickerItem.visible
-
     // All center-origin panels share this layer surface. Closing every other
     // panel before a new one appears prevents stacked backdrops and focus.
     function presentOnly(panel) {
@@ -183,24 +178,12 @@ PanelWindow {
         id: emojiService
     }
 
-    // Dims the desktop behind modal-style panels. Sits below the notch so it
-    // never darkens the panel's own content.
-    Rectangle {
+    // Invisible click-outside-to-close catcher. Sits below the notch so it
+    // never intercepts clicks meant for the panel's own content.
+    MouseArea {
         anchors.fill: parent
-        color: "#000000"
-        opacity: root.activeDims ? 0.30 : 0
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: 180
-            }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            visible: root.active
-            onClicked: root.closeActive()
-        }
+        visible: root.active
+        onClicked: root.closeActive()
     }
 
     // Seed dimensions: the bar's collapsed notch width and height.

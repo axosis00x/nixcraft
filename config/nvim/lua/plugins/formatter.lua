@@ -11,6 +11,7 @@ return {
       yaml = { "prettierd", "prettier" },
       markdown = { "prettierd", "prettier" },
       rust = { "rustfmt" },
+      json = { "prettier" },
       go = { "gofmt" },
       c = { "clang-format" },
       cpp = { "clang-format" },

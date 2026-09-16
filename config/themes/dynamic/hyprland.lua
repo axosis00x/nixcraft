@@ -1,6 +1,6 @@
 return {
-    outline = { colors = { "rgb(ffb3ad)", "rgb(f5b9a2)" }, angle = 45 },
-    outline_variant = "rgba(55424166)",
-    primary = "rgb(ffb3ad)",
-    tertiary = "rgb(fbb884)",
+    outline = { colors = { "rgb(acc7ff)", "rgb(c0c4eb)" }, angle = 45 },
+    outline_variant = "rgba(43475166)",
+    primary = "rgb(acc7ff)",
+    tertiary = "rgb(cabff8)",
 }

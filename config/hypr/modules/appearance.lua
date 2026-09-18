@@ -14,7 +14,7 @@ end
 
 hl.config({
 	general = {
-		gaps_in = 3,
+		gaps_in = 2,
 		gaps_out = 4,
 		border_size = 0,
 		["col.active_border"] = theme.outline,
@@ -26,7 +26,7 @@ hl.config({
 	decoration = {
 		rounding = 7,
 		rounding_power = 7,
-		active_opacity = 0.90,
+		active_opacity = 0.88,
 		inactive_opacity = 0.95,
 		screen_shader = screen_shader,
 

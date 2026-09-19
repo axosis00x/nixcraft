@@ -8,29 +8,20 @@ Item {
     property string iconSource: ""
     property color iconColor: Palette.Theme.textSecondary
     property color stateColor: Palette.Theme.textPrimary
-    property real stateOpacity: hover.containsMouse ? 0.10 : 0
+    property real stateOpacity: hover.pressed ? 0.20 : (hover.containsMouse ? 0.12 : 0)
     signal clicked
 
     implicitWidth: Palette.Theme.iconButtonSize
     implicitHeight: Palette.Theme.iconButtonSize
     opacity: enabled ? 1 : 0.38
 
-    SequentialAnimation {
-        id: pressBounce
+    // M3 Expressive responsive spring interaction
+    scale: enabled && hover.pressed ? 0.88 : (enabled && hover.containsMouse ? 1.08 : 1.0)
+    Behavior on scale {
         NumberAnimation {
-            target: root
-            property: "scale"
-            to: 0.85
-            duration: 80
-            easing.type: Easing.OutCubic
-        }
-        NumberAnimation {
-            target: root
-            property: "scale"
-            to: 1
-            duration: 200
+            duration: 140
             easing.type: Easing.OutBack
-            easing.overshoot: 3
+            easing.overshoot: 1.8
         }
     }
 
@@ -39,10 +30,9 @@ Item {
         radius: width / 2
         color: root.stateColor
         opacity: root.stateOpacity
+
         Behavior on opacity {
-            NumberAnimation {
-                duration: 120
-            }
+            NumberAnimation { duration: 120 }
         }
     }
 
@@ -50,11 +40,15 @@ Item {
         anchors.fill: parent
         visible: root.iconSource === ""
         text: root.icon
-        color: root.iconColor
+        color: hover.containsMouse ? Palette.Theme.textPrimary : root.iconColor
         font.family: Palette.Theme.fontIcons
         font.pixelSize: 17
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
+
+        Behavior on color {
+            ColorAnimation { duration: 120 }
+        }
     }
 
     Image {
@@ -73,9 +67,6 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: root.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onClicked: if (root.enabled) {
-            pressBounce.restart();
-            root.clicked();
-        }
+        onClicked: if (root.enabled) root.clicked()
     }
 }

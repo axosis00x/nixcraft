@@ -125,7 +125,7 @@ Item {
                 Text {
                     text: "Services"
                     color: Palette.Theme.textTitle
-                    font.family: Palette.Theme.fontMono
+                    font.family: Palette.Theme.fontSans
                     font.pixelSize: 16
                     font.weight: Font.DemiBold
                     Layout.fillWidth: true
@@ -133,8 +133,8 @@ Item {
                 Text {
                     text: root.entries.length + " units"
                     color: Palette.Theme.textMuted
-                    font.family: Palette.Theme.fontMono
-                    font.pixelSize: 10
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: 11
                 }
                 ActionChip {
                     label: "Refresh"

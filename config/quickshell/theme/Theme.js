@@ -31,11 +31,17 @@ const textSecondary = "#9fb4c4"
 const textMuted = "#6c8494"
 const textDisabled = "#2c3a46"
 
+// ── Semantic Aliases ──
+const accentText = typeof onAccent !== 'undefined' ? onAccent : '#00161b'
+const primaryText = typeof onPrimaryContainer !== 'undefined' ? onPrimaryContainer : '#a8dbe6'
+const secondaryText = typeof onSecondaryContainer !== 'undefined' ? onSecondaryContainer : '#c9a8dc'
+
 // ── Tint ──
 const surfaceTintOpacity = 0.015
 
 // ── Typography ──
 const fontMono  = "SF Mono "
+const fontSans  = "Inter"
 const fontIcons = "Material Symbols Rounded "
 
 // ── Shape ──

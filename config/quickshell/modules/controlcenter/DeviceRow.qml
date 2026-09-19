@@ -21,13 +21,13 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: 8
+        radius: 12
         color: rowMouse.containsMouse ? Palette.Theme.surfaceContainerHigh : "transparent"
         border.width: 0
 
         Behavior on color {
             ColorAnimation {
-                duration: 100
+                duration: 120
             }
         }
     }
@@ -39,16 +39,16 @@ Item {
         spacing: 10
 
         Rectangle {
-            implicitWidth: 28
-            implicitHeight: 28
-            radius: 14
+            implicitWidth: 32
+            implicitHeight: 32
+            radius: 16
             color: root.active ? Palette.Theme.surfaceContainerHighest : Palette.Theme.surfaceContainerHigh
             Layout.alignment: Qt.AlignVCenter
 
             Image {
                 anchors.centerIn: parent
-                width: 15
-                height: 15
+                width: 16
+                height: 16
                 source: root.iconSource
                 visible: root.iconSource !== ""
                 fillMode: Image.PreserveAspectFit
@@ -60,9 +60,9 @@ Item {
                 anchors.centerIn: parent
                 visible: root.iconSource === "" && root.iconGlyph !== ""
                 text: root.iconGlyph
-                color: root.active ? Palette.Theme.info : Palette.Theme.textSecondary
+                color: root.active ? Palette.Theme.accent : Palette.Theme.textSecondary
                 font.family: Palette.Theme.fontIcons
-                font.pixelSize: 17
+                font.pixelSize: 18
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
             }
@@ -76,8 +76,9 @@ Item {
             Text {
                 text: root.title
                 color: Palette.Theme.textPrimary
-                font.family: Palette.Theme.fontMono
-                font.pixelSize: 12
+                font.family: Palette.Theme.fontSans
+                font.pixelSize: 13
+                font.weight: Font.Medium
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }
@@ -85,8 +86,8 @@ Item {
             Text {
                 text: root.subtitle
                 color: Palette.Theme.textMuted
-                font.family: Palette.Theme.fontMono
-                font.pixelSize: 10
+                font.family: Palette.Theme.fontSans
+                font.pixelSize: 11
                 elide: Text.ElideRight
                 Layout.fillWidth: true
                 visible: text !== ""

@@ -158,10 +158,29 @@ Item {
                     Layout.maximumWidth: 48
                     implicitHeight: 48
                     radius: 14
-                    color: index === root.selectedIndex ? Palette.Theme.accent : Palette.Theme.surfaceContainerLow
+                    scale: actionMouse.pressed ? 0.90 : (actionMouse.containsMouse ? 1.08 : 1.0)
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 150
+                            easing.type: Easing.OutBack
+                            easing.overshoot: 1.6
+                        }
+                    }
+
+                    color: index === root.selectedIndex
+                        ? Palette.Theme.accent
+                        : (actionMouse.containsMouse ? Palette.Theme.surfaceContainerHighest : Palette.Theme.surfaceContainerLow)
                     border.width: 0
 
                     Behavior on color { ColorAnimation { duration: 120 } }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: parent.radius
+                        color: index === root.selectedIndex ? "#ffffff" : Palette.Theme.accent
+                        opacity: actionMouse.pressed ? 0.18 : (actionMouse.containsMouse ? 0.08 : 0)
+                        Behavior on opacity { NumberAnimation { duration: 120 } }
+                    }
 
                     Text {
                         anchors.centerIn: parent

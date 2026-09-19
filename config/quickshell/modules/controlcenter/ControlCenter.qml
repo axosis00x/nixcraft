@@ -536,7 +536,6 @@ Item {
         return Palette.Theme.radiusMedium;
     }
 
-
     function bluetoothSubtitle() {
         if (!root.bluetoothLoaded)
             return "loading";
@@ -589,13 +588,7 @@ Item {
             // session (resumes on next login/restart) — acceptable, since a
             // guaranteed flash on every toggle is worse than a schedule that
             // needs a nudge later.
-            hyprsunsetSet.exec(["sh", "-c", [
-                "conf=\"$HOME/.config/hypr/hyprsunset.conf\"",
-                "now=$(date +%H%M)",
-                "t=$(awk -v now=\"$now\" '/time[[:space:]]*=/{gsub(/[^0-9:]/,\"\");n=split($0,a,\":\");tm=a[1]a[2];next}/temperature[[:space:]]*=/{gsub(/[^0-9]/,\"\");temp=$0;if(first==\"\")first=temp;last=temp;if(tm<=now)best=temp}END{print (best!=\"\"?best:last)}' \"$conf\")",
-                "[ -n \"$t\" ] || t=4000",
-                "hyprctl hyprsunset temperature \"$t\"",
-            ].join("; ")]);
+            hyprsunsetSet.exec(["sh", "-c", ["conf=\"$HOME/.config/hypr/hyprsunset.conf\"", "now=$(date +%H%M)", "t=$(awk -v now=\"$now\" '/time[[:space:]]*=/{gsub(/[^0-9:]/,\"\");n=split($0,a,\":\");tm=a[1]a[2];next}/temperature[[:space:]]*=/{gsub(/[^0-9]/,\"\");temp=$0;if(first==\"\")first=temp;last=temp;if(tm<=now)best=temp}END{print (best!=\"\"?best:last)}' \"$conf\")", "[ -n \"$t\" ] || t=4000", "hyprctl hyprsunset temperature \"$t\"",].join("; ")]);
         }
     }
 
@@ -673,7 +666,7 @@ Item {
 
     Process {
         id: wifiConnect
-        onExited: (exitCode) => {
+        onExited: exitCode => {
             if (root.wifiAuthVisible) {
                 root.wifiAuthBusy = false;
                 if (exitCode === 0)
@@ -993,21 +986,22 @@ Item {
 
                             Surface {
                                 Layout.preferredHeight: slidersInner.implicitHeight + 20
-                                Layout.preferredWidth: gridInner.implicitWidth + 20
+                                Layout.preferredWidth: slidersInner.implicitHeight + 20
                                 radius: 14
                                 color: Palette.Theme.surfaceContainerLow
                                 tintOpacity: 0.025
 
                                 GridLayout {
                                     id: gridInner
-                                    anchors.top: parent.top
-                                    anchors.topMargin: 10
-                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.fill: parent
+                                    anchors.margins: 10
                                     columns: 2
                                     columnSpacing: 10
                                     rowSpacing: 10
 
                                     QuickTile {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
                                         iconOnly: true
                                         accentColor: Palette.Theme.accent
                                         iconGlyph: root.hyprsunsetIcon()
@@ -1017,6 +1011,8 @@ Item {
                                     }
 
                                     QuickTile {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
                                         iconOnly: true
                                         accentColor: "#4a90e2"
                                         iconGlyph: root.gameModeIcon()
@@ -1026,6 +1022,8 @@ Item {
                                     }
 
                                     QuickTile {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
                                         iconOnly: true
                                         accentColor: Palette.Theme.success
                                         iconGlyph: root.keepAwakeIcon()
@@ -1035,6 +1033,8 @@ Item {
                                     }
 
                                     QuickTile {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
                                         iconOnly: true
                                         accentColor: root.powerProfileColor()
                                         activeIconColor: root.powerProfile === "balanced" ? "#ffffff" : "#000000"
@@ -1058,7 +1058,7 @@ Item {
                         Text {
                             text: "Notifications"
                             color: Palette.Theme.textPrimary
-                            font.family: Palette.Theme.fontMono
+                            font.family: Palette.Theme.fontSans
                             font.pixelSize: 13
                             font.weight: Font.DemiBold
                             Layout.alignment: Qt.AlignVCenter
@@ -1154,8 +1154,8 @@ Item {
                         Text {
                             text: root.detailMode === "wifi" ? "Wi-Fi" : "Bluetooth"
                             color: Palette.Theme.textPrimary
-                            font.family: Palette.Theme.fontMono
-                            font.pixelSize: 12
+                            font.family: Palette.Theme.fontSans
+                            font.pixelSize: 13
                             font.weight: Font.DemiBold
                         }
 
@@ -1181,9 +1181,9 @@ Item {
 
                         Text {
                             anchors.centerIn: parent
-                            text: root.detailMode === "wifi" ? (root.wifiScanning ? "Scanning" : "No networks") : (root.bluetoothScanning ? "Scanning" : "No devices")
+                            text: root.detailMode === "wifi" ? (root.wifiScanning ? "Scanning…" : "No networks") : (root.bluetoothScanning ? "Scanning…" : "No devices")
                             color: Palette.Theme.textMuted
-                            font.family: Palette.Theme.fontMono
+                            font.family: Palette.Theme.fontSans
                             font.pixelSize: 12
                             visible: detailList.count === 0
                         }
@@ -1372,18 +1372,24 @@ Item {
                                 }
 
                                 Rectangle {
-                                    implicitWidth: cancelText.implicitWidth + 16
-                                    implicitHeight: 24
-                                    radius: 12
+                                    implicitWidth: cancelText.implicitWidth + 24
+                                    implicitHeight: 28
+                                    radius: 14
                                     color: cancelMouse.containsMouse ? Palette.Theme.surfaceContainerHighest : "transparent"
+                                    scale: cancelMouse.pressed ? 0.93 : (cancelMouse.containsMouse ? 1.04 : 1.0)
+                                    Behavior on scale {
+                                        NumberAnimation { duration: 140; easing.type: Easing.OutBack; easing.overshoot: 1.6 }
+                                    }
+                                    Behavior on color { ColorAnimation { duration: 120 } }
 
                                     Text {
                                         id: cancelText
                                         anchors.centerIn: parent
                                         text: "Cancel"
                                         color: Palette.Theme.textSecondary
-                                        font.family: Palette.Theme.fontMono
-                                        font.pixelSize: 10
+                                        font.family: Palette.Theme.fontSans
+                                        font.pixelSize: 12
+                                        font.weight: Font.Medium
                                     }
 
                                     MouseArea {
@@ -1396,23 +1402,29 @@ Item {
                                 }
 
                                 Rectangle {
-                                    implicitWidth: connectText.implicitWidth + 20
-                                    implicitHeight: 24
-                                    radius: 12
+                                    implicitWidth: connectText.implicitWidth + 28
+                                    implicitHeight: 28
+                                    radius: 14
                                     color: Palette.Theme.accent
                                     opacity: authPasswordInput.text.length > 0 ? 1 : 0.4
+                                    scale: authPasswordInput.text.length > 0 && connectMouse.pressed ? 0.93 : (authPasswordInput.text.length > 0 && connectMouse.containsMouse ? 1.04 : 1.0)
+                                    Behavior on scale {
+                                        NumberAnimation { duration: 140; easing.type: Easing.OutBack; easing.overshoot: 1.6 }
+                                    }
+                                    Behavior on opacity { NumberAnimation { duration: 120 } }
 
                                     Text {
                                         id: connectText
                                         anchors.centerIn: parent
                                         text: root.wifiAuthBusy ? "Connecting…" : "Connect"
-                                        color: "#000000"
-                                        font.family: Palette.Theme.fontMono
-                                        font.pixelSize: 10
+                                        color: Palette.Theme.accentText
+                                        font.family: Palette.Theme.fontSans
+                                        font.pixelSize: 12
                                         font.weight: Font.DemiBold
                                     }
 
                                     MouseArea {
+                                        id: connectMouse
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
                                         enabled: authPasswordInput.text.length > 0 && !root.wifiAuthBusy

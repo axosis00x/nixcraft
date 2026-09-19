@@ -456,7 +456,7 @@ Item {
                         Layout.fillWidth: true
                         text: (modelData && modelData.name) ? modelData.name : ""
                         color: Palette.Theme.textPrimary
-                        font.family: Palette.Theme.fontMono
+                        font.family: Palette.Theme.fontSans
                         font.pixelSize: 13
                         font.weight: Font.Medium
                         elide: Text.ElideRight
@@ -467,7 +467,7 @@ Item {
                         text: (modelData && modelData.comment) ? modelData.comment : ""
                         visible: text !== ""
                         color: Palette.Theme.textMuted
-                        font.family: Palette.Theme.fontMono
+                        font.family: Palette.Theme.fontSans
                         font.pixelSize: 11
                         elide: Text.ElideRight
                     }
@@ -571,7 +571,7 @@ Item {
                         Layout.fillWidth: true
                         text: rowPrimary
                         color: Palette.Theme.textPrimary
-                        font.family: Palette.Theme.fontMono
+                        font.family: Palette.Theme.fontSans
                         font.pixelSize: 13
                         font.weight: Font.Medium
                         elide: Text.ElideRight
@@ -582,7 +582,7 @@ Item {
                         text: rowSecondary
                         visible: text !== ""
                         color: Palette.Theme.textMuted
-                        font.family: Palette.Theme.fontMono
+                        font.family: Palette.Theme.fontSans
                         font.pixelSize: 11
                         elide: Text.ElideRight
                     }

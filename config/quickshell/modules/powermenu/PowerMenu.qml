@@ -182,14 +182,31 @@ Item {
                     Layout.maximumWidth: 48
                     implicitHeight: 48
                     radius: 14
+                    scale: actionMouse.pressed ? 0.90 : (actionMouse.containsMouse ? 1.08 : 1.0)
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 150
+                            easing.type: Easing.OutBack
+                            easing.overshoot: 1.6
+                        }
+                    }
+
                     color: {
                         if (index === root.selectedIndex)
                             return modelData.dangerous ? "#ff5252" : Palette.Theme.accent;
-                        return modelData.dangerous ? "#3d1515" : Palette.Theme.surfaceContainerLow;
+                        return modelData.dangerous ? (actionMouse.containsMouse ? "#4d1a1a" : "#3d1515") : (actionMouse.containsMouse ? Palette.Theme.surfaceContainerHighest : Palette.Theme.surfaceContainerLow);
                     }
                     border.width: 0
 
                     Behavior on color { ColorAnimation { duration: 120 } }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: parent.radius
+                        color: index === root.selectedIndex ? "#ffffff" : Palette.Theme.accent
+                        opacity: actionMouse.pressed ? 0.18 : (actionMouse.containsMouse ? 0.08 : 0)
+                        Behavior on opacity { NumberAnimation { duration: 120 } }
+                    }
 
                     Text {
                         anchors.centerIn: parent
@@ -220,13 +237,17 @@ Item {
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 4
+                spacing: 8
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 44
-                    radius: 8
+                    implicitHeight: 46
+                    radius: 12
                     color: root.confirmChoiceSelected ? Palette.Theme.accent : Palette.Theme.surfaceContainerLow
+                    scale: confirmMouse.pressed ? 0.94 : (confirmMouse.containsMouse ? 1.03 : 1.0)
+                    Behavior on scale {
+                        NumberAnimation { duration: 150; easing.type: Easing.OutBack; easing.overshoot: 1.5 }
+                    }
 
                     Behavior on color {
                         ColorAnimation {
@@ -248,8 +269,9 @@ Item {
                             Layout.alignment: Qt.AlignHCenter
                             text: confirmAction
                             color: root.confirmChoiceSelected ? Palette.Theme.accentText : Palette.Theme.textPrimary
-                            font.family: Palette.Theme.fontMono
-                            font.pixelSize: 9
+                            font.family: Palette.Theme.fontSans
+                            font.pixelSize: 11
+                            font.weight: Font.Medium
                         }
                     }
 
@@ -265,11 +287,15 @@ Item {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 44
-                    radius: 8
+                    implicitHeight: 46
+                    radius: 12
                     // The primary background follows keyboard/mouse focus,
                     // including the X/Cancel choice.
                     color: !root.confirmChoiceSelected ? Palette.Theme.accent : Palette.Theme.surfaceContainerLow
+                    scale: cancelMouse.pressed ? 0.94 : (cancelMouse.containsMouse ? 1.03 : 1.0)
+                    Behavior on scale {
+                        NumberAnimation { duration: 150; easing.type: Easing.OutBack; easing.overshoot: 1.5 }
+                    }
 
                     Behavior on color {
                         ColorAnimation {
@@ -291,8 +317,9 @@ Item {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Cancel"
                             color: !root.confirmChoiceSelected ? Palette.Theme.accentText : Palette.Theme.textPrimary
-                            font.family: Palette.Theme.fontMono
-                            font.pixelSize: 9
+                            font.family: Palette.Theme.fontSans
+                            font.pixelSize: 11
+                            font.weight: Font.Medium
                         }
                     }
 

@@ -156,6 +156,14 @@ Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 92
                         radius: 14
+                        scale: cardMouse.pressed ? 0.94 : (cardMouse.containsMouse || index === root.selected ? 1.025 : 1.0)
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: 150
+                                easing.type: Easing.OutBack
+                                easing.overshoot: 1.4
+                            }
+                        }
                         color: index === root.selected ? Palette.Theme.surfaceContainerHigh : Palette.Theme.surfaceContainerLow
                         border.width: index === root.selected ? 2 : 0
                         border.color: root.accentFor(modelData)
@@ -199,9 +207,9 @@ Item {
                             anchors.bottomMargin: 14
                             text: modelData.replace(/-/g, " ")
                             color: Palette.Theme.textPrimary
-                            font.family: Palette.Theme.fontMono
-                            font.pixelSize: 11
-                            font.weight: index === root.selected ? Font.DemiBold : Font.Normal
+                            font.family: Palette.Theme.fontSans
+                            font.pixelSize: 12
+                            font.weight: index === root.selected ? Font.DemiBold : Font.Medium
                             elide: Text.ElideRight
                         }
 
@@ -225,8 +233,10 @@ Item {
                         }
 
                         MouseArea {
+                            id: cardMouse
                             anchors.fill: parent
                             hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
                             onEntered: root.selected = index
                             onClicked: root.apply(index)
                         }

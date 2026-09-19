@@ -118,6 +118,14 @@ Item {
 
                 Layout.fillWidth: true
                 implicitHeight: root.itemH
+                scale: rowHover.pressed ? 0.95 : (rowHover.containsMouse || row.isSelected ? 1.02 : 1.0)
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 150
+                        easing.type: Easing.OutBack
+                        easing.overshoot: 1.4
+                    }
+                }
 
                 Rectangle {
                     anchors.fill: parent
@@ -144,15 +152,15 @@ Item {
                         Text {
                             text: row.modelData.label
                             color: Palette.Theme.textPrimary
-                            font.family: Palette.Theme.fontMono
+                            font.family: Palette.Theme.fontSans
                             font.pixelSize: 13
                             font.weight: Font.Medium
                         }
                         Text {
                             text: row.modelData.desc
                             color: Palette.Theme.textMuted
-                            font.family: Palette.Theme.fontMono
-                            font.pixelSize: 10
+                            font.family: Palette.Theme.fontSans
+                            font.pixelSize: 11
                         }
                     }
 

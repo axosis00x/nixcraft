@@ -165,7 +165,7 @@ Item {
         Text {
             text: root.title
             color: root.active ? "#ffffff" : Palette.Theme.textPrimary
-            font.family: Palette.Theme.fontMono
+            font.family: Palette.Theme.fontSans
             font.pixelSize: 13
             font.weight: root.active ? Font.DemiBold : Font.Medium
             elide: Text.ElideRight
@@ -180,8 +180,8 @@ Item {
             visible: root.subtitle !== ""
             text: root.subtitle
             color: root.active ? Qt.lighter(root.accentColor, 1.35) : Palette.Theme.textMuted
-            font.family: Palette.Theme.fontMono
-            font.pixelSize: 10
+            font.family: Palette.Theme.fontSans
+            font.pixelSize: 11
             elide: Text.ElideRight
             Layout.fillWidth: true
 
@@ -191,14 +191,24 @@ Item {
         }
     }
 
+    // Material 3 Expressive spring press and hover feedback
+    scale: tileMouse.pressed ? 0.94 : (tileMouse.containsMouse ? 1.025 : 1.0)
+    Behavior on scale {
+        NumberAnimation {
+            duration: 150
+            easing.type: Easing.OutBack
+            easing.overshoot: 1.5
+        }
+    }
+
     Rectangle {
         anchors.fill: parent
         radius: root.shapeRadius >= 0 ? root.shapeRadius : Palette.Theme.radiusMedium
-        color: "#ffffff"
-        opacity: tileMouse.containsMouse ? 0.04 : 0
+        color: root.active ? "#ffffff" : Palette.Theme.textPrimary
+        opacity: tileMouse.pressed ? 0.16 : (tileMouse.containsMouse ? 0.08 : 0)
 
         Behavior on opacity {
-            NumberAnimation { duration: 100 }
+            NumberAnimation { duration: 120 }
         }
     }
 

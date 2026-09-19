@@ -39,6 +39,7 @@ QtObject {
 
     readonly property real surfaceTintOpacity: 0.015
     readonly property string fontMono: "SF Mono "
+    readonly property string fontSans: "Inter"
     readonly property string fontIcons: "Material Symbols Rounded "
     readonly property int radiusSmall: 10
     readonly property int radiusMedium: 16

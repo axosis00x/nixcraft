@@ -14,9 +14,9 @@ end
 
 hl.config({
 	general = {
-		gaps_in = 2,
+		gaps_in = 1,
 		gaps_out = 4,
-		border_size = 0,
+		border_size = 1,
 		["col.active_border"] = theme.outline,
 		["col.inactive_border"] = theme.outline_variant,
 		resize_on_border = true,
@@ -24,8 +24,8 @@ hl.config({
 	},
 
 	decoration = {
-		rounding = 7,
-		rounding_power = 7,
+		rounding = 6,
+		rounding_power = 4,
 		active_opacity = 0.88,
 		inactive_opacity = 0.95,
 		screen_shader = screen_shader,

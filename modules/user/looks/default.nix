@@ -26,7 +26,6 @@ in
       inter
       mononoki
       iosevka
-      calibri
       monaspace
       corefonts
       inputs.apple-fonts.packages.${pkgs.stdenv.hostPlatform.system}.sf-pro

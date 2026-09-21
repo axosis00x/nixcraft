@@ -13,8 +13,29 @@ Item {
 
     readonly property var widgets: [
         { id: "clock", label: "Clock Widget", icon: "" },
-        { id: "weather", label: "Weather Widget", icon: "" }
+        { id: "weather", label: "Weather Widget", icon: "" },
+        { id: "dock", label: "Dock", icon: "" }
     ]
+
+    // Desktop-file ids pinned to the dock (widgets/Dock.qml), in order.
+    readonly property var dockPinned: state.dockPinned
+
+    function isPinned(appId) {
+        return state.dockPinned.indexOf(appId) !== -1;
+    }
+
+    function togglePin(appId) {
+        if (!appId)
+            return;
+        var next = state.dockPinned.slice();
+        var i = next.indexOf(appId);
+        if (i === -1)
+            next.push(appId);
+        else
+            next.splice(i, 1);
+        state.dockPinned = next;
+        stateFile.writeAdapter();
+    }
 
     function isEnabled(widgetId) {
         switch (widgetId) {
@@ -22,6 +43,8 @@ Item {
             return state.clockEnabled;
         case "weather":
             return state.weatherEnabled;
+        case "dock":
+            return state.dockEnabled;
         default:
             return false;
         }
@@ -34,6 +57,9 @@ Item {
             break;
         case "weather":
             state.weatherEnabled = !state.weatherEnabled;
+            break;
+        case "dock":
+            state.dockEnabled = !state.dockEnabled;
             break;
         }
         stateFile.writeAdapter();
@@ -101,6 +127,8 @@ Item {
             id: state
             property bool clockEnabled: true
             property bool weatherEnabled: true
+            property bool dockEnabled: true
+            property var dockPinned: ["kitty", "zen-twilight", "org.gnome.Nautilus", "dev.zed.Zed", "spotify"]
             property real clockX: -1
             property real clockY: -1
             property real weatherX: -1

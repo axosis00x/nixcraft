@@ -19,6 +19,7 @@ Item {
     property var powerMenu: null
     property string query: ""
     property int selected: 0
+    readonly property int columns: 4
     readonly property var themes: service ? service.themes.filter(name => name.toLowerCase().indexOf(query.toLowerCase()) !== -1) : []
 
     implicitWidth: Math.min(maxWidth - 20, Ui.themeOverlayWidth)
@@ -80,16 +81,33 @@ Item {
         selected = Math.max(0, Math.min(themes.length - 1, selected + delta));
     }
 
+    // A theme's own colors, read from its quickshell.js by ThemeService.
+    function paletteFor(themeName) {
+        return service && service.palettes ? service.palettes[themeName] : undefined;
+    }
+
+    // Five distinct colors for a card: the theme's UI accents first, then its
+    // terminal colors to fill in wherever the UI palette repeats itself.
+    function swatchesFor(themeName) {
+        var pal = paletteFor(themeName);
+        if (!pal)
+            return [];
+        var candidates = [pal.accent, pal.info, pal.success, pal.warning, pal.error, pal.ansi5, pal.ansi4, pal.ansi6, pal.ansi2, pal.ansi3, pal.ansi1];
+        var out = [];
+        var seen = {};
+        for (var i = 0; i < candidates.length && out.length < 5; i++) {
+            var c = candidates[i];
+            if (!c || seen[c.toLowerCase()])
+                continue;
+            seen[c.toLowerCase()] = true;
+            out.push(c);
+        }
+        return out;
+    }
+
     function accentFor(themeName) {
-        var colors = {
-            gruvbox: "#d79921",
-            mocha: "#cba6f7",
-            monochrome: "#d0d0d0",
-            moonfly: "#78a8ff",
-            ryo: "#8bd5ff",
-            tokyonight: "#7aa2f7"
-        };
-        return colors[themeName] || Palette.Theme.accent;
+        var pal = paletteFor(themeName);
+        return pal && pal.accent ? pal.accent : Palette.Theme.accent;
     }
 
     function handleKey(event) {
@@ -103,10 +121,10 @@ Item {
             move(1);
             event.accepted = true;
         } else if (event.key === Qt.Key_Up) {
-            move(-3);
+            move(-root.columns);
             event.accepted = true;
         } else if (event.key === Qt.Key_Down) {
-            move(3);
+            move(root.columns);
             event.accepted = true;
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             apply(selected);
@@ -141,9 +159,9 @@ Item {
             }
 
             GridLayout {
-                columns: 3
-                columnSpacing: 10
-                rowSpacing: 10
+                columns: root.columns
+                columnSpacing: 8
+                rowSpacing: 8
                 Layout.fillWidth: true
 
                 Repeater {
@@ -153,8 +171,9 @@ Item {
                         required property string modelData
                         required property int index
                         readonly property bool isActive: modelData === service.activeTheme
+                        readonly property var pal: root.paletteFor(modelData)
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 92
+                        Layout.preferredHeight: 66
                         radius: 14
                         scale: cardMouse.pressed ? 0.94 : (cardMouse.containsMouse || index === root.selected ? 1.025 : 1.0)
                         Behavior on scale {
@@ -164,9 +183,10 @@ Item {
                                 easing.overshoot: 1.4
                             }
                         }
-                        color: index === root.selected ? Palette.Theme.surfaceContainerHigh : Palette.Theme.surfaceContainerLow
-                        border.width: index === root.selected ? 2 : 0
-                        border.color: root.accentFor(modelData)
+                        // Previewed in the theme's own surface and border colors.
+                        color: pal && pal.surfaceContainerHigh ? pal.surfaceContainerHigh : Palette.Theme.surfaceContainerLow
+                        border.width: index === root.selected ? 2 : 1
+                        border.color: index === root.selected ? root.accentFor(modelData) : (pal && pal.border ? Qt.alpha(pal.border, 0.8) : "transparent")
 
                         Behavior on border.width {
                             NumberAnimation {
@@ -179,44 +199,47 @@ Item {
                             }
                         }
 
-                        Row {
-                            anchors.left: parent.left
-                            anchors.top: parent.top
-                            anchors.margins: 14
-                            spacing: 6
-
-                            Repeater {
-                                model: 4
-                                delegate: Rectangle {
-                                    required property int index
-                                    width: 16
-                                    height: 16
-                                    radius: 5
-                                    color: root.accentFor(card.modelData)
-                                    opacity: 1 - index * 0.24
-                                }
-                            }
-                        }
-
                         Text {
                             anchors.left: parent.left
                             anchors.right: parent.right
-                            anchors.leftMargin: 14
-                            anchors.rightMargin: 14
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 14
+                            anchors.top: parent.top
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 30
+                            anchors.topMargin: 10
                             text: modelData.replace(/-/g, " ")
-                            color: Palette.Theme.textPrimary
+                            color: card.pal && card.pal.textPrimary ? card.pal.textPrimary : Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontSans
                             font.pixelSize: 12
                             font.weight: index === root.selected ? Font.DemiBold : Font.Medium
                             elide: Text.ElideRight
                         }
 
+                        // The theme's actual palette, five distinct colors.
+                        Row {
+                            anchors.left: parent.left
+                            anchors.bottom: parent.bottom
+                            anchors.leftMargin: 12
+                            anchors.bottomMargin: 10
+                            spacing: 5
+
+                            Repeater {
+                                model: root.swatchesFor(card.modelData)
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    width: 14
+                                    height: 14
+                                    radius: 7
+                                    color: modelData
+                                    border.width: 1
+                                    border.color: Qt.alpha(card.pal && card.pal.textPrimary ? card.pal.textPrimary : "#ffffff", 0.18)
+                                }
+                            }
+                        }
+
                         Rectangle {
                             anchors.top: parent.top
                             anchors.right: parent.right
-                            anchors.margins: 10
+                            anchors.margins: 8
                             width: 18
                             height: 18
                             radius: 9

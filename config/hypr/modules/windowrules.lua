@@ -67,3 +67,21 @@ hl.window_rule({
     move = { 100, 100 },
     animation = "popin 50%",
 })
+
+-- Quickshell's settings window (quickshell/modules/settings/SettingsWindow.qml):
+-- a rounded card drawn on a transparent window, so Hyprland's own translucency,
+-- blur, border and rounding must stay out of the way.
+hl.window_rule({
+    name = "nixcraft-settings",
+    match = {
+        title = "^(nixcraft-settings)$",
+    },
+    float = true,
+    size = "940 600",
+    center = true,
+    opacity = "1.0 override",
+    no_blur = true,
+    no_shadow = true,
+    border_size = 0,
+    rounding = 0,
+})

@@ -45,7 +45,8 @@ Item {
     // same pattern services/BarLayoutService.qml uses for `vertical`.
     readonly property bool hyprsunsetEnabled: toggleState.hyprsunset
     property string powerProfilePending: ""
-    readonly property bool keepAwake: toggleState.keepAwake
+    // Owned and persisted by IdleService, which is what actually enforces it.
+    readonly property bool keepAwake: idleService ? idleService.keepAwake : false
 
     readonly property real minLevel: 0.05
     readonly property var notifications: notificationCenter ? notificationCenter.notifications : []
@@ -81,8 +82,6 @@ Item {
 
     Component.onCompleted: {
         readPowerProfile();
-        if (toggleState.keepAwake && root.idleService)
-            root.idleService.keepAwake = true;
         if (toggleState.dnd) {
             if (root.notificationCenter)
                 root.notificationCenter.setDnd(true);
@@ -597,10 +596,8 @@ Item {
     }
 
     function toggleKeepAwake() {
-        toggleState.keepAwake = !toggleState.keepAwake;
-        toggleStateFile.writeAdapter();
         if (root.idleService)
-            root.idleService.keepAwake = toggleState.keepAwake;
+            root.idleService.toggleKeepAwake();
     }
 
     function keepAwakeIcon() {

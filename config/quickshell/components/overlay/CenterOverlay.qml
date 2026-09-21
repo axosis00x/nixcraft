@@ -38,6 +38,10 @@ PanelWindow {
             intersection: Intersection.Combine
         }
         Region {
+            item: root.dockAutoHidden ? dockTrigger : null
+            intersection: Intersection.Combine
+        }
+        Region {
             item: dockPopups.menuVisible ? dockPopups.menuRect : null
             intersection: Intersection.Combine
         }
@@ -52,6 +56,7 @@ PanelWindow {
     property var idleService: null
     property var barLayout: null
     property var widgetsService: null
+    property var settingsWindow: null
     readonly property bool verticalBar: barLayout ? barLayout.vertical : false
     readonly property bool active: (activeTopPanel !== null) || (activeBottomPanel !== null)
 
@@ -106,7 +111,47 @@ PanelWindow {
     // bottom panel is open, and the slab morphs between it and those panels.
     // It deliberately doesn't count towards `active` (that grabs the whole
     // screen's input and keyboard focus).
-    readonly property bool dockShown: dockItem.wanted && activeBottomPanel === null
+    //
+    // While the current workspace has windows it auto-hides; hovering the
+    // strip at the bottom edge (dockTrigger) reveals it until the pointer
+    // has left the dock again. An empty workspace keeps it up permanently.
+    property bool dockRevealed: false
+    readonly property bool dockCanShow: dockItem.wanted && activeBottomPanel === null
+    readonly property bool dockShown: dockCanShow && (!dockItem.workspaceBusy || dockRevealed)
+    readonly property bool dockAutoHidden: dockCanShow && !dockShown
+    readonly property bool dockPointerInside: dockTrigger.hovered || dockItem.holdOpen
+
+    onDockPointerInsideChanged: {
+        if (dockPointerInside) {
+            dockHideTimer.stop();
+            dockRevealed = true;
+        } else {
+            dockHideTimer.restart();
+        }
+    }
+
+    Timer {
+        id: dockHideTimer
+        interval: 450
+        onTriggered: root.dockRevealed = false
+    }
+
+    // Thin hover strip along the bottom edge, only part of the input region
+    // while the dock is tucked away.
+    Item {
+        id: dockTrigger
+
+        readonly property bool hovered: triggerHover.hovered
+
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: Math.max(360, dockItem.implicitWidth + 120)
+        height: 6
+
+        HoverHandler {
+            id: triggerHover
+        }
+    }
 
     readonly property var activePanel: activeTopPanel ? activeTopPanel : activeBottomPanel
     readonly property bool activeIsTopOrigin: activeTopPanel !== null
@@ -122,6 +167,7 @@ PanelWindow {
     property alias emojiPicker: emojiPickerItem
     property alias barLayoutPicker: barLayoutPickerItem
     property alias wallpaperPicker: wallpaperPickerItem
+    property alias themes: themeService
 
     // All center-origin panels share this layer surface. Closing every other
     // panel before a new one appears prevents stacked backdrops and focus.
@@ -335,6 +381,7 @@ PanelWindow {
             shaderService: shaderService
             wayclickService: wayclickService
             widgetsService: root.widgetsService
+            settingsWindow: root.settingsWindow
         }
 
         ThemePicker {

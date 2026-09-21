@@ -8,6 +8,8 @@ Item {
     visible: false
 
     property var themes: []
+    // theme name -> { bg, surfaceContainerHigh, border, textPrimary, accent, info, success, warning, error }
+    property var palettes: ({})
     property string activeTheme: ""
     signal applied(string themeName)
 
@@ -15,6 +17,11 @@ Item {
 
     function refresh() {
         themeList.running = true;
+        readSwatches();
+    }
+
+    function readSwatches() {
+        swatchRead.exec(["bash", Quickshell.env("HOME") + "/.config/quickshell/scripts/theme-swatches.sh"]);
     }
 
     function apply(themeName, wallpaperPath) {
@@ -49,6 +56,22 @@ Item {
             onStreamFinished: {
                 root.themes = text.trim() === "" ? [] : text.trim().split("\n");
                 activeThemeRead.running = true;
+            }
+        }
+    }
+
+    Process {
+        id: swatchRead
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var out = {};
+                text.trim().split("\n").forEach(line => {
+                    var parts = line.split("\t");
+                    if (parts.length !== 3)
+                        return;
+                    (out[parts[0]] = out[parts[0]] || {})[parts[1]] = parts[2];
+                });
+                root.palettes = out;
             }
         }
     }
@@ -98,6 +121,8 @@ Item {
                 // Re-read now that the script (and, for "dynamic", wallust)
                 // has finished writing the palette this apply used.
                 root.readPalette(root.activeTheme);
+                // The dynamic theme's colors were just rewritten.
+                root.readSwatches();
             }
             root.pendingTheme = "";
         }

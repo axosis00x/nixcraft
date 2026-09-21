@@ -523,13 +523,13 @@ PanelWindow {
                 }
 
                 IconButton {
-                    icon: "\ue1bd"
+                    icon: "\ue8b8"
+                    stateOpacity: 0
                     implicitWidth: 26
                     implicitHeight: 34
                     Layout.alignment: Qt.AlignVCenter
                     onClicked: {
-                        if (bar.toolMenu && typeof bar.toolMenu.toggleToolMenu === "function")
-                            bar.toolMenu.toggleToolMenu();
+                        Quickshell.execDetached(["quickshell", "ipc", "call", "settings", "toggle"]);
                     }
                 }
             }
@@ -755,13 +755,13 @@ PanelWindow {
                 }
 
                 IconButton {
-                    icon: ""
+                    icon: "\ue8b8"
+                    stateOpacity: 0
                     implicitWidth: 26
                     implicitHeight: 26
                     Layout.alignment: Qt.AlignHCenter
                     onClicked: {
-                        if (bar.toolMenu && typeof bar.toolMenu.toggleToolMenu === "function")
-                            bar.toolMenu.toggleToolMenu();
+                        Quickshell.execDetached(["quickshell", "ipc", "call", "settings", "toggle"]);
                     }
                 }
             }

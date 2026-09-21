@@ -22,6 +22,7 @@ Item {
     property var shaderService: null
     property var wayclickService: null
     property var widgetsService: null
+    property var settingsWindow: null
 
     readonly property int itemH: 56
 
@@ -31,7 +32,8 @@ Item {
     readonly property var commands: [
         { cmd: "shaders", label: "Shaders", icon: "", desc: "Change the screen shader" },
         { cmd: "sounds", label: "Sound Packs", icon: "", desc: "Change the wayclick sound pack" },
-        { cmd: "widgets", label: "Widgets", icon: "widgets", desc: "Toggle desktop widgets" }
+        { cmd: "widgets", label: "Widgets", icon: "widgets", desc: "Toggle desktop widgets" },
+        { cmd: "settings", label: "Settings", icon: "settings", desc: "Open a settings page" }
     ]
 
     readonly property bool isCommandInput: query.startsWith("/")
@@ -66,6 +68,18 @@ Item {
         return f === "" ? allWidgets : allWidgets.filter(w => w.label.toLowerCase().indexOf(f) !== -1);
     }
 
+    // One entry per settings page; picking one opens the settings window there.
+    readonly property var allSettings: settingsWindow ? settingsWindow.categories.map(c => ({
+                id: c.id,
+                label: c.title,
+                icon: c.icon,
+                desc: settingsWindow.pageSummary(c.id)
+            })) : []
+    readonly property var settingsItems: {
+        var f = commandArg.trim().toLowerCase();
+        return f === "" ? allSettings : allSettings.filter(c => c.label.toLowerCase().indexOf(f) !== -1);
+    }
+
     readonly property var currentList: {
         switch (mode) {
         case "apps":
@@ -78,6 +92,8 @@ Item {
             return packItems;
         case "widgets":
             return widgetItems;
+        case "settings":
+            return settingsItems;
         default:
             return [];
         }
@@ -91,6 +107,8 @@ Item {
             return "Search sound packs…";
         case "widgets":
             return "Search widgets…";
+        case "settings":
+            return "Search settings…";
         case "commands":
             return "Type a command…";
         default:
@@ -108,6 +126,8 @@ Item {
             return allPacks.length === 0 ? "No sound packs found" : "No results for '" + commandArg + "'";
         case "widgets":
             return allWidgets.length === 0 ? "No widgets found" : "No results for '" + commandArg + "'";
+        case "settings":
+            return "No results for '" + commandArg + "'";
         default:
             return allApps.length === 0 ? "No applications found" : "No results for '" + query + "'";
         }
@@ -322,6 +342,11 @@ Item {
             // stay open — the user likely wants to flip more than one.
             widgetsService.toggle(list[index].id);
             return;
+        case "settings":
+            closeLauncher();
+            if (settingsWindow)
+                settingsWindow.openPage(list[index].id);
+            return;
         }
     }
 
@@ -506,11 +531,12 @@ Item {
             readonly property bool isShader: root.mode === "shaders"
             readonly property bool isSound: root.mode === "sounds"
             readonly property bool isWidget: root.mode === "widgets"
+            readonly property bool isSettings: root.mode === "settings"
             readonly property bool widgetEnabled: isWidget && root.widgetsService && modelData && modelData.id ? root.widgetsService.isEnabled(modelData.id) : false
 
-            readonly property string rowIcon: isCommand ? (modelData && modelData.icon ? modelData.icon : "") : (isShader ? "" : (isSound ? "" : "widgets"))
+            readonly property string rowIcon: isCommand || isSettings ? (modelData && modelData.icon ? modelData.icon : "") : (isShader ? "" : (isSound ? "" : "widgets"))
             readonly property string rowPrimary: isCommand ? (modelData && modelData.label ? modelData.label : "") : (isShader ? (root.shaderService && modelData ? root.shaderService.displayName(modelData) : "") : (isSound ? (root.wayclickService && modelData ? root.wayclickService.displayName(modelData) : "") : (modelData && modelData.label ? modelData.label : "")))
-            readonly property string rowSecondary: isCommand ? (modelData && modelData.desc ? modelData.desc : "") : (isShader ? (rowActive ? "Active" : (index === root.selected ? "Previewing" : "")) : "")
+            readonly property string rowSecondary: isCommand || isSettings ? (modelData && modelData.desc ? modelData.desc : "") : (isShader ? (rowActive ? "Active" : (index === root.selected ? "Previewing" : "")) : "")
             readonly property bool rowActive: isShader ? (root.shaderService && modelData ? modelData === root.shaderService.activeShader : false) : (isSound ? (root.wayclickService && modelData ? modelData === root.wayclickService.activePack : false) : widgetEnabled)
 
             width: ListView.view.width

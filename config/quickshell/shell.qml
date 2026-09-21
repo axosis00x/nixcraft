@@ -11,6 +11,7 @@ import "modules/lockscreen"
 import "modules/idle"
 import "services"
 import "widgets"
+import "modules/settings"
 
 ShellRoot {
     id: root
@@ -32,7 +33,24 @@ ShellRoot {
         bar: barLoader.item
         idleService: idleService
         barLayout: barLayoutService
+        settingsWindow: settingsWindow
         widgetsService: widgetsService
+    }
+    SettingsWindow {
+        id: settingsWindow
+        controlCenter: overlay.controlCenter
+        widgetsService: widgetsService
+        themeService: overlay.themes
+        // A centered window and the overlay both grab the keyboard, so only one at a time.
+        onAboutToOpen: overlay.closeActive()
+        onRequestOpen: what => {
+            if (what === "theme")
+                overlay.themePicker.open();
+            else if (what === "wallpaper")
+                overlay.wallpaperPicker.open();
+            else if (what === "barlayout")
+                overlay.barLayoutPicker.open();
+        }
     }
     WorkspacesService {
         id: workspacesServiceInstance

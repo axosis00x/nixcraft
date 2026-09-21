@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Widgets
 import QtQuick
@@ -23,11 +24,24 @@ Item {
 
     readonly property bool dockOn: widgetsService ? widgetsService.isEnabled("dock") : false
     readonly property var pinnedIds: widgetsService ? widgetsService.dockPinned : []
-    readonly property var items: buildItems(pinnedIds, ToplevelManager.toplevels.values, DesktopEntries.applications.values)
+    // Order of running-but-unpinned apps (item keys). Session-only: those apps
+    // aren't persisted anywhere, so neither is where you dragged them.
+    property var unpinnedOrder: []
+    readonly property var items: buildItems(pinnedIds, ToplevelManager.toplevels.values, DesktopEntries.applications.values, unpinnedOrder)
 
     readonly property bool fullscreenActive: ToplevelManager.activeToplevel ? ToplevelManager.activeToplevel.fullscreen : false
     // Whether the stage should show the dock when nothing else is open.
     readonly property bool wanted: dockOn && items.length > 0 && !fullscreenActive
+
+    // With windows open on the current workspace the dock steps out of the
+    // way (the overlay reveals it on hover); an empty workspace keeps it up.
+    readonly property bool workspaceBusy: {
+        var ws = Hyprland.focusedWorkspace;
+        return ws && ws.toplevels ? ws.toplevels.values.length > 0 : false;
+    }
+    readonly property bool hovered: dockHover.hovered
+    // Reasons to keep the dock up even though the pointer moved off it.
+    readonly property bool holdOpen: hovered || menuItem !== null || dragIndex >= 0
 
     // Shared with DockPopups.
     property Item hoverCell: null
@@ -38,7 +52,7 @@ Item {
     readonly property real cellSize: 40
     readonly property real cellSpacing: 6
 
-    implicitWidth: Math.min(maxWidth - 40, row.implicitWidth + 30)
+    implicitWidth: Math.min(maxWidth - 40, row.implicitWidth + 18)
     implicitHeight: cellSize + 14
 
     onVisibleChanged: {
@@ -88,6 +102,7 @@ Item {
     function makeItem(entry, windows, pinned, fallbackKey) {
         return {
             id: entry ? entry.id : "",
+            key: entry ? entry.id : "win:" + fallbackKey,
             name: entry ? entry.name : fallbackKey,
             icon: iconFor(entry, fallbackKey),
             entry: entry,
@@ -96,7 +111,7 @@ Item {
         };
     }
 
-    function buildItems(pins, toplevels, apps) {
+    function buildItems(pins, toplevels, apps, order) {
         var groups = {};
         for (var i = 0; i < toplevels.length; i++) {
             var k = keyOf(toplevels[i].appId);
@@ -125,12 +140,18 @@ Item {
             out.push(makeItem(entry, wins, true, keyOf(pins[p])));
         }
 
+        var loose = [];
         for (var key in groups) {
             if (claimed[key])
                 continue;
-            out.push(makeItem(DesktopEntries.heuristicLookup(key) || null, groups[key], false, key));
+            loose.push(makeItem(DesktopEntries.heuristicLookup(key) || null, groups[key], false, key));
         }
-        return out;
+        // Dragged order first; anything not dragged yet keeps window order after it.
+        loose.sort((a, b) => {
+            var ia = order.indexOf(a.key), ib = order.indexOf(b.key);
+            return (ia === -1 ? order.length : ia) - (ib === -1 ? order.length : ib);
+        });
+        return out.concat(loose);
     }
 
     function launch(item) {
@@ -160,10 +181,11 @@ Item {
         menuCloseTimer.stop();
     }
 
-    // Drag-to-reorder for pinned apps. Pinned items always come first in
-    // `items`, so a pinned item's index is also its slot in the pin order.
+    // Drag-to-reorder. Pinned items always come first in `items`, then the
+    // running-but-unpinned ones; each group is reordered within itself.
     property int dragIndex: -1
     property int dropIndex: -1
+    property bool dragPinned: true
     // Off briefly after a reorder so the rebuilt delegates don't replay their
     // pop-in animation.
     property bool popIn: true
@@ -183,8 +205,30 @@ Item {
         onTriggered: root.popIn = true
     }
 
+    // First and last slot of a group in `items`.
+    function groupStart(pinned) {
+        return pinned ? 0 : pinnedCount;
+    }
+
+    function groupEnd(pinned) {
+        return pinned ? pinnedCount - 1 : items.length - 1;
+    }
+
     function commitReorder(from, to) {
-        if (!widgetsService || from === to || from < 0 || to < 0)
+        if (from === to || from < 0 || to < 0)
+            return;
+        if (!dragPinned) {
+            var keys = [];
+            for (var u = pinnedCount; u < items.length; u++)
+                keys.push(items[u].key);
+            var movedKey = keys.splice(from - pinnedCount, 1)[0];
+            keys.splice(to - pinnedCount, 0, movedKey);
+            popIn = false;
+            popInTimer.restart();
+            unpinnedOrder = keys;
+            return;
+        }
+        if (!widgetsService)
             return;
         var ids = [];
         for (var i = 0; i < pinnedCount; i++)
@@ -213,6 +257,7 @@ Item {
     }
 
     HoverHandler {
+        id: dockHover
         onHoveredChanged: root.holdMenu(hovered)
     }
 
@@ -245,7 +290,7 @@ Item {
                 // Slides neighbours aside to open a gap at the drop slot.
                 readonly property real shiftX: {
                     var step = root.cellSize + root.cellSpacing;
-                    if (root.dragIndex < 0 || dragging || !modelData.pinned)
+                    if (root.dragIndex < 0 || dragging || modelData.pinned !== root.dragPinned)
                         return 0;
                     if (root.dragIndex < root.dropIndex && index > root.dragIndex && index <= root.dropIndex)
                         return -step;
@@ -359,22 +404,23 @@ Item {
                     }
 
                     onPositionChanged: event => {
-                        if (!(pressedButtons & Qt.LeftButton) || !cell.modelData.pinned)
+                        if (!(pressedButtons & Qt.LeftButton))
                             return;
                         var dx = event.x - pressX;
                         if (!cell.dragging) {
                             if (Math.abs(dx) < 8)
                                 return;
                             root.closeMenu();
+                            root.dragPinned = cell.modelData.pinned;
                             root.dragIndex = cell.index;
                             root.dropIndex = cell.index;
                             moved = true;
                         }
                         var step = root.cellSize + root.cellSpacing;
-                        var lo = -cell.index * step;
-                        var hi = (root.pinnedCount - 1 - cell.index) * step;
-                        cell.dragX = Math.max(lo, Math.min(hi, dx));
-                        root.dropIndex = Math.max(0, Math.min(root.pinnedCount - 1, Math.round(cell.index + cell.dragX / step)));
+                        var first = root.groupStart(cell.modelData.pinned);
+                        var last = root.groupEnd(cell.modelData.pinned);
+                        cell.dragX = Math.max((first - cell.index) * step, Math.min((last - cell.index) * step, dx));
+                        root.dropIndex = Math.max(first, Math.min(last, Math.round(cell.index + cell.dragX / step)));
                     }
 
                     onReleased: {

@@ -13,6 +13,7 @@ import "../../modules/emoji"
 import "../../modules/toolmenu"
 import "../../modules/barlayout"
 import "../../modules/wallpicker"
+import "../../modules/dock"
 import "../../services"
 
 PanelWindow {
@@ -27,8 +28,19 @@ PanelWindow {
     exclusiveZone: -1
     color: "transparent"
     mask: Region {
-        width: root.active ? root.width : 0
-        height: root.active ? root.height : 0
+        Region {
+            width: root.active ? root.width : 0
+            height: root.active ? root.height : 0
+            intersection: Intersection.Combine
+        }
+        Region {
+            item: root.dockShown ? bottomStage : null
+            intersection: Intersection.Combine
+        }
+        Region {
+            item: dockPopups.menuVisible ? dockPopups.menuRect : null
+            intersection: Intersection.Combine
+        }
     }
 
     WlrLayershell.layer: WlrLayer.Overlay
@@ -89,6 +101,12 @@ PanelWindow {
             return wallpaperPickerItem;
         return null;
     }
+
+    // The dock is the bottom stage's resting state: it shows whenever no
+    // bottom panel is open, and the slab morphs between it and those panels.
+    // It deliberately doesn't count towards `active` (that grabs the whole
+    // screen's input and keyboard focus).
+    readonly property bool dockShown: dockItem.wanted && activeBottomPanel === null
 
     readonly property var activePanel: activeTopPanel ? activeTopPanel : activeBottomPanel
     readonly property bool activeIsTopOrigin: activeTopPanel !== null
@@ -275,7 +293,7 @@ PanelWindow {
         wingSize: 9
         slabRadius: 20
 
-        readonly property var panel: root.activeBottomPanel
+        readonly property var panel: root.activeBottomPanel ? root.activeBottomPanel : (root.dockShown ? dockItem : null)
 
         slabWidth: panel ? panel.implicitWidth : 120
         slabHeight: panel ? panel.implicitHeight : 0
@@ -300,6 +318,13 @@ PanelWindow {
                 duration: 160
                 easing.type: Easing.OutCubic
             }
+        }
+
+        Dock {
+            id: dockItem
+            visible: bottomStage.panel === dockItem
+            maxWidth: root.width
+            widgetsService: root.widgetsService
         }
 
         Launcher {
@@ -359,6 +384,11 @@ PanelWindow {
             powerMenu: powerMenuItem
             themeService: themeService
         }
+    }
+
+    DockPopups {
+        id: dockPopups
+        dock: dockItem
     }
 
     Connections {

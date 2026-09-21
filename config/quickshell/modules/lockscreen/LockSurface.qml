@@ -47,13 +47,55 @@ WlSessionLockSurface {
         opacity: 0.32
     }
 
+    // Invisible: exists only to hold keyboard focus (and handle compose /
+    // dead keys) so typing works immediately without clicking anything. Its
+    // text is mirrored into the shared buffer the visible field renders.
+    TextInput {
+        id: keyCatcher
+        width: 1
+        height: 1
+        opacity: 0
+        echoMode: TextInput.NoEcho
+        focus: true
+        selectByMouse: false
+        // Stays enabled while PAM verifies so focus is never dropped.
+        readOnly: root.lockScreen.authBusy
+
+        Keys.onEscapePressed: root.lockScreen.typed = ""
+
+        onTextChanged: {
+            if (root.lockScreen.typed !== text)
+                root.lockScreen.typed = text;
+        }
+        onAccepted: root.lockScreen.submitTyped()
+    }
+
+    Connections {
+        target: root.lockScreen
+        function onTypedChanged() {
+            if (keyCatcher.text !== root.lockScreen.typed)
+                keyCatcher.text = root.lockScreen.typed;
+        }
+    }
+
+    // Re-grab focus whenever the compositor hands this surface the keyboard,
+    // or the pointer wanders over it.
+    Item {
+        Window.onActiveChanged: {
+            if (Window.active)
+                keyCatcher.forceActiveFocus();
+        }
+    }
+
     MouseArea {
         anchors.fill: parent
-        onClicked: passwordInput.forceActiveFocus()
+        hoverEnabled: true
+        onEntered: keyCatcher.forceActiveFocus()
+        onClicked: keyCatcher.forceActiveFocus()
     }
 
     Component.onCompleted: {
-        passwordInput.forceActiveFocus();
+        keyCatcher.forceActiveFocus();
         fadeIn.start();
     }
 
@@ -119,129 +161,164 @@ WlSessionLockSurface {
 
         ColumnLayout {
             Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: 6
-            spacing: 8
+            Layout.topMargin: 10
+            spacing: 10
 
             Item {
                 id: pwFieldWrapper
-                Layout.preferredWidth: 240
-                Layout.preferredHeight: 38
+                Layout.preferredWidth: 288
+                Layout.preferredHeight: 50
                 Layout.alignment: Qt.AlignHCenter
+
+                readonly property bool hasText: root.lockScreen.typed.length > 0
+                readonly property color stateColor: root.lockScreen.authFailed ? Palette.Theme.errorColor : Palette.Theme.accent
+                readonly property bool canSubmit: hasText && !root.lockScreen.authBusy
 
                 transform: Translate {
                     id: shakeTranslate
                 }
 
-                Surface {
-                    id: pwField
+                Rectangle {
                     anchors.fill: parent
-                    radius: 14
-                    color: passwordInput.activeFocus ? Palette.Theme.surfaceContainerHigh : Palette.Theme.surfaceContainer
-                    outlineWidth: 0
+                    radius: height / 2
+                    color: Qt.alpha(Palette.Theme.surfaceContainer, 0.72)
+                    border.width: 1.5
+                    border.color: root.lockScreen.authFailed ? Palette.Theme.errorColor : (pwFieldWrapper.hasText ? Palette.Theme.accent : Qt.alpha(Palette.Theme.border, 0.8))
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: 180
+                        }
+                    }
+                }
+
+                Text {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 18
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: ""
+                    color: pwFieldWrapper.hasText ? pwFieldWrapper.stateColor : Palette.Theme.textMuted
+                    font.family: Palette.Theme.fontIcons
+                    font.pixelSize: 18
 
                     Behavior on color {
                         ColorAnimation {
-                            duration: 260
-                            easing.type: Easing.InOutQuad
+                            duration: 180
+                        }
+                    }
+                }
+
+                Text {
+                    id: placeholder
+                    anchors.centerIn: parent
+                    text: root.lockScreen.authBusy ? "Verifying…" : "Password"
+                    color: Palette.Theme.textMuted
+                    font.family: Palette.Theme.fontMono
+                    font.pixelSize: 13
+                    opacity: pwFieldWrapper.hasText ? 0 : 1
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 140
                         }
                     }
 
-                    TextInput {
-                        id: passwordInput
-                        anchors.fill: parent
-                        anchors.margins: 4
-                        verticalAlignment: TextInput.AlignVCenter
-                        // NoEcho renders no glyphs, so alignment has no
-                        // visual effect here — but AlignHCenter combined
-                        // with NoEcho breaks QtQuick's cursor-position
-                        // tracking and silently swallows Backspace.
-                        echoMode: TextInput.NoEcho
-                        focus: true
-                        selectByMouse: false
-                        // Stays enabled (and keeps focus) even while PAM is
-                        // verifying; disabling it here would drop active
-                        // focus and force the user to click back in.
-                        readOnly: root.lockScreen.authBusy
+                    SequentialAnimation on opacity {
+                        running: root.lockScreen.authBusy
+                        loops: Animation.Infinite
+                        NumberAnimation {
+                            to: 0.45
+                            duration: 550
+                            easing.type: Easing.InOutSine
+                        }
+                        NumberAnimation {
+                            to: 1
+                            duration: 550
+                            easing.type: Easing.InOutSine
+                        }
+                    }
+                }
 
-                        Keys.onEscapePressed: text = ""
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 6
+                    opacity: pwFieldWrapper.hasText ? 1 : 0
 
-                        onAccepted: {
-                            var pw = text;
-                            text = "";
-                            root.lockScreen.submit(pw);
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 140
+                        }
+                    }
+
+                    Repeater {
+                        model: Math.min(root.lockScreen.typed.length, 12)
+                        delegate: Rectangle {
+                            id: dot
+                            width: 8
+                            height: 8
+                            radius: 4
+                            color: pwFieldWrapper.stateColor
+                            scale: 0
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 150
+                                }
+                            }
+                            Behavior on scale {
+                                NumberAnimation {
+                                    duration: 200
+                                    easing.type: Easing.OutBack
+                                    easing.overshoot: 2
+                                }
+                            }
+
+                            Component.onCompleted: scale = 1
+                        }
+                    }
+                }
+
+                Rectangle {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 7
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 36
+                    height: 36
+                    radius: 18
+                    color: pwFieldWrapper.canSubmit ? pwFieldWrapper.stateColor : Palette.Theme.surfaceContainerHigh
+                    scale: submitMouse.pressed && pwFieldWrapper.canSubmit ? 0.92 : 1
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 180
+                        }
+                    }
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 120
                         }
                     }
 
                     Text {
-                        id: placeholder
                         anchors.centerIn: parent
-                        text: root.lockScreen.authBusy ? "Verifying…" : "Enter password"
-                        color: Palette.Theme.textMuted
-                        font.family: Palette.Theme.fontMono
-                        font.pixelSize: 12
-                        opacity: passwordInput.text.length === 0 ? 1 : 0
+                        text: ""
+                        color: pwFieldWrapper.canSubmit ? Palette.Theme.accentText : Palette.Theme.textMuted
+                        font.family: Palette.Theme.fontIcons
+                        font.pixelSize: 20
 
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: 140
-                            }
-                        }
-
-                        SequentialAnimation on opacity {
-                            running: root.lockScreen.authBusy
-                            loops: Animation.Infinite
-                            NumberAnimation {
-                                to: 0.45
-                                duration: 550
-                                easing.type: Easing.InOutSine
-                            }
-                            NumberAnimation {
-                                to: 1
-                                duration: 550
-                                easing.type: Easing.InOutSine
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 180
                             }
                         }
                     }
 
-                    RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 8
-                        opacity: passwordInput.text.length > 0 ? 1 : 0
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: 140
-                            }
-                        }
-
-                        Repeater {
-                            model: Math.min(passwordInput.text.length, 16)
-                            delegate: MaterialDot {
-                                id: dot
-                                width: 11
-                                height: 11
-                                shapeIndex: index
-                                scale: 0
-                                color: root.lockScreen.authFailed ? Palette.Theme.errorColor : Palette.Theme.accent
-
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: 150
-                                    }
-                                }
-
-                                Component.onCompleted: dotPop.start()
-
-                                NumberAnimation {
-                                    id: dotPop
-                                    target: dot
-                                    property: "scale"
-                                    to: 1
-                                    duration: 220
-                                    easing.type: Easing.OutBack
-                                }
-                            }
-                        }
+                    MouseArea {
+                        id: submitMouse
+                        anchors.fill: parent
+                        enabled: pwFieldWrapper.canSubmit
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.lockScreen.submitTyped()
                     }
                 }
             }
@@ -265,7 +342,7 @@ WlSessionLockSurface {
         }
         function onAuthBusyChanged() {
             if (!root.lockScreen.authBusy)
-                passwordInput.forceActiveFocus();
+                keyCatcher.forceActiveFocus();
         }
     }
 

@@ -8,6 +8,9 @@ Item {
     id: root
 
     property string passwordBuffer: ""
+    // What's been typed so far, shared by every monitor's lock surface so
+    // the dots show up everywhere no matter which one holds keyboard focus.
+    property string typed: ""
     property bool authBusy: false
     property bool authFailed: false
     property int failedAttempts: 0
@@ -26,6 +29,7 @@ Item {
         if (sessionLock.locked)
             return;
         root.passwordBuffer = "";
+        root.typed = "";
         root.authFailed = false;
         root.authBusy = false;
         root.failedAttempts = 0;
@@ -35,6 +39,12 @@ Item {
         // Best-effort: keeps logind's own LockedHint/Lock signal in sync so
         // other session-aware tools see a consistent state.
         lockHint.exec(["loginctl", "lock-session"]);
+    }
+
+    function submitTyped() {
+        var pw = root.typed;
+        root.typed = "";
+        root.submit(pw);
     }
 
     function submit(password) {

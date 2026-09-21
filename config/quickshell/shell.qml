@@ -26,9 +26,6 @@ ShellRoot {
     DesktopWidgetsLayer {
         widgetsService: widgetsService
     }
-    Dock {
-        widgetsService: widgetsService
-    }
     CenterOverlay {
         id: overlay
         notificationCenter: notificationCenter

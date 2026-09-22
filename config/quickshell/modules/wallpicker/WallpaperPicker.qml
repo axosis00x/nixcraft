@@ -257,7 +257,7 @@ Item {
             return;
         }
 
-        setWallpaperProcess.command = ["awww", "img", path, "--transition-type", "random", "--transition-duration", "0.7", "--transition-fps", "60"];
+        setWallpaperProcess.command = ["awww", "img", path, "--transition-type", "any", "--transition-duration", "0.7", "--transition-fps", "60"];
 
         setWallpaperProcess.running = true;
     }

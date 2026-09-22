@@ -27,7 +27,25 @@ Item {
     // Order of running-but-unpinned apps (item keys). Session-only: those apps
     // aren't persisted anywhere, so neither is where you dragged them.
     property var unpinnedOrder: []
-    readonly property var items: buildItems(pinnedIds, ToplevelManager.toplevels.values, DesktopEntries.applications.values, unpinnedOrder)
+    // buildItems() returns brand-new objects every call, so a plain binding
+    // here would hand the Repeater a new array (and thus rebuild every
+    // delegate, killing any MouseArea grab mid-drag) each time a totally
+    // unrelated window updates — e.g. a title change on some other running
+    // app. Unpinned apps are exactly the ones that tend to be doing that
+    // (they're the ones in active use), so their drags were the ones this
+    // actually broke. No inline binding here on purpose — `itemsBinding`
+    // below is the only thing that ever writes `items`, so there's no
+    // ambiguity about which one "wins": while `dragIndex >= 0` it simply
+    // doesn't run, and `items` stays parked at its last value.
+    property var items: []
+
+    Binding {
+        id: itemsBinding
+        target: root
+        property: "items"
+        value: root.buildItems(root.pinnedIds, ToplevelManager.toplevels.values, DesktopEntries.applications.values, root.unpinnedOrder)
+        when: root.dragIndex < 0
+    }
 
     readonly property bool fullscreenActive: ToplevelManager.activeToplevel ? ToplevelManager.activeToplevel.fullscreen : false
     // Whether the stage should show the dock when nothing else is open.
@@ -181,8 +199,14 @@ Item {
         menuCloseTimer.stop();
     }
 
-    // Drag-to-reorder. Pinned items always come first in `items`, then the
-    // running-but-unpinned ones; each group is reordered within itself.
+    // Drag-to-reorder across the whole row. Pinned items always render
+    // first in `items`, then the running-but-unpinned ones, but the drag
+    // itself now spans both groups: dropping a running app's icon into the
+    // pinned block pins it there, and dragging a pinned icon out into the
+    // running block unpins it. (This also happens to be the fix for
+    // "can't drag unpinned apps" when there's only one of them — reordering
+    // a group of one against itself is a no-op by definition, so letting
+    // the drag reach across the boundary gives it somewhere to actually go.)
     property int dragIndex: -1
     property int dropIndex: -1
     property bool dragPinned: true
@@ -205,41 +229,60 @@ Item {
         onTriggered: root.popIn = true
     }
 
-    // First and last slot of a group in `items`.
-    function groupStart(pinned) {
-        return pinned ? 0 : pinnedCount;
-    }
-
-    function groupEnd(pinned) {
-        return pinned ? pinnedCount - 1 : items.length - 1;
-    }
-
     function commitReorder(from, to) {
         if (from === to || from < 0 || to < 0)
             return;
-        if (!dragPinned) {
+        var moved = items[from];
+        var nowPinned = to < pinnedCount;
+
+        popIn = false;
+        popInTimer.restart();
+
+        if (dragPinned && nowPinned) {
+            // Plain reorder within the pinned block.
+            var ids = [];
+            for (var i = 0; i < pinnedCount; i++)
+                ids.push(items[i].id);
+            var mid = ids.splice(from, 1)[0];
+            ids.splice(to, 0, mid);
+            if (widgetsService) {
+                // Keep pins whose app isn't installed/resolvable right now.
+                var rest = pinnedIds.filter(p => !lookup(p));
+                widgetsService.setPinOrder(ids.concat(rest));
+            }
+            return;
+        }
+
+        if (!dragPinned && !nowPinned) {
+            // Plain reorder within the running-but-unpinned block.
             var keys = [];
             for (var u = pinnedCount; u < items.length; u++)
                 keys.push(items[u].key);
             var movedKey = keys.splice(from - pinnedCount, 1)[0];
             keys.splice(to - pinnedCount, 0, movedKey);
-            popIn = false;
-            popInTimer.restart();
             unpinnedOrder = keys;
             return;
         }
-        if (!widgetsService)
+
+        if (!dragPinned && nowPinned) {
+            // Dropped a running app into the pinned block: pin it there.
+            if (!moved.id || !widgetsService)
+                return;
+            var ids2 = [];
+            for (var i2 = 0; i2 < pinnedCount; i2++)
+                ids2.push(items[i2].id);
+            ids2.splice(to, 0, moved.id);
+            var rest2 = pinnedIds.filter(p => !lookup(p));
+            widgetsService.setPinOrder(ids2.concat(rest2));
             return;
-        var ids = [];
-        for (var i = 0; i < pinnedCount; i++)
-            ids.push(items[i].id);
-        var moved = ids.splice(from, 1)[0];
-        ids.splice(to, 0, moved);
-        // Keep pins whose app isn't installed/resolvable right now.
-        var rest = pinnedIds.filter(p => !lookup(p));
-        popIn = false;
-        popInTimer.restart();
-        widgetsService.setPinOrder(ids.concat(rest));
+        }
+
+        // dragPinned && !nowPinned: dragged a pinned icon out into the
+        // running block — unpin it. It naturally lands among the running
+        // apps afterwards; where exactly is cosmetic, so no need to also
+        // thread it through unpinnedOrder here.
+        if (widgetsService)
+            widgetsService.togglePin(moved.id);
     }
 
     Timer {
@@ -287,10 +330,12 @@ Item {
                     return false;
                 }
 
-                // Slides neighbours aside to open a gap at the drop slot.
+                // Slides neighbours aside to open a gap at the drop slot —
+                // across the whole row now, since a drag can cross the
+                // pinned/unpinned boundary (see commitReorder).
                 readonly property real shiftX: {
                     var step = root.cellSize + root.cellSpacing;
-                    if (root.dragIndex < 0 || dragging || modelData.pinned !== root.dragPinned)
+                    if (root.dragIndex < 0 || dragging)
                         return 0;
                     if (root.dragIndex < root.dropIndex && index > root.dragIndex && index <= root.dropIndex)
                         return -step;
@@ -416,9 +461,12 @@ Item {
                             root.dropIndex = cell.index;
                             moved = true;
                         }
+                        // Full-row range: a drag can cross the pinned/unpinned
+                        // boundary (pinning/unpinning on drop) rather than
+                        // being confined to its own group.
                         var step = root.cellSize + root.cellSpacing;
-                        var first = root.groupStart(cell.modelData.pinned);
-                        var last = root.groupEnd(cell.modelData.pinned);
+                        var first = 0;
+                        var last = root.items.length - 1;
                         cell.dragX = Math.max((first - cell.index) * step, Math.min((last - cell.index) * step, dx));
                         root.dropIndex = Math.max(first, Math.min(last, Math.round(cell.index + cell.dragX / step)));
                     }
@@ -427,10 +475,13 @@ Item {
                         if (cell.dragging) {
                             var from = root.dragIndex;
                             var to = root.dropIndex;
+                            cell.dragX = 0;
+                            // Commit first, then release the drag guard, so
+                            // `items` re-binds straight to the final order
+                            // instead of flashing the pre-commit state.
+                            root.commitReorder(from, to);
                             root.dragIndex = -1;
                             root.dropIndex = -1;
-                            cell.dragX = 0;
-                            root.commitReorder(from, to);
                         }
                     }
 

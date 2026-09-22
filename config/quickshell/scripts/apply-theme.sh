@@ -24,7 +24,7 @@ fi
 # of everything below (palette regen, hyprctl reload, ...) and its own
 # transition takes a while, so waiting on it serially before doing anything
 # else only adds dead time to every theme switch.
-[ -z "$wallpaper" ] || (awww img "$wallpaper" --transition-type random --transition-duration 0.7 --transition-fps 60 || true) &
+[ -z "$wallpaper" ] || (awww img "$wallpaper" --transition-type any --transition-duration 0.7 --transition-fps 60 || true) &
 
 # The dynamic theme has no static files of its own: regenerate its whole
 # palette using Material Design 3 (matugen) from the wallpaper we just picked.

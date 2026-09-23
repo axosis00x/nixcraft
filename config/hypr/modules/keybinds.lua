@@ -37,6 +37,7 @@ hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("quickshell ipc call barlayou
 hl.bind("ALT + B", app("kitty -e btop"))
 
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("quickshell ipc call clipboard toggle"))
+hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("quickshell ipc call calendar toggle"))
 hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd("quickshell ipc call toolmenu toggle"))
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("quickshell ipc call controlcenter toggle"))
 hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("quickshell ipc call theme toggle"))

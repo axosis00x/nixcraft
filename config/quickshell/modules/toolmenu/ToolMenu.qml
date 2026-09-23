@@ -34,9 +34,9 @@ Item {
             command: ["bash", "-lc", "~/.config/quickshell/scripts/screenshot.sh ri"]
         },
         {
-            name: "Emoji",
-            icon: "",
-            command: ["qs", "ipc", "call", "emoji", "toggle"]
+            name: "Calendar",
+            icon: "",
+            command: ["qs", "ipc", "call", "calendar", "toggle"]
         },
         {
             name: "Clipboard",
@@ -167,19 +167,25 @@ Item {
                         }
                     }
 
-                    color: index === root.selectedIndex
-                        ? Palette.Theme.accent
-                        : (actionMouse.containsMouse ? Palette.Theme.surfaceContainerHighest : Palette.Theme.surfaceContainerLow)
+                    color: index === root.selectedIndex ? Palette.Theme.accent : (actionMouse.containsMouse ? Palette.Theme.surfaceContainerHighest : Palette.Theme.surfaceContainerLow)
                     border.width: 0
 
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 120
+                        }
+                    }
 
                     Rectangle {
                         anchors.fill: parent
                         radius: parent.radius
                         color: index === root.selectedIndex ? "#ffffff" : Palette.Theme.accent
                         opacity: actionMouse.pressed ? 0.18 : (actionMouse.containsMouse ? 0.08 : 0)
-                        Behavior on opacity { NumberAnimation { duration: 120 } }
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: 120
+                            }
+                        }
                     }
 
                     Text {

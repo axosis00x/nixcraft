@@ -54,7 +54,7 @@ PanelWindow {
     property var clipboard: null
     property var mediaPanel: null
     property var toolMenu: null
-    property var emojiPicker: null
+    property var calendarPicker: null
     property var workspacesService: null
     property var ensureControlCenter: null
     property real osdValue: 0

@@ -21,6 +21,7 @@ in
       vips
       util-linux
       libsecret
+      file
     ];
   };
 }

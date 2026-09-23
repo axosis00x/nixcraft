@@ -1,13 +1,12 @@
 import Quickshell
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import "../theme" as Palette
-import "../components/material"
 
-// Material 3 Expressive desktop clock: a scalloped "cookie" dial with a
-// digital hh/mm readout, a decorative sweeping hand, and two perched badges
-// (day-of-month, seconds) — an at-a-glance widget rather than a literal
-// analog clock.
+// Immersive desktop clock: bold text sitting straight on the wallpaper —
+// no dial, no badges, no background shape. A soft drop shadow is the only
+// thing keeping it readable over busy wallpaper content.
 Item {
     id: root
 
@@ -16,8 +15,8 @@ Item {
     property real defaultX: 0
     property real defaultY: 0
 
-    implicitWidth: 132
-    implicitHeight: 132
+    implicitWidth: mainColumn.implicitWidth
+    implicitHeight: mainColumn.implicitHeight
     width: implicitWidth
     height: implicitHeight
 
@@ -26,25 +25,6 @@ Item {
     // default corner spot until the widget has been dragged at least once.
     x: widgetsService && widgetsService.hasPosition(widgetId) ? widgetsService.positionX(widgetId) : defaultX
     y: widgetsService && widgetsService.hasPosition(widgetId) ? widgetsService.positionY(widgetId) : defaultY
-
-    // Idle "breathing" pulse — Material 3 Expressive's continuous, gentle
-    // motion rather than a perfectly static shape. Runs on a slightly
-    // different period than the weather widget's pulse so the pair doesn't
-    // beat in unison.
-    transformOrigin: Item.Center
-    SequentialAnimation on scale {
-        loops: Animation.Infinite
-        NumberAnimation {
-            to: 1.02
-            duration: 3200
-            easing.type: Easing.InOutSine
-        }
-        NumberAnimation {
-            to: 1.0
-            duration: 3200
-            easing.type: Easing.InOutSine
-        }
-    }
 
     SystemClock {
         id: clock
@@ -56,114 +36,50 @@ Item {
     readonly property int minutes: clock.date.getMinutes()
     readonly property int seconds: clock.date.getSeconds()
     readonly property int dayOfMonth: clock.date.getDate()
+    readonly property var weekdayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    readonly property var monthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-    // Sweeps a full turn per hour, nudged by the current second so it
-    // isn't dead-still between minute ticks.
-    readonly property real handAngle: (minutes + seconds / 60) / 60 * 360
-
-    CookieShape {
-        anchors.fill: parent
-        color: Palette.Theme.secondaryContainer
-        lobes: 12
-        amplitude: 0.05
-    }
-
-    // Zero-size pivot at the dial's center — rotating it carries the hand
-    // rectangle (positioned relative to it) around the same point.
-    Item {
-        anchors.centerIn: parent
-        width: 1
-        height: 1
-        rotation: root.handAngle
-
-        Behavior on rotation {
-            RotationAnimation {
-                duration: 400
-                direction: RotationAnimation.Shortest
-            }
-        }
-
-        Rectangle {
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: -height * 0.85
-            width: root.width * 0.1
-            height: root.height * 0.6
-            radius: width / 2
-            color: Palette.Theme.accent
-            opacity: 0.55
-        }
+    function pad(n) {
+        return n < 10 ? "0" + n : "" + n;
     }
 
     ColumnLayout {
-        anchors.centerIn: parent
-        spacing: -6
+        id: mainColumn
+        spacing: 0
+
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Qt.rgba(0, 0, 0, 0.55)
+            shadowBlur: 0.7
+            shadowVerticalOffset: 2
+        }
 
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: root.hours12 < 10 ? "0" + root.hours12 : "" + root.hours12
+            text: root.pad(root.hours12) + ":" + root.pad(root.minutes)
             color: Palette.Theme.textPrimary
-            opacity: 0.9
             font.family: Palette.Theme.fontMono
-            font.pixelSize: 34
-            font.weight: Font.Bold
+            font.pixelSize: 64
+            font.weight: Font.Black
+            font.letterSpacing: -1
         }
+
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: root.minutes < 10 ? "0" + root.minutes : "" + root.minutes
-            color: Palette.Theme.textPrimary
-            opacity: 0.9
+            text: root.weekdayNames[clock.date.getDay()] + " " + root.dayOfMonth + " " + root.monthNames[clock.date.getMonth()] + "  ·  " + root.pad(root.seconds)
+            color: Palette.Theme.textSecondary
             font.family: Palette.Theme.fontMono
-            font.pixelSize: 34
-            font.weight: Font.Bold
+            font.pixelSize: 13
+            font.weight: Font.DemiBold
+            font.letterSpacing: 2
+            font.capitalization: Font.AllUppercase
         }
     }
 
-    // Day-of-month badge, perched on the dial's upper-left rim.
-    CookieShape {
-        width: 30
-        height: 30
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.topMargin: -2
-        anchors.leftMargin: -2
-        lobes: 6
-        amplitude: 0.16
-        color: Palette.Theme.success
-
-        Text {
-            anchors.centerIn: parent
-            text: root.dayOfMonth
-            color: Palette.Theme.bg
-            font.family: Palette.Theme.fontMono
-            font.pixelSize: 11
-            font.weight: Font.Bold
-        }
-    }
-
-    // Seconds badge, perched on the dial's lower-right rim.
-    Rectangle {
-        width: 30
-        height: 30
-        radius: 15
-        anchors.bottom: parent.bottom
-        anchors.right: parent.right
-        anchors.bottomMargin: -2
-        anchors.rightMargin: -2
-        color: Palette.Theme.surfaceContainerHighest
-
-        Text {
-            anchors.centerIn: parent
-            text: root.seconds < 10 ? "0" + root.seconds : "" + root.seconds
-            color: Palette.Theme.textPrimary
-            font.family: Palette.Theme.fontMono
-            font.pixelSize: 11
-            font.weight: Font.Bold
-        }
-    }
-
-    // Drag-to-reposition — covers the whole widget rather than just the
-    // dial, so grabbing the badges works too. Position is persisted on
-    // release rather than on every move, to avoid hammering the state file.
+    // Drag-to-reposition — covers the whole widget. Position is persisted
+    // on release rather than on every move, to avoid hammering the state
+    // file.
     MouseArea {
         anchors.fill: parent
         cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor

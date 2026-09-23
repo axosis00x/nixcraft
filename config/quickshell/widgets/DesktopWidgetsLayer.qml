@@ -63,8 +63,11 @@ PanelWindow {
         id: clockWidget
         widgetsService: root.widgetsService
         visible: root.clockOn
-        defaultX: root.width - root.margin - 140
-        defaultY: root.height - root.margin - root.spacing - 132 - 76
+        // Right edge lines up with the weather widget below it; the clock's
+        // own footprint is now just its text, so it's sized off that
+        // instead of the old fixed dial dimensions.
+        defaultX: root.width - root.margin - (weatherWidget.implicitWidth + clockWidget.implicitWidth) / 2
+        defaultY: root.height - root.margin - root.spacing - clockWidget.implicitHeight - weatherWidget.implicitHeight
     }
 
     WeatherWidget {

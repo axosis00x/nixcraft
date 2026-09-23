@@ -6,44 +6,44 @@
 overall = {}
 
 [mgr]
-cwd = { fg = "#adc6ff" }
+cwd = { fg = "#ffb959" }
 
-find_keyword  = { fg = "#ccbff8", bold = true, italic = true, underline = true }
-find_position = { fg = "#c1c4eb", bg = "reset", bold = true, italic = true }
+find_keyword  = { fg = "#dfc478", bold = true, italic = true, underline = true }
+find_position = { fg = "#e2c28c", bg = "reset", bold = true, italic = true }
 
 symlink_target = { italic = true }
 
-marker_copied   = { fg = "#c1c4eb", bg = "#c1c4eb" }
+marker_copied   = { fg = "#e2c28c", bg = "#e2c28c" }
 marker_cut      = { fg = "#ffb4ab", bg = "#ffb4ab" }
-marker_marked   = { fg = "#adc6ff", bg = "#adc6ff" }
-marker_selected = { fg = "#ccbff8", bg = "#ccbff8" }
+marker_marked   = { fg = "#ffb959", bg = "#ffb959" }
+marker_selected = { fg = "#dfc478", bg = "#dfc478" }
 marker_symbol   = "│"
 
-count_copied   = { fg = "#0f131c", bg = "#c1c4eb" }
-count_cut      = { fg = "#0f131c", bg = "#ffb4ab" }
-count_selected = { fg = "#0f131c", bg = "#ccbff8" }
+count_copied   = { fg = "#1b1206", bg = "#e2c28c" }
+count_cut      = { fg = "#1b1206", bg = "#ffb4ab" }
+count_selected = { fg = "#1b1206", bg = "#dfc478" }
 
 border_symbol = "│"
-border_style  = { fg = "#434751" }
+border_style  = { fg = "#514536" }
 
 syntect_theme = ""
 
 [tabs]
-active   = { bg = "#adc6ff", bold = true }
-inactive = { fg = "#adc6ff", bg = "#434751" }
+active   = { bg = "#ffb959", bold = true }
+inactive = { fg = "#ffb959", bg = "#514536" }
 
 sep_inner = { open = "", close = "" }
 sep_outer = { open = "", close = "" }
 
 [mode]
-normal_main = { bg = "#adc6ff", bold = true }
-normal_alt  = { fg = "#adc6ff", bg = "#434751" }
+normal_main = { bg = "#ffb959", bold = true }
+normal_alt  = { fg = "#ffb959", bg = "#514536" }
 
 select_main = { bg = "#ffb4ab", bold = true }
-select_alt  = { fg = "#ffb4ab", bg = "#434751" }
+select_alt  = { fg = "#ffb4ab", bg = "#514536" }
 
 unset_main = { bg = "#ffb4ab", bold = true }
-unset_alt  = { fg = "#ffb4ab", bg = "#434751" }
+unset_alt  = { fg = "#ffb4ab", bg = "#514536" }
 
 [indicator]
 parent  = { reversed = true }
@@ -56,28 +56,28 @@ overall   = {}
 sep_left  = { open = "", close = "" }
 sep_right = { open = "", close = "" }
 
-perm_sep   = { fg = "#434751" }
-perm_type  = { fg = "#c1c4eb" }
-perm_read  = { fg = "#ccbff8" }
+perm_sep   = { fg = "#514536" }
+perm_type  = { fg = "#e2c28c" }
+perm_read  = { fg = "#dfc478" }
 perm_write = { fg = "#ffb4ab" }
-perm_exec  = { fg = "#adc6ff" }
+perm_exec  = { fg = "#ffb959" }
 
 progress_label  = { bold = true }
-progress_normal = { fg = "#c1c4eb", bg = "#1c2029" }
-progress_error  = { fg = "#ccbff8", bg = "#ffb4ab" }
+progress_normal = { fg = "#e2c28c", bg = "#281e11" }
+progress_error  = { fg = "#dfc478", bg = "#ffb4ab" }
 
 [which]
 cols            = 3
-mask            = { bg = "#1c2029" }
-cand            = { fg = "#adc6ff" }
-rest            = { fg = "#434751" }
-desc            = { fg = "#ccbff8" }
+mask            = { bg = "#281e11" }
+cand            = { fg = "#ffb959" }
+rest            = { fg = "#514536" }
+desc            = { fg = "#dfc478" }
 separator       = "  "
-separator_style = { fg = "#434751" }
+separator_style = { fg = "#514536" }
 
 [confirm]
-border     = { fg = "#adc6ff" }
-title      = { fg = "#adc6ff" }
+border     = { fg = "#ffb959" }
+title      = { fg = "#ffb959" }
 body       = {}
 list       = {}
 btn_yes    = { reversed = true }
@@ -85,15 +85,15 @@ btn_no     = {}
 btn_labels = [ "  [Y]es  ", "  (N)o  " ]
 
 [spot]
-border = { fg = "#adc6ff" }
-title  = { fg = "#adc6ff" }
+border = { fg = "#ffb959" }
+title  = { fg = "#ffb959" }
 
-tbl_col  = { fg = "#adc6ff" }
-tbl_cell = { fg = "#ccbff8", reversed = true }
+tbl_col  = { fg = "#ffb959" }
+tbl_cell = { fg = "#dfc478", reversed = true }
 
 [notify]
-title_info  = { fg = "#c1c4eb" }
-title_warn  = { fg = "#ccbff8" }
+title_info  = { fg = "#e2c28c" }
+title_warn  = { fg = "#dfc478" }
 title_error = { fg = "#ffb4ab" }
 
 icon_info  = ""
@@ -101,18 +101,18 @@ icon_warn  = ""
 icon_error = ""
 
 [pick]
-border   = { fg = "#adc6ff" }
-active   = { fg = "#ccbff8", bold = true }
+border   = { fg = "#ffb959" }
+active   = { fg = "#dfc478", bold = true }
 inactive = {}
 
 [input]
-border   = { fg = "#adc6ff" }
+border   = { fg = "#ffb959" }
 title    = {}
 value    = {}
 selected = { reversed = true }
 
 [cmp]
-border   = { fg = "#adc6ff" }
+border   = { fg = "#ffb959" }
 active   = { reversed = true }
 inactive = {}
 
@@ -121,13 +121,13 @@ icon_folder  = ""
 icon_command = ""
 
 [tasks]
-border  = { fg = "#adc6ff" }
+border  = { fg = "#ffb959" }
 title   = {}
-hovered = { fg = "#ccbff8", bold = true }
+hovered = { fg = "#dfc478", bold = true }
 
 [help]
-on      = { fg = "#adc6ff" }
-run     = { fg = "#ccbff8" }
+on      = { fg = "#ffb959" }
+run     = { fg = "#dfc478" }
 desc    = {}
 hovered = { reversed = true, bold = true }
-footer  = { fg = "#1c2029", bg = "#dfe2ef" }
+footer  = { fg = "#281e11", bg = "#f3dfcb" }

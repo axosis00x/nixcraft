@@ -9,7 +9,7 @@ import "../../modules/theme"
 import "../../modules/clipboard"
 import "../../modules/servicemanager"
 import "../../modules/bar"
-import "../../modules/emoji"
+import "../../modules/calendar"
 import "../../modules/toolmenu"
 import "../../modules/barlayout"
 import "../../modules/wallpicker"
@@ -63,7 +63,7 @@ PanelWindow {
     // Central modules origin edge:
     // Top origin: Control Center, Power Menu, Tool Menu, Media Panel.
     // Bottom origin: Launcher (shaders/sounds live inside it), Theme, Clipboard,
-    // Service Manager, Emoji, Bar Layout, Wallpaper Picker.
+    // Service Manager, Calendar, Bar Layout, Wallpaper Picker.
     function isTopModule(panel) {
         return panel === controlCenterItem
             || panel === powerMenuItem
@@ -98,8 +98,8 @@ PanelWindow {
             return clipboardItem;
         if (serviceManagerItem.visible)
             return serviceManagerItem;
-        if (emojiPickerItem.visible)
-            return emojiPickerItem;
+        if (calendarPickerItem.visible)
+            return calendarPickerItem;
         if (barLayoutPickerItem.visible)
             return barLayoutPickerItem;
         if (wallpaperPickerItem.visible)
@@ -164,7 +164,7 @@ PanelWindow {
     property alias serviceManager: serviceManagerItem
     property alias mediaPanel: mediaPanelItem
     property alias toolMenu: toolMenuItem
-    property alias emojiPicker: emojiPickerItem
+    property alias calendarPicker: calendarPickerItem
     property alias barLayoutPicker: barLayoutPickerItem
     property alias wallpaperPicker: wallpaperPickerItem
     property alias themes: themeService
@@ -189,8 +189,8 @@ PanelWindow {
             mediaPanelItem.close(true);
         if (panel !== toolMenuItem && toolMenuItem.visible)
             toolMenuItem.closeToolMenu(true);
-        if (panel !== emojiPickerItem && emojiPickerItem.visible)
-            emojiPickerItem.close(true);
+        if (panel !== calendarPickerItem && calendarPickerItem.visible)
+            calendarPickerItem.close(true);
         if (panel !== barLayoutPickerItem && barLayoutPickerItem.visible)
             barLayoutPickerItem.close(true);
         if (panel !== wallpaperPickerItem && wallpaperPickerItem.visible)
@@ -214,8 +214,8 @@ PanelWindow {
             mediaPanelItem.close();
         else if (toolMenuItem.visible)
             toolMenuItem.closeToolMenu();
-        else if (emojiPickerItem.visible)
-            emojiPickerItem.close();
+        else if (calendarPickerItem.visible)
+            calendarPickerItem.close();
         else if (barLayoutPickerItem.visible)
             barLayoutPickerItem.close();
         else if (wallpaperPickerItem.visible)
@@ -236,10 +236,6 @@ PanelWindow {
 
     ClipboardService {
         id: clipboardService
-    }
-
-    EmojiService {
-        id: emojiService
     }
 
     // Invisible click-outside-to-close catcher. Sits below the notch so it
@@ -407,11 +403,10 @@ PanelWindow {
             maxHeight: root.height
         }
 
-        EmojiPicker {
-            id: emojiPickerItem
+        CalendarPanel {
+            id: calendarPickerItem
             maxWidth: root.width
             maxHeight: root.height
-            service: emojiService
         }
 
         BarLayoutPicker {
@@ -471,8 +466,8 @@ PanelWindow {
         function onAboutToOpen() { root.presentOnly(toolMenuItem); }
     }
     Connections {
-        target: emojiPickerItem
-        function onAboutToOpen() { root.presentOnly(emojiPickerItem); }
+        target: calendarPickerItem
+        function onAboutToOpen() { root.presentOnly(calendarPickerItem); }
     }
     Connections {
         target: barLayoutPickerItem

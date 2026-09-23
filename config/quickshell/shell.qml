@@ -132,7 +132,7 @@ ShellRoot {
             clipboard: overlay.clipboard
             mediaPanel: overlay.mediaPanel
             toolMenu: overlay.toolMenu
-            emojiPicker: overlay.emojiPicker
+            calendarPicker: overlay.calendarPicker
             ensureControlCenter: function () {
                 return overlay.controlCenter;
             }

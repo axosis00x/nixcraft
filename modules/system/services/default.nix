@@ -19,9 +19,9 @@ in
     services.power-profiles-daemon.enable = true;
 
     networking.firewall = {
-      enable = true;
-      allowedTCPPorts = [ ];
-      allowedUDPPorts = [ ];
+      enable = false;
+    #   allowedTCPPorts = [ ];
+    #   allowedUDPPorts = [ ];
     };
 
     services.fstrim.enable = true;

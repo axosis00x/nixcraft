@@ -31,8 +31,6 @@ in
       inputs.apple-fonts.packages.${pkgs.stdenv.hostPlatform.system}.sf-pro
       inputs.apple-fonts.packages.${pkgs.stdenv.hostPlatform.system}.sf-mono
       inputs.apple-fonts.packages.${pkgs.stdenv.hostPlatform.system}.ny
-      libsForQt5.qtstyleplugin-kvantum
-      qt6Packages.qtstyleplugin-kvantum
     ];
 
     fonts.fontconfig.enable = true;
@@ -46,11 +44,12 @@ in
       size = 24;
     };
 
-    # Make Qt apps actually use Kvantum
+    # Stock Fusion with just the palette overridden per theme; the qt5ct/qt6ct
+    # configs are written at runtime by config/quickshell/scripts/apply-qt.sh
+    # (so they're deliberately not managed here — they must stay writable).
     qt = {
       enable = true;
-      platformTheme.name = "kvantum";
-      style.name = "kvantum";
+      platformTheme.name = "qtct";
     };
     gtk = {
       enable = true;
@@ -60,10 +59,5 @@ in
         package = mocu-xcursor;
       };
     };
-    # Tell Kvantum which theme to load
-    xdg.configFile."Kvantum/kvantum.kvconfig".text = ''
-      [General]
-      theme=KvMojave
-    '';
   };
 }

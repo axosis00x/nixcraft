@@ -23,6 +23,10 @@ output_path = "~/.config/themes/dynamic/gtk-3.css"
 input_path = "templates/gtk.css.template"
 output_path = "~/.config/themes/dynamic/gtk-4.css"
 
+[templates.qt]
+input_path = "templates/qt.conf.template"
+output_path = "~/.config/themes/dynamic/qt.conf"
+
 [templates.tmux]
 input_path = "templates/tmux.conf.template"
 output_path = "~/.config/themes/dynamic/tmux.conf"

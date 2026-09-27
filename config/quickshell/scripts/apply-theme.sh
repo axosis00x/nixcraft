@@ -59,10 +59,8 @@ install_if_present() {
     cp "$source" "$destination"
 }
 
-rm -f "$HOME/.config/gtk-3.0/gtk.css" "$HOME/.config/gtk-4.0/gtk.css"
-install_if_present "$theme_dir/gtk-3.css" "$HOME/.config/gtk-3.0/gtk.css"
-install_if_present "$theme_dir/gtk-4.css" "$HOME/.config/gtk-4.0/gtk.css"
-command -v gsettings >/dev/null && gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-dark || true
+"$HOME/.config/quickshell/scripts/apply-gtk.sh" "$theme_dir" || true
+"$HOME/.config/quickshell/scripts/apply-qt.sh" "$theme_dir" || true
 
 install_if_present "$theme_dir/tmux.conf" "$HOME/.config/tmux/theme.conf"
 install_if_present "$theme_dir/yazi-flavor.toml" "$HOME/.config/yazi/flavors/nixcraft.yazi/flavor.toml"
@@ -80,7 +78,7 @@ case "$theme_name" in
 gruvbox) zed_theme="Gruvbox Dark" ;;
 mocha) zed_theme="Catppuccin Mocha" ;;
 tokyonight) zed_theme="Aura Dark" ;;
-monochrome) zed_theme="Nord Darker" ;;
+monochrome) zed_theme="Quasi Monochrome Dark" ;;
 moonfly) zed_theme="One Dark Pro Max" ;;
 ryo) zed_theme="One Dark Pro Max" ;;
 dynamic) zed_theme="One Dark Pro Max" ;;

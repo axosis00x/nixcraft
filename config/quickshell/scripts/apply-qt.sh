@@ -22,7 +22,6 @@ for ct in qt5ct qt6ct; do
 [Appearance]
 color_scheme_path=$dir/colors/nixcraft.conf
 custom_palette=true
-icon_theme=Papirus-Dark
 standard_dialogs=default
 style=Fusion
 EOF

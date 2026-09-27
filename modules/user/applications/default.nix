@@ -39,6 +39,7 @@ in
       blanket
       nautilus
       nwg-look
+      thunar
       gnome-disk-utility
       zotero
     ];

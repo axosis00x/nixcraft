@@ -1,9 +1,7 @@
 {
-  "markdown_preview": {
-    "font_size": 16.0
-  },
   "cli_default_open_behavior": "new_window",
   "ui_font_weight": 400.0,
+  "markdown_preview_font_size": 16.0,
   "autosave": {
     "after_delay": {
       "milliseconds": 1000,
@@ -57,7 +55,7 @@
   "buffer_font_size": 16.0,
   "theme": {
     "mode": "dark",
-    "light": "One Dark Pro Max",
-    "dark": "One Dark Pro Max",
+    "light": "Catppuccin Mocha",
+    "dark": "Catppuccin Mocha",
   },
 }

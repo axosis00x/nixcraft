@@ -13,7 +13,7 @@ in
     enable = lib.mkEnableOption "SilentSDDM display manager";
     theme = lib.mkOption {
       type = lib.types.str;
-      default = "default";
+      default = "ken";
       description = "SilentSDDM theme to use.";
     };
     user = lib.mkOption {

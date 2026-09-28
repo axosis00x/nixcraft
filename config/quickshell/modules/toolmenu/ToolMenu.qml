@@ -31,7 +31,7 @@ Item {
         {
             name: "Screenshot",
             icon: "",
-            command: ["bash", "-lc", "~/.config/quickshell/scripts/screenshot.sh ri"]
+            command: ["bash", "-lc", "~/.config/quickshell/scripts/screenshot.sh rc"]
         },
         {
             name: "Calendar",

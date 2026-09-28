@@ -100,13 +100,29 @@ Item {
         activeThemeProcess.running = true;
     }
 
+    // Cycling draws from a shuffled bag: every wallpaper in the current set
+    // shows once before any of them repeats, and a refilled bag never starts
+    // with the one already on screen.
+    property var shuffleBag: []
+
     function chooseRandomWallpaper() {
         if (wallpapers.length === 0)
             return;
-        var choices = wallpapers.filter(path => path !== currentWallpaper);
-        if (choices.length === 0)
-            choices = wallpapers;
-        setWallpaper(choices[Math.floor(Math.random() * choices.length)]);
+        var bag = shuffleBag.filter(path => wallpapers.indexOf(path) !== -1 && path !== currentWallpaper);
+        if (bag.length === 0) {
+            bag = wallpapers.filter(path => path !== currentWallpaper);
+            if (bag.length === 0)
+                bag = wallpapers.slice();
+            for (var i = bag.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var t = bag[i];
+                bag[i] = bag[j];
+                bag[j] = t;
+            }
+        }
+        var next = bag.pop();
+        shuffleBag = bag;
+        setWallpaper(next);
     }
 
     function move(delta) {

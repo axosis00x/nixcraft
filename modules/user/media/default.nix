@@ -25,6 +25,7 @@ in
       loupe
       satty
       wf-recorder
+      hyprshot
     ];
   };
 }

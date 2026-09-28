@@ -40,7 +40,7 @@
     "claude-acp": {
       "default_config_options": {
         "mode": "auto",
-        "model": "opus",
+        "model": "default",
         "effort": "default",
         "fast": false,
       },

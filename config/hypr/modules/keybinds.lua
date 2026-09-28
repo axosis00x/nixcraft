@@ -55,6 +55,7 @@ hl.bind(mainMod .. " + comma", hl.dsp.layout("move -col"))
 hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("quickshell ipc call wallpicker toggle"))
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("quickshell ipc call wallpicker cycle"))
 
+-- osds
 hl.bind("F7", hl.dsp.exec_cmd("quickshell ipc call osd volumeDown"), { locked = true })
 hl.bind("F8", hl.dsp.exec_cmd("quickshell ipc call osd volumeUp"), { locked = true })
 hl.bind("F9", hl.dsp.exec_cmd("quickshell ipc call osd brightnessDown"), { locked = true })
@@ -89,18 +90,18 @@ end
 hl.bind("Caps_Lock", lockNotify("capsLock"), { locked = true })
 hl.bind("Num_Lock", lockNotify("numLock"), { locked = true })
 
+-- screenshots
 hl.bind("Print", hl.dsp.exec_cmd("~/.config/quickshell/scripts/screenshot.sh rc"), { locked = true })
 hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("~/.config/quickshell/scripts/screenshot.sh rf"), { locked = true })
-hl.bind("CTRL + Print", hl.dsp.exec_cmd("~/.config/quickshell/scripts/screenshot.sh ri"), { locked = true })
+hl.bind("CTRL + Print", hl.dsp.exec_cmd("~/.config/quickshell/scripts/screenshot.sh w"), { locked = true })
 hl.bind("SHIFT + Print", hl.dsp.exec_cmd("~/.config/quickshell/scripts/screenshot.sh sc"), { locked = true })
 hl.bind(
     mainMod .. " + SHIFT + Print",
     hl.dsp.exec_cmd("~/.config/quickshell/scripts/screenshot.sh sf"),
     { locked = true }
 )
-hl.bind("CTRL + SHIFT + Print", hl.dsp.exec_cmd("~/.config/quickshell/scripts/screenshot.sh si"), { locked = true })
-hl.bind("ALT + Print", hl.dsp.exec_cmd("~/.config/quickshell/scripts/screenshot.sh p"), { locked = true })
 
+-- movements
 hl.bind(mainMod .. " + left", hl.dsp.focus({ direction = "left" }))
 hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }))
 hl.bind(mainMod .. " + up", hl.dsp.focus({ direction = "up" }))
@@ -161,8 +162,6 @@ hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = tru
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), { locked = true })
 
 
--- hl.bind(mainMod .. " + G", hl.dsp.window.move({ workspace = "special" }))
--- hl.bind(mainMod .. " + SHIFT + G", hl.dsp.workspace.toggle_special())
 
 hl.bind("XF86KbdLightOnOff", hl.dsp.exec_cmd("brightnessctl -s rgb:kbd_backlight set 0"))
 hl.bind("XF86KbdLightOnOff", hl.dsp.exec_cmd("brightnessctl -s rgb:kbd_backlight set 1"))

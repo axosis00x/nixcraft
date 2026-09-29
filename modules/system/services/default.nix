@@ -20,8 +20,8 @@ in
 
     networking.firewall = {
       enable = false;
-    #   allowedTCPPorts = [ ];
-    #   allowedUDPPorts = [ ];
+      #   allowedTCPPorts = [ ];
+      #   allowedUDPPorts = [ ];
     };
 
     services.fstrim.enable = true;
@@ -43,6 +43,7 @@ in
     services.udisks2.enable = true;
 
     services.timesyncd.enable = true;
+    services.xserver.enable = true;
 
     services.openssh = {
       enable = false;

@@ -143,7 +143,7 @@ Item {
                 Text {
                     text: "Theme"
                     color: Palette.Theme.textTitle
-                    font.family: Palette.Theme.fontMono
+                    font.family: Palette.Theme.fontSans
                     font.pixelSize: 16
                     font.weight: Font.DemiBold
                     Layout.fillWidth: true
@@ -183,10 +183,12 @@ Item {
                                 easing.overshoot: 1.4
                             }
                         }
-                        // Previewed in the theme's own surface and border colors.
-                        color: pal && pal.surfaceContainerHigh ? pal.surfaceContainerHigh : Palette.Theme.surfaceContainerLow
-                        border.width: index === root.selected ? 2 : 1
-                        border.color: index === root.selected ? root.accentFor(modelData) : (pal && pal.border ? Qt.alpha(pal.border, 0.8) : "transparent")
+                        // Uniform cards in the shell's own colors; the theme is
+                        // previewed only through its palette strip below. No
+                        // outline except on the selected card.
+                        color: index === root.selected ? Palette.Theme.surfaceContainerHighest : Palette.Theme.surfaceContainerHigh
+                        border.width: index === root.selected ? 2 : 0
+                        border.color: root.accentFor(modelData)
 
                         Behavior on border.width {
                             NumberAnimation {
@@ -203,35 +205,43 @@ Item {
                             anchors.left: parent.left
                             anchors.right: parent.right
                             anchors.top: parent.top
-                            anchors.leftMargin: 12
+                            anchors.leftMargin: 14
                             anchors.rightMargin: 30
-                            anchors.topMargin: 10
-                            text: modelData.replace(/-/g, " ")
-                            color: card.pal && card.pal.textPrimary ? card.pal.textPrimary : Palette.Theme.textPrimary
+                            anchors.topMargin: 12
+                            text: modelData.charAt(0).toUpperCase() + modelData.slice(1).replace(/-/g, " ")
+                            color: Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontSans
                             font.pixelSize: 12
                             font.weight: index === root.selected ? Font.DemiBold : Font.Medium
                             elide: Text.ElideRight
                         }
 
-                        // The theme's actual palette, five distinct colors.
+                        // The theme's palette as one segmented strip.
                         Row {
+                            id: strip
                             anchors.left: parent.left
+                            anchors.right: parent.right
                             anchors.bottom: parent.bottom
-                            anchors.leftMargin: 12
-                            anchors.bottomMargin: 10
-                            spacing: 5
+                            anchors.leftMargin: 14
+                            anchors.rightMargin: 14
+                            anchors.bottomMargin: 13
+                            height: 8
+                            spacing: 2
+
+                            readonly property var colors: root.swatchesFor(card.modelData)
 
                             Repeater {
-                                model: root.swatchesFor(card.modelData)
+                                model: strip.colors
                                 delegate: Rectangle {
                                     required property var modelData
-                                    width: 14
-                                    height: 14
-                                    radius: 7
+                                    required property int index
+                                    width: (strip.width - strip.spacing * (strip.colors.length - 1)) / Math.max(1, strip.colors.length)
+                                    height: strip.height
+                                    topLeftRadius: index === 0 ? height / 2 : 2
+                                    bottomLeftRadius: topLeftRadius
+                                    topRightRadius: index === strip.colors.length - 1 ? height / 2 : 2
+                                    bottomRightRadius: topRightRadius
                                     color: modelData
-                                    border.width: 1
-                                    border.color: Qt.alpha(card.pal && card.pal.textPrimary ? card.pal.textPrimary : "#ffffff", 0.18)
                                 }
                             }
                         }
@@ -249,7 +259,7 @@ Item {
                             Text {
                                 anchors.centerIn: parent
                                 text: "✓"
-                                color: Palette.Theme.bg
+                                color: card.pal && card.pal.onAccent ? card.pal.onAccent : Palette.Theme.accentText
                                 font.pixelSize: 10
                                 font.bold: true
                             }

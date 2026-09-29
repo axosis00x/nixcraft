@@ -1,0 +1,133 @@
+# Yazi flavor — Ryo
+# Installed as ~/.config/yazi/flavors/nixcraft.yazi/flavor.toml by apply-theme.sh.
+# Overrides only the style colors; icon/filetype tables stay in theme.toml.
+
+[app]
+overall = {}
+
+[mgr]
+cwd = { fg = "#7dcfff" }
+
+find_keyword  = { fg = "#e0af68", bold = true, italic = true, underline = true }
+find_position = { fg = "#bb9af7", bg = "reset", bold = true, italic = true }
+
+symlink_target = { italic = true }
+
+marker_copied   = { fg = "#8ff0c7", bg = "#8ff0c7" }
+marker_cut      = { fg = "#f7768e", bg = "#f7768e" }
+marker_marked   = { fg = "#7dcfff", bg = "#7dcfff" }
+marker_selected = { fg = "#e0af68", bg = "#e0af68" }
+marker_symbol   = "│"
+
+count_copied   = { fg = "#0c0f14", bg = "#8ff0c7" }
+count_cut      = { fg = "#0c0f14", bg = "#f7768e" }
+count_selected = { fg = "#0c0f14", bg = "#e0af68" }
+
+border_symbol = "│"
+border_style  = { fg = "#566678" }
+
+syntect_theme = ""
+
+[tabs]
+active   = { bg = "#8bd5ff", bold = true }
+inactive = { fg = "#8bd5ff", bg = "#263447" }
+
+sep_inner = { open = "", close = "" }
+sep_outer = { open = "", close = "" }
+
+[mode]
+normal_main = { bg = "#8bd5ff", bold = true }
+normal_alt  = { fg = "#8bd5ff", bg = "#263447" }
+
+select_main = { bg = "#f7768e", bold = true }
+select_alt  = { fg = "#f7768e", bg = "#263447" }
+
+unset_main = { bg = "#f7768e", bold = true }
+unset_alt  = { fg = "#f7768e", bg = "#263447" }
+
+[indicator]
+parent  = { reversed = true }
+current = { reversed = true }
+preview = { underline = true }
+padding = { open = "", close = "" }
+
+[status]
+overall   = {}
+sep_left  = { open = "", close = "" }
+sep_right = { open = "", close = "" }
+
+perm_sep   = { fg = "#566678" }
+perm_type  = { fg = "#8ff0c7" }
+perm_read  = { fg = "#e0af68" }
+perm_write = { fg = "#f7768e" }
+perm_exec  = { fg = "#7dcfff" }
+
+progress_label  = { bold = true }
+progress_normal = { fg = "#8ff0c7", bg = "#0c0f14" }
+progress_error  = { fg = "#e0af68", bg = "#f7768e" }
+
+[which]
+cols            = 3
+mask            = { bg = "#0c0f14" }
+cand            = { fg = "#7dcfff" }
+rest            = { fg = "#566678" }
+desc            = { fg = "#bb9af7" }
+separator       = "  "
+separator_style = { fg = "#566678" }
+
+[confirm]
+border     = { fg = "#8bd5ff" }
+title      = { fg = "#8bd5ff" }
+body       = {}
+list       = {}
+btn_yes    = { reversed = true }
+btn_no     = {}
+btn_labels = [ "  [Y]es  ", "  (N)o  " ]
+
+[spot]
+border = { fg = "#8bd5ff" }
+title  = { fg = "#8bd5ff" }
+
+tbl_col  = { fg = "#8bd5ff" }
+tbl_cell = { fg = "#e0af68", reversed = true }
+
+[notify]
+title_info  = { fg = "#8ff0c7" }
+title_warn  = { fg = "#e0af68" }
+title_error = { fg = "#f7768e" }
+
+icon_info  = ""
+icon_warn  = ""
+icon_error = ""
+
+[pick]
+border   = { fg = "#8bd5ff" }
+active   = { fg = "#bb9af7", bold = true }
+inactive = {}
+
+[input]
+border   = { fg = "#8bd5ff" }
+title    = {}
+value    = {}
+selected = { reversed = true }
+
+[cmp]
+border   = { fg = "#8bd5ff" }
+active   = { reversed = true }
+inactive = {}
+
+icon_file    = ""
+icon_folder  = ""
+icon_command = ""
+
+[tasks]
+border  = { fg = "#8bd5ff" }
+title   = {}
+hovered = { fg = "#bb9af7", bold = true }
+
+[help]
+on      = { fg = "#7dcfff" }
+run     = { fg = "#bb9af7" }
+desc    = {}
+hovered = { reversed = true, bold = true }
+footer  = { fg = "#0c0f14", bg = "#eef5ff" }

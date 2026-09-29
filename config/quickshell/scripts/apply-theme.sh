@@ -82,6 +82,7 @@ monochrome) zed_theme="Quasi Monochrome Dark" ;;
 moonfly) zed_theme="One Dark Pro Max" ;;
 ryo) zed_theme="One Dark Pro Max" ;;
 dynamic) zed_theme="One Dark Pro Max" ;;
+transparent) zed_theme="One Dark Pro Max" ;;
 *) zed_theme="" ;;
 esac
 if [ -n "$zed_theme" ] && [ -f "$HOME/.config/zed/settings.json" ]; then

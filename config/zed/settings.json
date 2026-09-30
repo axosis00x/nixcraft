@@ -57,7 +57,7 @@
   "buffer_font_size": 16.0,
   "theme": {
     "mode": "dark",
-    "light": "Catppuccin Mocha",
-    "dark": "Catppuccin Mocha",
+    "light": "One Dark Pro Max",
+    "dark": "One Dark Pro Max",
   },
 }

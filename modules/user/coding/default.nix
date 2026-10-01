@@ -19,8 +19,6 @@ in
       neovim
       zed-editor
       claude-code
-      antigravity-ide
-      jetbrains.idea
 
       # languages & runtimes
       jdk21

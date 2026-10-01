@@ -40,7 +40,6 @@ in
       nautilus
       nwg-look
       gnome-disk-utility
-      zotero
     ];
   };
 }

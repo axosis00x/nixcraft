@@ -23,6 +23,8 @@ in
       zsh-autosuggestions
       zsh-fast-syntax-highlighting
       fzf
+      zsh-autocomplete
+      zsh
       zsh-forgit
       zsh-fzf-history-search
       zsh-fzf-tab
@@ -34,7 +36,6 @@ in
       tmux
       ripgrep
       yazi
-      herdr
       fetch
     ];
   };

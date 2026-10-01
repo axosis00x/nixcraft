@@ -451,7 +451,7 @@ PanelWindow {
         BarSection {
             id: workspacesCapsule
             anchors.left: launcherIsland.right
-            anchors.leftMargin: 10
+            anchors.leftMargin: 6
             anchors.verticalCenter: parent.verticalCenter
             implicitWidth: Math.max(workspaces.implicitWidth + 24, 185)
 
@@ -478,7 +478,7 @@ PanelWindow {
         BarSection {
             id: weatherCapsule
             anchors.left: workspacesCapsule.right
-            anchors.leftMargin: 10
+            anchors.leftMargin: 6
             anchors.verticalCenter: parent.verticalCenter
             implicitWidth: weather.implicitWidth + 24
             visible: !bar.vertical && weather.available
@@ -487,7 +487,7 @@ PanelWindow {
         BarSection {
             id: batteryCapsule
             anchors.right: rightCapsule.left
-            anchors.rightMargin: 10
+            anchors.rightMargin: 6
             anchors.verticalCenter: parent.verticalCenter
             implicitWidth: batteryContent.implicitWidth + 24
             visible: bar.batteryAvailable
@@ -502,7 +502,7 @@ PanelWindow {
         BarSection {
             id: rightCapsule
             anchors.right: powerCapsule.left
-            anchors.rightMargin: 10
+            anchors.rightMargin: 6
             anchors.verticalCenter: parent.verticalCenter
             implicitWidth: rightRow.implicitWidth + 14
 

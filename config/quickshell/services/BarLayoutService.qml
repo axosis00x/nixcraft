@@ -17,7 +17,10 @@ Item {
     // directly, with nothing to animate away a wrong-then-right flip), and
     // CenterOverlay's idle notch (seeded from `vertical`) uses it to skip
     // animating that same transient.
-    readonly property bool loaded: stateFile.loaded
+    // A missing state file (first run, or a cleared ~/.cache) counts as
+    // loaded with the defaults — otherwise the bar would wait forever.
+    property bool missing: false
+    readonly property bool loaded: stateFile.loaded || missing
 
     function setVertical(value) {
         state.vertical = value;
@@ -40,6 +43,12 @@ Item {
         path: Quickshell.cachePath("bar-layout.json")
         watchChanges: false
         blockLoading: true
+        onLoadFailed: error => {
+            if (error === FileViewError.FileNotFound) {
+                root.missing = true;
+                writeAdapter();
+            }
+        }
 
         JsonAdapter {
             id: state

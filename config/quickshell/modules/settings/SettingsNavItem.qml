@@ -1,62 +1,49 @@
 import QtQuick
+import "../../components/material"
 import "../../theme" as Palette
 
-// Sidebar entry. The selected one gets a full pill in a tonal color and the
-// others relax back to a softer rounded rectangle.
+// Sidebar entry. The selection pill itself is drawn by the sidebar (it
+// glides between entries); an entry only adds its hover/press state layer
+// and a springy squeeze when pressed.
 Item {
     id: root
 
     property string icon: ""
     property string label: ""
     property bool selected: false
-    property color tint: Palette.Theme.accent
     signal clicked
 
-    implicitHeight: 50
+    implicitHeight: 40
 
-    Rectangle {
-        anchors.fill: parent
-        radius: root.selected ? height / 2 : 16
-        color: root.selected ? Qt.alpha(root.tint, 0.24) : (mouse.containsMouse ? Palette.Theme.surfaceContainerHigh : "transparent")
-        scale: mouse.pressed ? 0.97 : 1
+    scale: mouse.pressed ? 0.96 : 1
+    Behavior on scale {
+        SpatialMotion {
+            fast: true
+            bouncy: true
+        }
+    }
 
-        Behavior on radius {
-            NumberAnimation {
-                duration: 200
-                easing.type: Easing.OutCubic
-            }
-        }
-        Behavior on color {
-            ColorAnimation {
-                duration: 140
-            }
-        }
-        Behavior on scale {
-            NumberAnimation {
-                duration: 140
-                easing.type: Easing.OutBack
-                easing.overshoot: 2
-            }
-        }
+    StateLayer {
+        radius: height / 2
+        hovered: mouse.containsMouse && !root.selected
+        pressed: mouse.pressed
     }
 
     Row {
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
-        anchors.leftMargin: 16
-        spacing: 14
+        anchors.leftMargin: Palette.Theme.spacingMedium
+        spacing: Palette.Theme.spacingMedium
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: root.icon
-            color: root.selected ? root.tint : Palette.Theme.textSecondary
+            color: root.selected ? Palette.Theme.accent : Palette.Theme.textMuted
             font.family: Palette.Theme.fontIcons
-            font.pixelSize: 22
+            font.pixelSize: Palette.Theme.iconSize
 
             Behavior on color {
-                ColorAnimation {
-                    duration: 140
-                }
+                ColorMotion {}
             }
         }
 
@@ -65,8 +52,8 @@ Item {
             text: root.label
             color: root.selected ? Palette.Theme.textPrimary : Palette.Theme.textSecondary
             font.family: Palette.Theme.fontSans
-            font.pixelSize: 14
-            font.weight: root.selected ? Font.DemiBold : Font.Medium
+            font.pixelSize: Palette.Theme.fontSizeBody
+            font.weight: root.selected ? Font.DemiBold : Font.Normal
         }
     }
 

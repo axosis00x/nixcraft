@@ -3,9 +3,10 @@ import QtQuick.Layouts
 import "../../components/material"
 import "../../theme" as Palette
 
-// One row of a settings group. Rows sit in "connected" groups: the first and
-// last get large outer corners, the ones in between stay tight, and a pressed
-// row morphs towards a rounder shape.
+// One row of a settings group. The group card (SettingsPage) draws the
+// container; a row draws its state layer, rounded to match the card on the
+// first and last row, and a hairline below every row but the last. Pressing
+// an interactive row morphs it into a free-standing rounded card.
 Item {
     id: root
 
@@ -15,7 +16,6 @@ Item {
     property string title: ""
     property string subtitle: ""
     property string infoText: ""
-    property color tint: Palette.Theme.accent
     property bool first: true
     property bool last: true
     property bool checked: false
@@ -30,39 +30,53 @@ Item {
 
     readonly property bool interactive: kind === "nav" || kind === "switch"
     readonly property bool compactRow: kind === "nav" || kind === "switch" || kind === "info"
+    readonly property real groupRadius: Palette.Theme.radiusMedium
+    readonly property bool morph: mouse.pressed && interactive
 
-    implicitHeight: kind === "slider" ? 68 : (kind === "segment" ? 88 : 64)
+    implicitHeight: kind === "slider" ? 72 : (kind === "segment" ? 80 : (subtitle !== "" ? 58 : 48))
 
     Rectangle {
+        id: shape
         anchors.fill: parent
-
-        readonly property real bigRadius: 26
-        readonly property real smallRadius: 8
-        readonly property bool morph: mouse.pressed && root.interactive
-
-        topLeftRadius: morph ? 20 : (root.first ? bigRadius : smallRadius)
+        anchors.margins: root.morph ? 3 : 0
+        topLeftRadius: root.morph ? Palette.Theme.radiusMedium : (root.first ? root.groupRadius : 0)
         topRightRadius: topLeftRadius
-        bottomLeftRadius: morph ? 20 : (root.last ? bigRadius : smallRadius)
+        bottomLeftRadius: root.morph ? Palette.Theme.radiusMedium : (root.last ? root.groupRadius : 0)
         bottomRightRadius: bottomLeftRadius
-        color: mouse.containsMouse && root.interactive ? Palette.Theme.surfaceContainerHighest : Palette.Theme.surfaceContainerHigh
+        color: root.morph ? Palette.Theme.surfaceContainerHigh : "transparent"
 
-        Behavior on topLeftRadius {
-            NumberAnimation {
-                duration: 160
-                easing.type: Easing.OutCubic
+        Behavior on anchors.margins {
+            SpatialMotion {
+                fast: true
             }
+        }
+        Behavior on topLeftRadius {
+            SpatialMotion {}
         }
         Behavior on bottomLeftRadius {
-            NumberAnimation {
-                duration: 160
-                easing.type: Easing.OutCubic
-            }
+            SpatialMotion {}
         }
         Behavior on color {
-            ColorAnimation {
-                duration: 120
-            }
+            ColorMotion {}
         }
+
+        StateLayer {
+            topLeftRadius: parent.topLeftRadius
+            topRightRadius: parent.topRightRadius
+            bottomLeftRadius: parent.bottomLeftRadius
+            bottomRightRadius: parent.bottomRightRadius
+            hovered: mouse.containsMouse && root.interactive
+        }
+    }
+
+    Rectangle {
+        visible: !root.last
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: root.icon !== "" ? 48 : Palette.Theme.spacingLarge
+        height: 1
+        color: Palette.Theme.outlineSoft
     }
 
     MouseArea {
@@ -81,39 +95,32 @@ Item {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 14
-        anchors.rightMargin: 16
+        anchors.leftMargin: Palette.Theme.spacingLarge
+        anchors.rightMargin: Palette.Theme.spacingLarge
         spacing: 14
         visible: root.compactRow
 
-        Rectangle {
+        Text {
+            visible: root.icon !== ""
             Layout.alignment: Qt.AlignVCenter
-            Layout.preferredWidth: 40
-            Layout.preferredHeight: 40
-            radius: 20
-            color: Qt.alpha(root.tint, 0.2)
-
-            Text {
-                anchors.centerIn: parent
-                text: root.icon
-                color: root.tint
-                font.family: Palette.Theme.fontIcons
-                font.pixelSize: 21
-            }
+            Layout.preferredWidth: Palette.Theme.iconSize
+            text: root.icon
+            color: Palette.Theme.textMuted
+            font.family: Palette.Theme.fontIcons
+            font.pixelSize: Palette.Theme.iconSize
         }
 
         ColumnLayout {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
-            spacing: 1
+            spacing: 2
 
             Text {
                 Layout.fillWidth: true
                 text: root.title
                 color: Palette.Theme.textPrimary
                 font.family: Palette.Theme.fontSans
-                font.pixelSize: 14
-                font.weight: Font.Medium
+                font.pixelSize: Palette.Theme.fontSizeBody
                 elide: Text.ElideRight
             }
 
@@ -123,47 +130,52 @@ Item {
                 text: root.subtitle
                 color: Palette.Theme.textMuted
                 font.family: Palette.Theme.fontSans
-                font.pixelSize: 12
+                font.pixelSize: Palette.Theme.fontSizeXs
                 elide: Text.ElideRight
             }
         }
 
         Text {
             visible: root.kind === "nav"
-            text: ""
+            text: "chevron_right"
             color: Palette.Theme.textMuted
             font.family: Palette.Theme.fontIcons
-            font.pixelSize: 22
+            font.pixelSize: Palette.Theme.iconSize
+            // Nudges toward the pointer on hover.
+            Layout.rightMargin: mouse.containsMouse ? -3 : 0
+
+            Behavior on Layout.rightMargin {
+                SpatialMotion {
+                    fast: true
+                }
+            }
         }
 
         ToggleSwitch {
             visible: root.kind === "switch"
             Layout.alignment: Qt.AlignVCenter
-            implicitWidth: 46
-            implicitHeight: 27
             checked: root.checked
-            accentColor: root.tint
             onToggled: value => root.toggled(value)
         }
 
         Text {
             visible: root.kind === "info"
-            Layout.maximumWidth: 210
+            Layout.maximumWidth: 260
             text: root.infoText
             color: Palette.Theme.textSecondary
             font.family: Palette.Theme.fontSans
-            font.pixelSize: 12
+            font.pixelSize: Palette.Theme.fontSizeSmall
             elide: Text.ElideRight
         }
     }
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
-        anchors.topMargin: 10
-        anchors.bottomMargin: 10
-        spacing: 6
+        anchors.leftMargin: Palette.Theme.spacingLarge
+        anchors.rightMargin: Palette.Theme.spacingLarge
+        anchors.topMargin: Palette.Theme.spacingMedium
+        anchors.bottomMargin: Palette.Theme.spacingMedium
+        spacing: Palette.Theme.spacingSmall
         visible: !root.compactRow
 
         RowLayout {
@@ -174,86 +186,122 @@ Item {
                 text: root.title
                 color: Palette.Theme.textPrimary
                 font.family: Palette.Theme.fontSans
-                font.pixelSize: 14
-                font.weight: Font.Medium
+                font.pixelSize: Palette.Theme.fontSizeBody
             }
 
             Text {
                 visible: root.kind === "slider"
                 text: Math.round(root.value * 100) + "%"
                 color: Palette.Theme.textMuted
-                font.family: Palette.Theme.fontSans
-                font.pixelSize: 12
+                font.family: Palette.Theme.fontMono
+                font.pixelSize: Palette.Theme.fontSizeXs
             }
         }
 
-        SettingsSlider {
+        Slider {
             visible: root.kind === "slider"
             Layout.fillWidth: true
-            Layout.preferredHeight: 26
-            value: root.value
+            trackHeight: 24
             icon: root.icon
-            accent: root.tint
+            value: root.value
             onMoved: value => root.moved(value)
         }
 
-        Row {
-            id: segments
+        // Segmented control: one track with a single indicator that springs
+        // between options and stretches as it travels.
+        Rectangle {
+            id: segTrack
             visible: root.kind === "segment"
             Layout.fillWidth: true
-            Layout.preferredHeight: 34
-            spacing: 3
+            Layout.preferredHeight: 36
+            radius: height / 2
+            color: Palette.Theme.surfaceContainerHigh
 
-            Repeater {
-                model: root.options
+            readonly property int count: Math.max(1, root.options.length)
+            readonly property real segWidth: (width - 8) / count
+            readonly property int currentIndex: {
+                for (var i = 0; i < root.options.length; i++) {
+                    if (root.options[i].id === root.current)
+                        return i;
+                }
+                return -1;
+            }
 
-                delegate: Rectangle {
-                    id: seg
+            Rectangle {
+                id: indicator
+                visible: segTrack.currentIndex >= 0
+                y: 4
+                height: parent.height - 8
+                radius: height / 2
+                color: Palette.Theme.accent
 
-                    required property var modelData
-                    required property int index
+                // Leading edge moves fast and trailing edge follows, so the
+                // pill visibly stretches toward its destination.
+                property real targetL: 4 + segTrack.segWidth * segTrack.currentIndex
+                property real targetR: targetL + segTrack.segWidth
+                property real leadL: targetL
+                property real leadR: targetR
+                x: leadL
+                width: Math.max(height, leadR - leadL)
 
-                    readonly property bool selected: root.current === modelData.id
+                Behavior on leadL {
+                    SpatialMotion {
+                        fast: indicator.targetL < indicator.leadL
+                    }
+                }
+                Behavior on leadR {
+                    SpatialMotion {
+                        fast: indicator.targetR > indicator.leadR
+                    }
+                }
+                onTargetLChanged: leadL = targetL
+                onTargetRChanged: leadR = targetR
+            }
 
-                    width: (segments.width - segments.spacing * (root.options.length - 1)) / root.options.length
-                    height: segments.height
-                    topLeftRadius: index === 0 || selected ? height / 2 : 8
-                    bottomLeftRadius: topLeftRadius
-                    topRightRadius: index === root.options.length - 1 || selected ? height / 2 : 8
-                    bottomRightRadius: topRightRadius
-                    color: selected ? root.tint : Palette.Theme.surfaceContainerHighest
+            Row {
+                anchors.fill: parent
+                anchors.margins: 4
 
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: 140
+                Repeater {
+                    model: root.options
+
+                    delegate: Item {
+                        id: seg
+
+                        required property var modelData
+                        required property int index
+
+                        readonly property bool selected: segTrack.currentIndex === index
+
+                        width: segTrack.segWidth
+                        height: parent.height
+
+                        StateLayer {
+                            radius: height / 2
+                            hovered: segMouse.containsMouse && !seg.selected
+                            pressed: segMouse.pressed
                         }
-                    }
-                    Behavior on topLeftRadius {
-                        NumberAnimation {
-                            duration: 160
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-                    Behavior on topRightRadius {
-                        NumberAnimation {
-                            duration: 160
-                            easing.type: Easing.OutCubic
-                        }
-                    }
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: seg.modelData.label
-                        color: seg.selected ? Palette.Theme.accentText : Palette.Theme.textSecondary
-                        font.family: Palette.Theme.fontSans
-                        font.pixelSize: 12
-                        font.weight: seg.selected ? Font.DemiBold : Font.Medium
-                    }
+                        Text {
+                            anchors.centerIn: parent
+                            text: seg.modelData.label
+                            color: seg.selected ? Palette.Theme.accentText : Palette.Theme.textSecondary
+                            font.family: Palette.Theme.fontSans
+                            font.pixelSize: Palette.Theme.fontSizeSmall
+                            font.weight: seg.selected ? Font.DemiBold : Font.Normal
 
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.picked(seg.modelData.id)
+                            Behavior on color {
+                                ColorMotion {}
+                            }
+                        }
+
+                        MouseArea {
+                            id: segMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.picked(seg.modelData.id)
+                        }
                     }
                 }
             }

@@ -31,8 +31,8 @@ FloatingWindow {
     // Ask the shell to open one of the overlay pickers ("theme", "wallpaper", "barlayout").
     signal requestOpen(string what)
 
-    readonly property real cardWidth: 940
-    readonly property real cardHeight: 600
+    readonly property real cardWidth: 860
+    readonly property real cardHeight: 560
 
     // Matched by the Hyprland window rule.
     title: "nixcraft-settings"
@@ -126,6 +126,7 @@ FloatingWindow {
         case "dock":
         case "clock":
         case "weather":
+        case "cava":
             return widgetsService ? widgetsService.isEnabled(key) : false;
         default:
             return false;
@@ -171,6 +172,7 @@ FloatingWindow {
         case "dock":
         case "clock":
         case "weather":
+        case "cava":
             if (widgetsService)
                 widgetsService.toggle(key);
             break;
@@ -284,12 +286,6 @@ FloatingWindow {
         }
     }
 
-    readonly property var tints: [Palette.Theme.accent, Palette.Theme.info, Palette.Theme.success, Palette.Theme.warning, Palette.Theme.secondaryText, Palette.Theme.errorColor, Palette.Theme.primaryText]
-
-    function tintFor(i) {
-        return tints[(i || 0) % tints.length];
-    }
-
     function activate(spec) {
         if (spec.open) {
             // Hand keyboard focus over: close first, then let the shell open the picker.
@@ -306,14 +302,14 @@ FloatingWindow {
 
     // ── content ─────────────────────────────────────────────────────
     readonly property var categories: [
-        { id: "overview", icon: "", title: "Overview", sub: "overview", tint: 0 },
-        { id: "network", icon: "", title: "Network & internet", sub: "net", tint: 1 },
-        { id: "display", icon: "", title: "Display", sub: "display", tint: 3 },
-        { id: "sound", icon: "", title: "Sound", sub: "sound", tint: 0 },
-        { id: "notifications", icon: "", title: "Notifications", sub: "notifications", tint: 5 },
-        { id: "power", icon: "", title: "Battery & power", sub: "power", tint: 2 },
-        { id: "appearance", icon: "", title: "Appearance", sub: "appearance", tint: 4 },
-        { id: "about", icon: "", title: "About device", sub: "about", tint: 6 }
+        { id: "overview", icon: "", title: "Overview", sub: "overview" },
+        { id: "network", icon: "", title: "Network & internet", sub: "net" },
+        { id: "display", icon: "", title: "Display", sub: "display" },
+        { id: "sound", icon: "", title: "Sound", sub: "sound" },
+        { id: "notifications", icon: "", title: "Notifications", sub: "notifications" },
+        { id: "power", icon: "", title: "Battery & power", sub: "power" },
+        { id: "appearance", icon: "", title: "Appearance", sub: "appearance" },
+        { id: "about", icon: "", title: "About device", sub: "about" }
     ]
 
     readonly property var pageTitles: ({
@@ -346,20 +342,20 @@ FloatingWindow {
                     title: "Quick settings",
                     layout: "tiles",
                     rows: [
-                        { kind: "switch", key: "wifi", icon: "", title: "Wi-Fi", tint: 1 },
-                        { kind: "switch", key: "bluetooth", icon: "", title: "Bluetooth", tint: 0 },
-                        { kind: "switch", key: "dnd", icon: "", title: "Do not disturb", tint: 5 },
-                        { kind: "switch", key: "nightlight", icon: "", title: "Night light", tint: 3 },
-                        { kind: "switch", key: "keepawake", icon: "", title: "Keep awake", tint: 2 },
-                        { kind: "switch", key: "dock", icon: "", title: "Dock", tint: 4 }
+                        { kind: "switch", key: "wifi", icon: "", title: "Wi-Fi" },
+                        { kind: "switch", key: "bluetooth", icon: "", title: "Bluetooth" },
+                        { kind: "switch", key: "dnd", icon: "", title: "Do not disturb" },
+                        { kind: "switch", key: "nightlight", icon: "", title: "Night light" },
+                        { kind: "switch", key: "keepawake", icon: "", title: "Keep awake" },
+                        { kind: "switch", key: "dock", icon: "", title: "Dock" }
                     ]
                 },
                 {
                     title: "Levels",
                     rows: [
-                        { kind: "slider", key: "brightness", icon: "", title: "Brightness", tint: 3 },
-                        { kind: "slider", key: "volume", icon: "", title: "Volume", tint: 0 },
-                        { kind: "slider", key: "mic", icon: "", title: "Microphone", tint: 1 }
+                        { kind: "slider", key: "brightness", icon: "", title: "Brightness" },
+                        { kind: "slider", key: "volume", icon: "", title: "Volume" },
+                        { kind: "slider", key: "mic", icon: "", title: "Microphone" }
                     ]
                 }
             ],
@@ -367,9 +363,9 @@ FloatingWindow {
                 {
                     title: "Connections",
                     rows: [
-                        { kind: "switch", key: "wifi", icon: "", title: "Wi-Fi", tint: 1 },
-                        { kind: "switch", key: "bluetooth", icon: "", title: "Bluetooth", tint: 0 },
-                        { kind: "switch", key: "airplane", icon: "", title: "Airplane mode", subtitle: "Turns off Wi-Fi and Bluetooth", tint: 5 }
+                        { kind: "switch", key: "wifi", icon: "", title: "Wi-Fi" },
+                        { kind: "switch", key: "bluetooth", icon: "", title: "Bluetooth" },
+                        { kind: "switch", key: "airplane", icon: "", title: "Airplane mode", subtitle: "Turns off Wi-Fi and Bluetooth" }
                     ]
                 }
             ],
@@ -377,8 +373,8 @@ FloatingWindow {
                 {
                     title: "Brightness",
                     rows: [
-                        { kind: "slider", key: "brightness", icon: "", title: "Brightness level", tint: 3 },
-                        { kind: "switch", key: "nightlight", icon: "", title: "Night light", subtitle: "Warmer colors at night", tint: 3 }
+                        { kind: "slider", key: "brightness", icon: "", title: "Brightness level" },
+                        { kind: "switch", key: "nightlight", icon: "", title: "Night light", subtitle: "Warmer colors at night" }
                     ]
                 }
             ],
@@ -386,21 +382,21 @@ FloatingWindow {
                 {
                     title: "Volume",
                     rows: [
-                        { kind: "slider", key: "volume", icon: "", title: "Media volume", tint: 0 },
-                        { kind: "switch", key: "mute", icon: "", title: "Mute", tint: 0 }
+                        { kind: "slider", key: "volume", icon: "", title: "Media volume" },
+                        { kind: "switch", key: "mute", icon: "", title: "Mute" }
                     ]
                 },
                 {
                     title: "Microphone",
                     rows: [
-                        { kind: "slider", key: "mic", icon: "", title: "Microphone level", tint: 1 },
-                        { kind: "switch", key: "micmute", icon: "", title: "Mute microphone", tint: 1 }
+                        { kind: "slider", key: "mic", icon: "", title: "Microphone level" },
+                        { kind: "switch", key: "micmute", icon: "", title: "Mute microphone" }
                     ]
                 },
                 {
                     title: "",
                     rows: [
-                        { kind: "nav", act: "mixer", icon: "", title: "Audio mixer", subtitle: "Open per-app volume controls", tint: 4 }
+                        { kind: "nav", act: "mixer", icon: "", title: "Audio mixer", subtitle: "Open per-app volume controls" }
                     ]
                 }
             ],
@@ -408,8 +404,8 @@ FloatingWindow {
                 {
                     title: "",
                     rows: [
-                        { kind: "switch", key: "dnd", icon: "", title: "Do not disturb", subtitle: "Silence notification popups", tint: 5 },
-                        { kind: "nav", act: "clearnotifs", icon: "", title: "Clear all notifications", tint: 5 }
+                        { kind: "switch", key: "dnd", icon: "", title: "Do not disturb", subtitle: "Silence notification popups" },
+                        { kind: "nav", act: "clearnotifs", icon: "", title: "Clear all notifications" }
                     ]
                 }
             ],
@@ -418,7 +414,7 @@ FloatingWindow {
                     title: "Power mode",
                     rows: [
                         {
-                            kind: "segment", key: "powerprofile", title: "Performance profile", tint: 2,
+                            kind: "segment", key: "powerprofile", title: "Performance profile",
                             options: [
                                 { id: "power-saver", label: "Saver" },
                                 { id: "balanced", label: "Balanced" },
@@ -430,8 +426,8 @@ FloatingWindow {
                 {
                     title: "Battery",
                     rows: [
-                        { kind: "info", key: "battery", icon: "", title: "Battery level", tint: 2 },
-                        { kind: "switch", key: "keepawake", icon: "", title: "Keep screen awake", subtitle: "Prevent the screen from locking or sleeping", tint: 3 }
+                        { kind: "info", key: "battery", icon: "", title: "Battery level" },
+                        { kind: "switch", key: "keepawake", icon: "", title: "Keep screen awake", subtitle: "Prevent the screen from locking or sleeping" }
                     ]
                 }
             ],
@@ -439,17 +435,18 @@ FloatingWindow {
                 {
                     title: "Style",
                     rows: [
-                        { kind: "nav", open: "theme", icon: "", title: "Theme", sub: "appearance", tint: 4 },
-                        { kind: "nav", open: "wallpaper", icon: "", title: "Wallpaper", subtitle: "Pick a wallpaper for this theme", tint: 1 },
-                        { kind: "nav", open: "barlayout", icon: "", title: "Bar position", subtitle: "Move the bar between the top and the side", tint: 3 }
+                        { kind: "nav", open: "theme", icon: "", title: "Theme", sub: "appearance" },
+                        { kind: "nav", open: "wallpaper", icon: "", title: "Wallpaper", subtitle: "Pick a wallpaper for this theme" },
+                        { kind: "nav", open: "barlayout", icon: "", title: "Bar position", subtitle: "Move the bar between the top and the side" }
                     ]
                 },
                 {
                     title: "Desktop widgets",
                     rows: [
-                        { kind: "switch", key: "dock", icon: "", title: "Dock", subtitle: "App dock at the bottom of the screen", tint: 0 },
-                        { kind: "switch", key: "clock", icon: "", title: "Clock widget", tint: 2 },
-                        { kind: "switch", key: "weather", icon: "", title: "Weather widget", tint: 1 }
+                        { kind: "switch", key: "dock", icon: "", title: "Dock", subtitle: "App dock at the bottom of the screen" },
+                        { kind: "switch", key: "clock", icon: "", title: "Clock widget" },
+                        { kind: "switch", key: "weather", icon: "", title: "Weather widget" },
+                        { kind: "switch", key: "cava", icon: "graphic_eq", title: "Audio wave widget", subtitle: "Visualizes whatever is playing" }
                     ]
                 }
             ],
@@ -457,11 +454,11 @@ FloatingWindow {
                 {
                     title: "Device",
                     rows: [
-                        { kind: "info", key: "host", icon: "", title: "Device name", tint: 6 },
-                        { kind: "info", key: "user", icon: "", title: "User", tint: 6 },
-                        { kind: "info", key: "os", icon: "", title: "Operating system", tint: 6 },
-                        { kind: "info", key: "kernel", icon: "", title: "Kernel", tint: 6 },
-                        { kind: "info", key: "uptime", icon: "", title: "Uptime", tint: 6 }
+                        { kind: "info", key: "host", icon: "", title: "Device name" },
+                        { kind: "info", key: "user", icon: "", title: "User" },
+                        { kind: "info", key: "os", icon: "", title: "Operating system" },
+                        { kind: "info", key: "kernel", icon: "", title: "Kernel" },
+                        { kind: "info", key: "uptime", icon: "", title: "Uptime" }
                     ]
                 }
             ]
@@ -496,144 +493,172 @@ FloatingWindow {
             event.accepted = true;
         }
 
+        // Always opaque, even under translucent themes, so whatever is
+        // behind the window never bleeds through the text.
         Rectangle {
             id: cardBg
             anchors.fill: parent
-            radius: 34
-            color: Palette.Theme.surface
+            radius: Palette.Theme.radiusExtraLarge
+            color: Palette.Theme.surfaceSolid
             border.width: 1
-            border.color: Palette.Theme.outlineVariant
+            border.color: Palette.Theme.outlineSoft
         }
 
         RowLayout {
             anchors.fill: parent
-            anchors.margins: 10
-            spacing: 10
+            anchors.margins: 1
+            spacing: 0
 
             // ── left: profile, search, menu ─────────────────────────
-            Rectangle {
-                Layout.preferredWidth: 252
+            ColumnLayout {
+                Layout.preferredWidth: 224
+                Layout.maximumWidth: 224
+                Layout.fillWidth: false
                 Layout.fillHeight: true
-                radius: 26
-                color: Palette.Theme.surfaceContainer
+                Layout.margins: 14
+                spacing: 12
 
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: 12
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 6
+                    Layout.leftMargin: 6
                     spacing: 10
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.topMargin: 4
-                        spacing: 12
+                    Rectangle {
+                        Layout.preferredWidth: 34
+                        Layout.preferredHeight: 34
+                        radius: 17
+                        color: Palette.Theme.surfaceContainerHigh
+                        clip: true
 
-                        Rectangle {
-                            Layout.preferredWidth: 52
-                            Layout.preferredHeight: 52
-                            radius: 26
-                            color: Palette.Theme.surfaceContainerHighest
-                            clip: true
-
-                            Image {
-                                anchors.fill: parent
-                                source: "file://" + Quickshell.env("HOME") + "/Pictures/misc/pfp.png"
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                                smooth: true
-                            }
-                        }
-
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: 0
-
-                            Text {
-                                Layout.fillWidth: true
-                                text: root.about.user || Quickshell.env("USER")
-                                color: Palette.Theme.textPrimary
-                                font.family: Palette.Theme.fontSans
-                                font.pixelSize: 16
-                                font.weight: Font.Bold
-                                elide: Text.ElideRight
-                            }
-
-                            Text {
-                                Layout.fillWidth: true
-                                text: root.about.host || ""
-                                color: Palette.Theme.textMuted
-                                font.family: Palette.Theme.fontSans
-                                font.pixelSize: 12
-                                elide: Text.ElideRight
-                            }
+                        Image {
+                            anchors.fill: parent
+                            source: "file://" + Quickshell.env("HOME") + "/Pictures/misc/pfp.png"
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            smooth: true
                         }
                     }
 
-                    Rectangle {
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 44
-                        radius: 22
-                        color: Palette.Theme.surfaceContainerHigh
-                        border.width: searchInput.activeFocus ? 1.5 : 0
-                        border.color: Palette.Theme.accent
+                        spacing: 0
 
                         Text {
-                            anchors.left: parent.left
-                            anchors.leftMargin: 14
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: ""
-                            color: Palette.Theme.textMuted
-                            font.family: Palette.Theme.fontIcons
-                            font.pixelSize: 20
-                        }
-
-                        TextInput {
-                            id: searchInput
-                            anchors.fill: parent
-                            anchors.leftMargin: 44
-                            anchors.rightMargin: 40
-                            verticalAlignment: TextInput.AlignVCenter
+                            Layout.fillWidth: true
+                            text: root.about.user || Quickshell.env("USER")
                             color: Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontSans
-                            font.pixelSize: 13
-                            selectByMouse: true
-                            clip: true
-                            onTextChanged: root.query = text
-
-                            Keys.onEscapePressed: event => {
-                                root.back();
-                                event.accepted = true;
-                            }
-
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                visible: searchInput.text === ""
-                                text: "Search settings"
-                                color: Palette.Theme.textMuted
-                                font: searchInput.font
-                            }
+                            font.pixelSize: Palette.Theme.fontSizeBody
+                            font.weight: Font.DemiBold
+                            elide: Text.ElideRight
                         }
 
-                        IconButton {
-                            anchors.right: parent.right
-                            anchors.rightMargin: 7
+                        Text {
+                            Layout.fillWidth: true
+                            text: root.about.host || ""
+                            color: Palette.Theme.textMuted
+                            font.family: Palette.Theme.fontSans
+                            font.pixelSize: Palette.Theme.fontSizeXs
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 36
+                    radius: searchInput.activeFocus ? height / 2 : Palette.Theme.radiusSmall
+                    color: Palette.Theme.surfaceContainer
+                    border.width: 1
+                    border.color: searchInput.activeFocus ? Palette.Theme.accent : Palette.Theme.outlineSoft
+
+                    Behavior on radius {
+                        SpatialMotion {}
+                    }
+                    Behavior on border.color {
+                        ColorMotion {}
+                    }
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "search"
+                        color: Palette.Theme.textMuted
+                        font.family: Palette.Theme.fontIcons
+                        font.pixelSize: Palette.Theme.iconSizeSmall
+                    }
+
+                    TextInput {
+                        id: searchInput
+                        anchors.fill: parent
+                        anchors.leftMargin: 34
+                        anchors.rightMargin: 32
+                        verticalAlignment: TextInput.AlignVCenter
+                        color: Palette.Theme.textPrimary
+                        font.family: Palette.Theme.fontSans
+                        font.pixelSize: Palette.Theme.fontSizeSmall
+                        selectByMouse: true
+                        clip: true
+                        onTextChanged: root.query = text
+
+                        Keys.onEscapePressed: event => {
+                            root.back();
+                            event.accepted = true;
+                        }
+
+                        Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            icon: ""
-                            implicitWidth: 28
-                            implicitHeight: 28
-                            visible: searchInput.text !== ""
-                            onClicked: {
-                                searchInput.text = "";
-                                searchInput.forceActiveFocus();
-                            }
+                            visible: searchInput.text === ""
+                            text: "Search"
+                            color: Palette.Theme.textMuted
+                            font: searchInput.font
                         }
+                    }
+
+                    IconButton {
+                        anchors.right: parent.right
+                        anchors.rightMargin: 4
+                        anchors.verticalCenter: parent.verticalCenter
+                        icon: "close"
+                        implicitWidth: 24
+                        implicitHeight: 24
+                        visible: searchInput.text !== ""
+                        onClicked: {
+                            searchInput.text = "";
+                            searchInput.forceActiveFocus();
+                        }
+                    }
+                }
+
+                // The selection is one tonal pill that glides between
+                // entries rather than each entry filling itself in.
+                Item {
+                    Layout.fillWidth: true
+                    implicitHeight: navColumn.implicitHeight
+
+                    MovingHighlight {
+                        target: {
+                            if (navRepeater.count === 0)
+                                return null;
+                            for (var i = 0; i < root.categories.length; i++) {
+                                if (root.categories[i].id === root.activePage)
+                                    return navRepeater.itemAt(i);
+                            }
+                            return null;
+                        }
+                        radius: height / 2
+                        color: Palette.Theme.accentTonal
                     }
 
                     Column {
-                        Layout.fillWidth: true
-                        Layout.topMargin: 4
-                        spacing: 4
+                        id: navColumn
+                        width: parent.width
+                        spacing: 2
 
                         Repeater {
+                            id: navRepeater
                             model: root.categories
 
                             delegate: SettingsNavItem {
@@ -642,7 +667,6 @@ FloatingWindow {
                                 width: parent.width
                                 icon: modelData.icon
                                 label: modelData.title
-                                tint: root.tintFor(modelData.tint)
                                 selected: root.activePage === modelData.id
                                 onClicked: {
                                     searchInput.text = "";
@@ -651,22 +675,27 @@ FloatingWindow {
                             }
                         }
                     }
+                }
 
-                    Item {
-                        Layout.fillHeight: true
-                    }
+                Item {
+                    Layout.fillHeight: true
                 }
             }
 
-            // ── right: page header + dashboard ──────────────────────
+            Rectangle {
+                Layout.fillHeight: true
+                Layout.preferredWidth: 1
+                color: Palette.Theme.outlineSoft
+            }
+
+            // ── right: page header + content ────────────────────────
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.leftMargin: 10
-                Layout.rightMargin: 12
-                Layout.topMargin: 10
-                Layout.bottomMargin: 6
-                spacing: 14
+                Layout.leftMargin: 28
+                Layout.rightMargin: 20
+                Layout.topMargin: 20
+                spacing: 18
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -681,8 +710,8 @@ FloatingWindow {
                             text: root.pageTitles[root.activePage] || ""
                             color: Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontSans
-                            font.pixelSize: 28
-                            font.weight: Font.Bold
+                            font.pixelSize: Palette.Theme.fontSizeHeadline
+                            font.weight: Font.DemiBold
                             elide: Text.ElideRight
                         }
 
@@ -691,16 +720,16 @@ FloatingWindow {
                             text: root.pageSummary(root.activePage)
                             color: Palette.Theme.textMuted
                             font.family: Palette.Theme.fontSans
-                            font.pixelSize: 13
+                            font.pixelSize: Palette.Theme.fontSizeSmall
                             elide: Text.ElideRight
                         }
                     }
 
                     IconButton {
                         Layout.alignment: Qt.AlignTop
-                        icon: ""
-                        implicitWidth: 38
-                        implicitHeight: 38
+                        icon: "close"
+                        implicitWidth: 30
+                        implicitHeight: 30
                         onClicked: root.close()
                     }
                 }
@@ -709,6 +738,7 @@ FloatingWindow {
                     id: pages
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    Layout.rightMargin: 8
                     clip: true
 
                     Repeater {
@@ -725,20 +755,17 @@ FloatingWindow {
                             height: pages.height
                             panel: root
                             sections: root.sectionsFor(modelData)
-                            y: current ? 0 : 16
+                            y: current ? 0 : 24
                             opacity: current ? 1 : 0
                             visible: opacity > 0.01
                             enabled: current
 
                             Behavior on y {
-                                NumberAnimation {
-                                    duration: 260
-                                    easing.type: Easing.OutCubic
-                                }
+                                SpatialMotion {}
                             }
                             Behavior on opacity {
-                                NumberAnimation {
-                                    duration: 200
+                                EffectMotion {
+                                    fast: false
                                 }
                             }
 
@@ -748,7 +775,7 @@ FloatingWindow {
                                 text: "No settings match “" + root.query + "”"
                                 color: Palette.Theme.textMuted
                                 font.family: Palette.Theme.fontSans
-                                font.pixelSize: 14
+                                font.pixelSize: Palette.Theme.fontSizeBody
                             }
                         }
                     }

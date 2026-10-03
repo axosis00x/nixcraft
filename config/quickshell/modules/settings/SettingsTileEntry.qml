@@ -1,7 +1,8 @@
 import QtQuick
+import "../../components/material"
 
-// Same job as SettingsEntry, for tile-layout sections.
-SettingsTile {
+// Wires a tile-layout row spec to the panel's live state.
+Tile {
     id: entry
 
     required property var panel
@@ -9,8 +10,7 @@ SettingsTile {
 
     icon: spec.icon || ""
     title: spec.title
-    tint: panel.tintFor(spec.tint)
-    checked: panel.flag(spec.key)
-    stateText: checked ? "On" : "Off"
-    onToggled: value => panel.setFlag(spec.key, value)
+    active: panel.flag(spec.key)
+    subtitle: active ? "On" : "Off"
+    onClicked: panel.setFlag(spec.key, !active)
 }

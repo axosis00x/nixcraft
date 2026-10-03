@@ -14,7 +14,6 @@ SettingsItem {
     icon: spec.icon || ""
     title: spec.title
     subtitle: spec.sub ? panel.subtitleFor(spec.sub) : (spec.subtitle || "")
-    tint: panel.tintFor(spec.tint)
     first: isFirst
     last: isLast
     checked: spec.kind === "switch" ? panel.flag(spec.key) : false

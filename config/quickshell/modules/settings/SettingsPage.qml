@@ -1,8 +1,9 @@
 import QtQuick
+import "../../components/material"
 import "../../theme" as Palette
 
-// A scrolling stack of titled sections. A section is either a connected
-// group of rows or (layout: "tiles") a grid of quick-settings tiles.
+// A scrolling stack of titled sections. A section is either a card of rows
+// separated by hairlines or (layout: "tiles") a grid of quick-settings tiles.
 Flickable {
     id: root
 
@@ -10,14 +11,14 @@ Flickable {
     property var sections: []
 
     contentWidth: width
-    contentHeight: column.implicitHeight + 10
+    contentHeight: column.implicitHeight + 16
     clip: true
     boundsBehavior: Flickable.StopAtBounds
 
     Column {
         id: column
         width: root.width
-        spacing: 18
+        spacing: Palette.Theme.spacingExtraLarge
 
         Repeater {
             model: root.sections
@@ -29,35 +30,46 @@ Flickable {
                 readonly property bool tiles: modelData.layout === "tiles"
 
                 width: column.width
-                spacing: 8
+                spacing: Palette.Theme.spacingSmall
 
                 Text {
                     visible: text !== ""
-                    leftPadding: 6
+                    leftPadding: 4
                     text: section.modelData.title || ""
-                    color: Palette.Theme.accent
+                    color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontSans
-                    font.pixelSize: 12
+                    font.pixelSize: Palette.Theme.fontSizeXs
                     font.weight: Font.DemiBold
+                    font.letterSpacing: 0.8
+                    font.capitalization: Font.AllUppercase
                 }
 
-                Column {
+                Rectangle {
                     visible: !section.tiles
                     width: section.width
-                    spacing: 3
+                    height: rows.implicitHeight
+                    radius: Palette.Theme.radiusMedium
+                    color: Palette.Theme.surfaceContainer
+                    border.width: 1
+                    border.color: Palette.Theme.outlineSoft
 
-                    Repeater {
-                        model: section.tiles ? [] : section.modelData.rows
+                    Column {
+                        id: rows
+                        width: parent.width
 
-                        delegate: SettingsEntry {
-                            required property var modelData
-                            required property int index
+                        Repeater {
+                            model: section.tiles ? [] : section.modelData.rows
 
-                            width: parent.width
-                            panel: root.panel
-                            spec: modelData
-                            isFirst: index === 0
-                            isLast: index === section.modelData.rows.length - 1
+                            delegate: SettingsEntry {
+                                required property var modelData
+                                required property int index
+
+                                width: rows.width
+                                panel: root.panel
+                                spec: modelData
+                                isFirst: index === 0
+                                isLast: index === section.modelData.rows.length - 1
+                            }
                         }
                     }
                 }
@@ -66,7 +78,7 @@ Flickable {
                     id: tileFlow
                     visible: section.tiles
                     width: section.width
-                    spacing: 8
+                    spacing: Palette.Theme.spacingSmall
 
                     readonly property int columns: 3
 

@@ -1,13 +1,14 @@
 import QtQuick
 import "../../theme" as Palette
 
+// Base container: every card and panel in the shell is one of these.
 Rectangle {
     id: root
 
     property color tint: Palette.Theme.surfaceTint
     property real tintOpacity: Palette.Theme.surfaceTintOpacity
-    property color outlineColor: Palette.Theme.outlineVariant
-    property real outlineWidth: 0
+    property color outlineColor: Palette.Theme.outlineSoft
+    property real outlineWidth: 1
 
     radius: Palette.Theme.radiusLarge
     color: Palette.Theme.surfaceContainer

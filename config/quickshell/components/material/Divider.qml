@@ -6,6 +6,5 @@ Rectangle {
 
     width: vertical ? 1 : parent ? parent.width : 1
     height: vertical ? 14 : 1
-    color: Palette.Theme.outlineVariant
-    opacity: 0.72
+    color: Palette.Theme.outlineSoft
 }

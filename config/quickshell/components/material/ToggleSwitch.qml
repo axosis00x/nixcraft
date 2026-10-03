@@ -1,6 +1,8 @@
 import QtQuick
 import "../../theme" as Palette
 
+// Material 3 switch: a small outlined thumb when off that grows (and gains
+// a check) when on, springing across the track; pressing swells it.
 Item {
     id: root
 
@@ -8,58 +10,58 @@ Item {
     property color accentColor: Palette.Theme.accent
     signal toggled(bool value)
 
-    implicitWidth: 38
-    implicitHeight: 22
+    implicitWidth: 44
+    implicitHeight: 26
 
-    // M3 Expressive tactile spring scaling
-    scale: switchMouse.pressed ? 0.90 : (switchMouse.containsMouse ? 1.05 : 1.0)
-    Behavior on scale {
-        NumberAnimation {
-            duration: 140
-            easing.type: Easing.OutBack
-            easing.overshoot: 1.6
-        }
-    }
-
-    // Track
     Rectangle {
         anchors.fill: parent
         radius: height / 2
         color: root.checked ? root.accentColor : Palette.Theme.surfaceContainerHighest
-        border.color: root.checked ? "transparent" : (switchMouse.containsMouse ? Palette.Theme.accent : Palette.Theme.outlineVariant)
-        border.width: root.checked ? 0 : 1
+        border.width: root.checked ? 0 : 2
+        border.color: switchMouse.containsMouse ? Palette.Theme.textSecondary : Palette.Theme.textMuted
 
         Behavior on color {
-            ColorAnimation { duration: 150 }
-        }
-        Behavior on border.color {
-            ColorAnimation { duration: 150 }
+            ColorMotion {}
         }
     }
 
-    // Thumb (handle)
     Rectangle {
         id: thumb
-        readonly property real thumbBaseSize: parent.height - 6
-        width: switchMouse.pressed ? thumbBaseSize + 4 : thumbBaseSize
-        height: thumbBaseSize
-        radius: height / 2
-        y: 3
-        x: root.checked ? parent.width - width - 3 : 3
-        color: root.checked ? Palette.Theme.accentText : (switchMouse.containsMouse ? Palette.Theme.textPrimary : Palette.Theme.textSecondary)
 
-        Behavior on x {
-            NumberAnimation {
-                duration: 180
-                easing.type: Easing.OutBack
-                easing.overshoot: 1.4
-            }
+        // Center and diameter animate independently, so the thumb can
+        // swell on press while it springs across the track.
+        property real centerX: root.checked ? root.width - root.height / 2 : root.height / 2
+
+        width: switchMouse.pressed ? root.height - 4 : (root.checked ? root.height - 8 : root.height - 14)
+        height: width
+        radius: width / 2
+        anchors.verticalCenter: parent.verticalCenter
+        x: centerX - width / 2
+        color: root.checked ? Palette.Theme.accentText : (switchMouse.containsMouse ? Palette.Theme.textSecondary : Palette.Theme.textMuted)
+
+        Behavior on centerX {
+            SpatialMotion {}
         }
         Behavior on width {
-            NumberAnimation { duration: 100 }
+            SpatialMotion {
+                fast: true
+            }
         }
         Behavior on color {
-            ColorAnimation { duration: 120 }
+            ColorMotion {}
+        }
+
+        Text {
+            anchors.centerIn: parent
+            text: "check"
+            color: root.accentColor
+            font.family: Palette.Theme.fontIcons
+            font.pixelSize: parent.width * 0.75
+            opacity: root.checked ? 1 : 0
+
+            Behavior on opacity {
+                EffectMotion {}
+            }
         }
     }
 

@@ -19,7 +19,7 @@ Item {
     property real defaultY: 0
 
     // Must match `bars` in cava-wave.conf.
-    readonly property int pointCount: 32
+    readonly property int pointCount: 20
     property string configPath: String(Qt.resolvedUrl("cava-wave.conf")).replace("file://", "")
     property bool cavaEnabled: true
 
@@ -65,7 +65,15 @@ Item {
             next.push(Math.sqrt(Math.max(0, Math.min(1, val / 100))));
         }
         if (next.length > 0) {
-            root.target = next;
+            // Soften neighbouring bands into each other so crests come out
+            // as broad rounded swells rather than isolated spikes.
+            var soft = [];
+            for (var j = 0; j < next.length; j++) {
+                var l = next[Math.max(0, j - 1)];
+                var r = next[Math.min(next.length - 1, j + 1)];
+                soft.push((l + 2 * next[j] + r) / 4);
+            }
+            root.target = soft;
             animator.start();
         }
     }
@@ -124,7 +132,7 @@ Item {
         radius: Palette.Theme.radiusExtraLarge
         color: Qt.alpha(Palette.Theme.surfaceContainer, 0.8)
         border.width: 1
-        border.color: Qt.alpha(Palette.Theme.outlineVariant, 0.6)
+        border.color: Palette.Theme.outlineSoft
 
         layer.enabled: true
         layer.effect: MultiEffect {
@@ -147,19 +155,29 @@ Item {
         onAccentChanged: requestPaint()
         onWidthChanged: requestPaint()
 
-        // Traces the wave's crest as a smooth curve through the midpoints
-        // between samples, rising from a baseline along the bottom edge.
+        // Traces the wave's crest as a Catmull-Rom spline through every
+        // sample (converted to cubic Béziers), which keeps peaks round
+        // instead of pinched, rising from a baseline along the bottom edge.
         function trace(ctx, pts) {
             var base = height - 1;
             var amp = height - 4;
             var step = width / (pts.length - 1);
             var n = pts.length;
+            function px(k) {
+                return Math.max(0, Math.min(n - 1, k)) * step;
+            }
             function py(k) {
-                return base - Math.max(0.6, pts[k] * amp);
+                return base - Math.max(0.6, pts[Math.max(0, Math.min(n - 1, k))] * amp);
             }
             ctx.lineTo(0, base);
-            for (var k = 0; k < n - 1; k++)
-                ctx.quadraticCurveTo(k * step, py(k), (k + 0.5) * step, (py(k) + py(k + 1)) / 2);
+            ctx.lineTo(px(0), py(0));
+            for (var k = 0; k < n - 1; k++) {
+                var c1x = px(k) + (px(k + 1) - px(k - 1)) / 6;
+                var c1y = py(k) + (py(k + 1) - py(k - 1)) / 6;
+                var c2x = px(k + 1) - (px(k + 2) - px(k)) / 6;
+                var c2y = py(k + 1) - (py(k + 2) - py(k)) / 6;
+                ctx.bezierCurveTo(c1x, c1y, c2x, c2y, px(k + 1), py(k + 1));
+            }
             ctx.lineTo(width, base);
         }
 

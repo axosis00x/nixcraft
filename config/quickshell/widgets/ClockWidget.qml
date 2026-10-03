@@ -48,7 +48,7 @@ Item {
         radius: Palette.Theme.radiusExtraLarge
         color: Qt.alpha(Palette.Theme.surfaceContainer, 0.8)
         border.width: 1
-        border.color: Qt.alpha(Palette.Theme.outlineVariant, 0.6)
+        border.color: Palette.Theme.outlineSoft
 
         layer.enabled: true
         layer.effect: MultiEffect {

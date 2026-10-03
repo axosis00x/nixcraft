@@ -97,7 +97,10 @@ QtObject {
 
     // Derived roles. Bindings, so they follow palette changes live.
     readonly property color accentTonal: Qt.alpha(accent, stateSelected)
-    readonly property color outlineSoft: Qt.alpha(outlineVariant, 0.6)
+    // Scales the outline's own alpha rather than replacing it (Qt.alpha
+    // sets alpha), so themes with already-translucent outlines stay subtle.
+    readonly property color outlineColor: outlineVariant
+    readonly property color outlineSoft: Qt.rgba(outlineColor.r, outlineColor.g, outlineColor.b, outlineColor.a * 0.6)
     readonly property color surfaceSolid: Qt.alpha(bg, 1)
 
     function apply(values) {

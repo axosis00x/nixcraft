@@ -188,7 +188,26 @@ Item {
             if (wins[i].activated)
                 current = i;
         }
-        wins[(current + 1) % wins.length].activate();
+        focusWithoutWarp(wins[(current + 1) % wins.length]);
+    }
+
+    // Toplevel.activate() lets Hyprland warp the pointer to the window's
+    // center (and switch workspace), yanking it off the dock — which then
+    // auto-hides. Focus through Hyprland with warping suppressed for just
+    // this one dispatch, so the pointer stays put and cursor:no_warps keeps
+    // whatever value the config set for everything else.
+    function focusWithoutWarp(toplevel) {
+        var hy = Hyprland.toplevels.values.find(t => t.wayland === toplevel);
+        if (!hy) {
+            toplevel.activate();
+            return;
+        }
+        var addr = hy.address.indexOf("0x") === 0 ? hy.address : "0x" + hy.address;
+        focusProcess.exec(["hyprctl", "eval", "local w = hl.get_config('cursor.no_warps') " + "hl.config({ cursor = { no_warps = true } }) " + "hl.dispatch(hl.dsp.focus({ window = 'address:" + addr + "' })) " + "hl.config({ cursor = { no_warps = w } })"]);
+    }
+
+    Process {
+        id: focusProcess
     }
 
     function closeMenu() {

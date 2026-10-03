@@ -10,6 +10,9 @@ Item {
     property color iconColor: Palette.Theme.textSecondary
     property color stateColor: Palette.Theme.textPrimary
     property int iconSize: Palette.Theme.iconSize
+    // Hover/press shape; a circle by default. Inside a container, set it to
+    // the container's radius minus the inset so the corners stay concentric.
+    property real stateRadius: width / 2
     signal clicked
 
     implicitWidth: Palette.Theme.iconButtonSize
@@ -25,7 +28,7 @@ Item {
     }
 
     StateLayer {
-        radius: width / 2
+        radius: root.stateRadius
         tone: root.stateColor
         hovered: root.enabled && hover.containsMouse
         pressed: root.enabled && hover.pressed

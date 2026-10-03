@@ -504,11 +504,16 @@ PanelWindow {
             anchors.right: powerCapsule.left
             anchors.rightMargin: 6
             anchors.verticalCenter: parent.verticalCenter
-            implicitWidth: rightRow.implicitWidth + 14
+            // The settings button sits flush in the capsule's end with an
+            // even inset on its three outer sides.
+            readonly property real buttonInset: 3
+            implicitWidth: rightRow.implicitWidth + 10 + buttonInset
 
             RowLayout {
                 id: rightRow
-                anchors.centerIn: parent
+                anchors.left: parent.left
+                anchors.leftMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
                 spacing: 8
 
                 Tray {
@@ -522,8 +527,9 @@ PanelWindow {
 
                 IconButton {
                     icon: "\ue8b8"
-                    implicitWidth: 26
-                    implicitHeight: 34
+                    implicitWidth: rightCapsule.height - rightCapsule.buttonInset * 2
+                    implicitHeight: implicitWidth
+                    stateRadius: rightCapsule.radius - rightCapsule.buttonInset
                     Layout.alignment: Qt.AlignVCenter
                     onClicked: {
                         Quickshell.execDetached(["quickshell", "ipc", "call", "settings", "toggle"]);
@@ -729,11 +735,16 @@ PanelWindow {
             anchors.bottomMargin: 10
             anchors.horizontalCenter: parent.horizontalCenter
             implicitWidth: parent.width
-            implicitHeight: toolColumnV.implicitHeight + 14
+            // The settings button sits flush in the capsule's end with an
+            // even inset on its three outer sides.
+            readonly property real buttonInset: 3
+            implicitHeight: toolColumnV.implicitHeight + 10 + buttonInset
 
             ColumnLayout {
                 id: toolColumnV
-                anchors.centerIn: parent
+                anchors.top: parent.top
+                anchors.topMargin: 10
+                anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 8
 
                 Tray {
@@ -749,8 +760,9 @@ PanelWindow {
 
                 IconButton {
                     icon: "\ue8b8"
-                    implicitWidth: 26
-                    implicitHeight: 26
+                    implicitWidth: toolCapsuleV.width - toolCapsuleV.buttonInset * 2
+                    implicitHeight: implicitWidth
+                    stateRadius: toolCapsuleV.radius - toolCapsuleV.buttonInset
                     Layout.alignment: Qt.AlignHCenter
                     onClicked: {
                         Quickshell.execDetached(["quickshell", "ipc", "call", "settings", "toggle"]);

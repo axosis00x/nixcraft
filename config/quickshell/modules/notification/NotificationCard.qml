@@ -51,7 +51,7 @@ Surface {
     // than freezing at whatever it read on first render.
     Timer {
         interval: 30000
-        running: card.notification && card.notification.receivedAt
+        running: !!(card.notification && card.notification.receivedAt)
         repeat: true
         triggeredOnStart: false
         onTriggered: timeAgoText.text = card.timeAgo(card.notification.receivedAt)

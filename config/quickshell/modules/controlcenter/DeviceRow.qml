@@ -16,21 +16,11 @@ Item {
     property string actionLabel: ""
     signal actionClicked
 
+    // The list draws one gliding hover highlight behind its rows.
+    readonly property bool hovered: rowMouse.containsMouse
+
     implicitWidth: 1
     implicitHeight: 46
-
-    Rectangle {
-        anchors.fill: parent
-        radius: 12
-        color: rowMouse.containsMouse ? Palette.Theme.surfaceContainerHigh : "transparent"
-        border.width: 0
-
-        Behavior on color {
-            ColorAnimation {
-                duration: 120
-            }
-        }
-    }
 
     RowLayout {
         anchors.fill: parent
@@ -62,7 +52,7 @@ Item {
                 text: root.iconGlyph
                 color: root.active ? Palette.Theme.accent : Palette.Theme.textSecondary
                 font.family: Palette.Theme.fontIcons
-                font.pixelSize: 18
+                font.pixelSize: Palette.Theme.iconSize
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
             }
@@ -77,7 +67,7 @@ Item {
                 text: root.title
                 color: Palette.Theme.textPrimary
                 font.family: Palette.Theme.fontSans
-                font.pixelSize: 13
+                font.pixelSize: Palette.Theme.fontSizeBody
                 font.weight: Font.Medium
                 elide: Text.ElideRight
                 Layout.fillWidth: true
@@ -87,7 +77,7 @@ Item {
                 text: root.subtitle
                 color: Palette.Theme.textMuted
                 font.family: Palette.Theme.fontSans
-                font.pixelSize: 11
+                font.pixelSize: Palette.Theme.fontSizeXs
                 elide: Text.ElideRight
                 Layout.fillWidth: true
                 visible: text !== ""

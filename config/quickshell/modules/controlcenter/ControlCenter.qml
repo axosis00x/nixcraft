@@ -516,14 +516,6 @@ Item {
         return "\ue8d4";
     }
 
-    function powerProfileColor() {
-        if (root.powerProfile === "power-saver")
-            return Palette.Theme.success;
-        if (root.powerProfile === "performance")
-            return "#ef5350";
-        return Palette.Theme.surfaceContainer;
-    }
-
     // Each power profile gets its own silhouette, not just a color swap —
     // power-saver is a calm full circle, performance is a sharp-cornered
     // square, balanced sits in between as a plain rounded square.
@@ -870,17 +862,14 @@ Item {
                 enabled: !root.showingDetail
 
                 Behavior on opacity {
-                    NumberAnimation {
-                        duration: 190
-                        easing.type: Easing.OutCubic
+                    EffectMotion {
+                        fast: false
                     }
                 }
 
                 Behavior on scale {
-                    NumberAnimation {
-                        duration: 340
-                        easing.type: Easing.OutBack
-                        easing.overshoot: 1.8
+                    SpatialMotion {
+                        bouncy: true
                     }
                 }
 
@@ -900,16 +889,10 @@ Item {
                             Layout.fillWidth: true
                             spacing: 10
 
-                            QuickTile {
+                            Tile {
                                 Layout.fillWidth: true
-                                Layout.minimumHeight: 68
-                                Layout.preferredHeight: 68
-                                Layout.maximumHeight: 68
-                                compact: true
-                                shapeRadius: 22
-                                accentColor: Palette.Theme.accent
-                                iconGlyph: root.networkIcon()
-                                iconSize: 20
+                                Layout.preferredHeight: 64
+                                icon: root.networkIcon()
                                 title: "Network"
                                 subtitle: root.networkSubtitle()
                                 active: root.networkActive()
@@ -917,16 +900,10 @@ Item {
                                 onRightClicked: root.openWifiList()
                             }
 
-                            QuickTile {
+                            Tile {
                                 Layout.fillWidth: true
-                                Layout.minimumHeight: 68
-                                Layout.preferredHeight: 68
-                                Layout.maximumHeight: 68
-                                compact: true
-                                shapeRadius: 22
-                                accentColor: Palette.Theme.accent
-                                iconGlyph: root.bluetoothIcon()
-                                iconSize: 20
+                                Layout.preferredHeight: 64
+                                icon: root.bluetoothIcon()
                                 title: "Bluetooth"
                                 subtitle: root.bluetoothSubtitle()
                                 active: root.bluetoothLoaded && root.bluetoothEnabled
@@ -942,7 +919,7 @@ Item {
                             Surface {
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: slidersInner.implicitHeight + 20
-                                radius: 14
+                                radius: Palette.Theme.radiusMedium
                                 color: Palette.Theme.surfaceContainerLow
                                 tintOpacity: 0.025
 
@@ -955,7 +932,6 @@ Item {
                                     ControlSlider {
                                         Layout.fillWidth: true
                                         iconGlyph: root.volumeIcon()
-                                        accentColor: Palette.Theme.accent
                                         value: root.volumeValue
                                         onIconClicked: root.toggleMute()
                                         onIconRightClicked: root.openWiremix()
@@ -965,7 +941,6 @@ Item {
                                     ControlSlider {
                                         Layout.fillWidth: true
                                         iconGlyph: root.brightnessIcon()
-                                        accentColor: Palette.Theme.accent
                                         value: root.brightnessValue
                                         onValueRequested: value => root.setBrightness(value)
                                     }
@@ -973,7 +948,6 @@ Item {
                                     ControlSlider {
                                         Layout.fillWidth: true
                                         iconGlyph: root.micIcon()
-                                        accentColor: Palette.Theme.accent
                                         value: root.micValue
                                         onIconClicked: root.toggleMicMute()
                                         onValueRequested: value => root.setMic(value)
@@ -984,7 +958,7 @@ Item {
                             Surface {
                                 Layout.preferredHeight: slidersInner.implicitHeight + 20
                                 Layout.preferredWidth: slidersInner.implicitHeight + 20
-                                radius: 14
+                                radius: Palette.Theme.radiusMedium
                                 color: Palette.Theme.surfaceContainerLow
                                 tintOpacity: 0.025
 
@@ -996,47 +970,46 @@ Item {
                                     columnSpacing: 10
                                     rowSpacing: 10
 
-                                    QuickTile {
+                                    Tile {
                                         Layout.fillWidth: true
                                         Layout.fillHeight: true
                                         iconOnly: true
-                                        accentColor: Palette.Theme.accent
-                                        iconGlyph: root.hyprsunsetIcon()
+                                        icon: root.hyprsunsetIcon()
                                         title: "Night"
+                                        tint: Palette.Theme.secondaryText
                                         active: root.hyprsunsetEnabled
                                         onClicked: root.toggleHyprsunset()
                                     }
 
-                                    QuickTile {
+                                    Tile {
                                         Layout.fillWidth: true
                                         Layout.fillHeight: true
                                         iconOnly: true
-                                        accentColor: "#4a90e2"
-                                        iconGlyph: root.gameModeIcon()
+                                        icon: root.gameModeIcon()
                                         title: "Game Mode"
+                                        tint: Palette.Theme.info
                                         active: root.dndEnabled
                                         onClicked: root.toggleDnd()
                                     }
 
-                                    QuickTile {
+                                    Tile {
                                         Layout.fillWidth: true
                                         Layout.fillHeight: true
                                         iconOnly: true
-                                        accentColor: Palette.Theme.success
-                                        iconGlyph: root.keepAwakeIcon()
+                                        icon: root.keepAwakeIcon()
                                         title: "Keep Awake"
+                                        tint: Palette.Theme.success
                                         active: root.keepAwake
                                         onClicked: root.toggleKeepAwake()
                                     }
 
-                                    QuickTile {
+                                    Tile {
                                         Layout.fillWidth: true
                                         Layout.fillHeight: true
                                         iconOnly: true
-                                        accentColor: root.powerProfileColor()
-                                        activeIconColor: root.powerProfile === "balanced" ? "#ffffff" : "#000000"
-                                        iconGlyph: root.powerIcon()
+                                        icon: root.powerIcon()
                                         title: "Power"
+                                        tint: Palette.Theme.warning
                                         active: root.powerProfileLoaded
                                         shapeRadius: root.powerProfileShapeRadius()
                                         pulseKey: root.powerProfile
@@ -1056,7 +1029,7 @@ Item {
                             text: "Notifications"
                             color: Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontSans
-                            font.pixelSize: 13
+                            font.pixelSize: Palette.Theme.fontSizeBody
                             font.weight: Font.DemiBold
                             Layout.alignment: Qt.AlignVCenter
                         }
@@ -1085,7 +1058,7 @@ Item {
                             text: "No notifications"
                             color: Palette.Theme.textMuted
                             font.family: Palette.Theme.fontMono
-                            font.pixelSize: 12
+                            font.pixelSize: Palette.Theme.fontSizeSmall
                             visible: root.notificationCount === 0
                         }
 
@@ -1119,17 +1092,14 @@ Item {
                 enabled: root.showingDetail
 
                 Behavior on opacity {
-                    NumberAnimation {
-                        duration: 210
-                        easing.type: Easing.OutCubic
+                    EffectMotion {
+                        fast: false
                     }
                 }
 
                 Behavior on scale {
-                    NumberAnimation {
-                        duration: 360
-                        easing.type: Easing.OutBack
-                        easing.overshoot: 1.8
+                    SpatialMotion {
+                        bouncy: true
                     }
                 }
 
@@ -1152,7 +1122,7 @@ Item {
                             text: root.detailMode === "wifi" ? "Wi-Fi" : "Bluetooth"
                             color: Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontSans
-                            font.pixelSize: 13
+                            font.pixelSize: Palette.Theme.fontSizeBody
                             font.weight: Font.DemiBold
                         }
 
@@ -1181,7 +1151,7 @@ Item {
                             text: root.detailMode === "wifi" ? (root.wifiScanning ? "Scanning…" : "No networks") : (root.bluetoothScanning ? "Scanning…" : "No devices")
                             color: Palette.Theme.textMuted
                             font.family: Palette.Theme.fontSans
-                            font.pixelSize: 12
+                            font.pixelSize: Palette.Theme.fontSizeSmall
                             visible: detailList.count === 0
                         }
 
@@ -1194,6 +1164,17 @@ Item {
                             model: root.detailMode === "wifi" ? wifiNetworkModel : bluetoothDeviceModel
                             reuseItems: true
                             cacheBuffer: 240
+                            currentIndex: -1
+
+                            HoverHandler {
+                                id: detailHover
+                            }
+
+                            highlightFollowsCurrentItem: false
+                            highlight: MovingHighlight {
+                                target: detailHover.hovered ? detailList.currentItem : null
+                                radius: Palette.Theme.radiusSmall
+                            }
 
                             section.property: "sectionLabel"
                             section.criteria: ViewSection.FullString
@@ -1202,7 +1183,7 @@ Item {
                                 text: section
                                 color: Palette.Theme.textMuted
                                 font.family: Palette.Theme.fontMono
-                                font.pixelSize: 10
+                                font.pixelSize: Palette.Theme.fontSizeXs
                                 font.weight: Font.DemiBold
                                 topPadding: 10
                                 bottomPadding: 4
@@ -1211,8 +1192,11 @@ Item {
 
                             delegate: DeviceRow {
                                 required property var modelData
+                                required property int index
 
                                 width: ListView.view.width
+                                onHoveredChanged: if (hovered)
+                                    ListView.view.currentIndex = index
                                 iconGlyph: root.detailMode === "wifi" ? root.wifiIcon() : root.bluetoothIcon()
                                 title: root.detailMode === "wifi" ? modelData.ssid : modelData.name
                                 subtitle: root.detailMode === "wifi" ? (modelData.security + "  " + modelData.signal + "%") : modelData.address
@@ -1247,7 +1231,7 @@ Item {
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: 18
+                        radius: Palette.Theme.radiusLarge
                         color: Qt.rgba(0, 0, 0, 0.55)
                     }
 
@@ -1260,7 +1244,7 @@ Item {
                         anchors.centerIn: parent
                         width: Math.min(240, parent.width - 32)
                         implicitHeight: authColumn.implicitHeight + 28
-                        radius: 16
+                        radius: Palette.Theme.radiusMedium
                         color: Palette.Theme.surfaceContainerHigh
                         outlineWidth: 0
 
@@ -1289,9 +1273,9 @@ Item {
                                     Text {
                                         anchors.centerIn: parent
                                         text: ""
-                                        color: Palette.Theme.info
+                                        color: Palette.Theme.accent
                                         font.family: Palette.Theme.fontIcons
-                                        font.pixelSize: 15
+                                        font.pixelSize: Palette.Theme.iconSizeSmall
                                     }
                                 }
 
@@ -1299,7 +1283,7 @@ Item {
                                     text: "Authentication required"
                                     color: Palette.Theme.textPrimary
                                     font.family: Palette.Theme.fontMono
-                                    font.pixelSize: 12
+                                    font.pixelSize: Palette.Theme.fontSizeSmall
                                     font.weight: Font.DemiBold
                                     elide: Text.ElideRight
                                     Layout.fillWidth: true
@@ -1310,7 +1294,7 @@ Item {
                                 text: "Enter the password for \"" + root.wifiAuthSsid + "\""
                                 color: Palette.Theme.textMuted
                                 font.family: Palette.Theme.fontMono
-                                font.pixelSize: 10
+                                font.pixelSize: Palette.Theme.fontSizeXs
                                 wrapMode: Text.WordWrap
                                 Layout.fillWidth: true
                             }
@@ -1318,7 +1302,7 @@ Item {
                             Surface {
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 34
-                                radius: 10
+                                radius: Palette.Theme.radiusSmall
                                 color: authPasswordInput.activeFocus ? Palette.Theme.surfaceContainerHigh : Palette.Theme.surfaceContainer
                                 outlineWidth: 0
 
@@ -1330,7 +1314,7 @@ Item {
                                     echoMode: TextInput.Password
                                     color: Palette.Theme.textPrimary
                                     font.family: Palette.Theme.fontMono
-                                    font.pixelSize: 12
+                                    font.pixelSize: Palette.Theme.fontSizeSmall
                                     selectByMouse: true
                                     readOnly: root.wifiAuthBusy
                                     focus: root.wifiAuthVisible
@@ -1346,7 +1330,7 @@ Item {
                                     text: "Password"
                                     color: Palette.Theme.textMuted
                                     font.family: Palette.Theme.fontMono
-                                    font.pixelSize: 11
+                                    font.pixelSize: Palette.Theme.fontSizeXs
                                     visible: authPasswordInput.text.length === 0
                                 }
                             }
@@ -1356,7 +1340,7 @@ Item {
                                 text: "Incorrect password. Try again."
                                 color: Palette.Theme.errorColor
                                 font.family: Palette.Theme.fontMono
-                                font.pixelSize: 10
+                                font.pixelSize: Palette.Theme.fontSizeXs
                             }
 
                             RowLayout {
@@ -1373,11 +1357,15 @@ Item {
                                     implicitHeight: 28
                                     radius: 14
                                     color: cancelMouse.containsMouse ? Palette.Theme.surfaceContainerHighest : "transparent"
-                                    scale: cancelMouse.pressed ? 0.93 : (cancelMouse.containsMouse ? 1.04 : 1.0)
+                                    scale: cancelMouse.pressed ? 0.93 : 1
                                     Behavior on scale {
-                                        NumberAnimation { duration: 140; easing.type: Easing.OutBack; easing.overshoot: 1.6 }
+                                        SpatialMotion {
+                                            fast: true
+                                        }
                                     }
-                                    Behavior on color { ColorAnimation { duration: 120 } }
+                                    Behavior on color {
+                                        ColorMotion {}
+                                    }
 
                                     Text {
                                         id: cancelText
@@ -1385,7 +1373,7 @@ Item {
                                         text: "Cancel"
                                         color: Palette.Theme.textSecondary
                                         font.family: Palette.Theme.fontSans
-                                        font.pixelSize: 12
+                                        font.pixelSize: Palette.Theme.fontSizeSmall
                                         font.weight: Font.Medium
                                     }
 
@@ -1404,11 +1392,15 @@ Item {
                                     radius: 14
                                     color: Palette.Theme.accent
                                     opacity: authPasswordInput.text.length > 0 ? 1 : 0.4
-                                    scale: authPasswordInput.text.length > 0 && connectMouse.pressed ? 0.93 : (authPasswordInput.text.length > 0 && connectMouse.containsMouse ? 1.04 : 1.0)
+                                    scale: authPasswordInput.text.length > 0 && connectMouse.pressed ? 0.93 : 1
                                     Behavior on scale {
-                                        NumberAnimation { duration: 140; easing.type: Easing.OutBack; easing.overshoot: 1.6 }
+                                        SpatialMotion {
+                                            fast: true
+                                        }
                                     }
-                                    Behavior on opacity { NumberAnimation { duration: 120 } }
+                                    Behavior on opacity {
+                                        EffectMotion {}
+                                    }
 
                                     Text {
                                         id: connectText
@@ -1416,7 +1408,7 @@ Item {
                                         text: root.wifiAuthBusy ? "Connecting…" : "Connect"
                                         color: Palette.Theme.accentText
                                         font.family: Palette.Theme.fontSans
-                                        font.pixelSize: 12
+                                        font.pixelSize: Palette.Theme.fontSizeSmall
                                         font.weight: Font.DemiBold
                                     }
 

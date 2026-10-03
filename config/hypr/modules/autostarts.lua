@@ -4,6 +4,7 @@
 
 hl.on("hyprland.start", function()
     hl.exec_cmd("awww-daemon & awww img ~/Pictures/wallpapers/night.png")
+    hl.exec_cmd("~/.config/quickshell/scripts/live-wallpaper.sh restore")
     hl.exec_cmd("nm-applet &")
     hl.exec_cmd("hyprsunset")
     hl.exec_cmd("qs & disown")

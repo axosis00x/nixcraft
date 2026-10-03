@@ -1,10 +1,11 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import "../theme" as Palette
 
-// Material 3 Expressive desktop weather widget: a pill/stadium chip holding
-// the current temperature and condition glyph, sourced from
-// services/WeatherService.qml.
+// Desktop weather widget: a pill holding the current temperature and
+// condition glyph, sourced from services/WeatherService.qml. Shares the
+// clock widget's translucent card styling so the pair reads as one set.
 Item {
     id: root
 
@@ -31,28 +32,20 @@ Item {
     x: widgetsService && widgetsService.hasPosition(widgetId) ? widgetsService.positionX(widgetId) : defaultX
     y: widgetsService && widgetsService.hasPosition(widgetId) ? widgetsService.positionY(widgetId) : defaultY
 
-    // Idle "breathing" pulse — Material 3 Expressive's continuous, gentle
-    // motion rather than a perfectly static shape. Slightly out of phase
-    // with the clock widget's own pulse so the pair doesn't beat in unison.
-    transformOrigin: Item.Center
-    SequentialAnimation on scale {
-        loops: Animation.Infinite
-        NumberAnimation {
-            to: 1.025
-            duration: 2800
-            easing.type: Easing.InOutSine
-        }
-        NumberAnimation {
-            to: 1.0
-            duration: 2800
-            easing.type: Easing.InOutSine
-        }
-    }
-
     Rectangle {
         anchors.fill: parent
         radius: height / 2
-        color: Palette.Theme.secondaryContainer
+        color: Qt.alpha(Palette.Theme.surfaceContainer, 0.8)
+        border.width: 1
+        border.color: Qt.alpha(Palette.Theme.outlineVariant, 0.6)
+
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Qt.rgba(0, 0, 0, 0.45)
+            shadowBlur: 0.8
+            shadowVerticalOffset: 4
+        }
     }
 
     RowLayout {
@@ -64,15 +57,15 @@ Item {
             implicitWidth: 40
             implicitHeight: 40
             radius: 20
-            color: Palette.Theme.surfaceContainerHighest
+            color: Qt.alpha(Palette.Theme.accent, 0.18)
             Layout.alignment: Qt.AlignVCenter
 
             Text {
                 anchors.centerIn: parent
                 text: root.glyph
-                color: Palette.Theme.textPrimary
+                color: Palette.Theme.accent
                 font.family: Palette.Theme.fontIcons
-                font.pixelSize: 22
+                font.pixelSize: Palette.Theme.iconSizeLarge
             }
         }
 
@@ -81,7 +74,7 @@ Item {
             text: root.tempC + "°"
             color: Palette.Theme.textPrimary
             font.family: Palette.Theme.fontMono
-            font.pixelSize: 28
+            font.pixelSize: Palette.Theme.fontSizeDisplay
             font.weight: Font.Bold
         }
     }

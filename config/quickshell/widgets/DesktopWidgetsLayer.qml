@@ -3,7 +3,7 @@ import Quickshell.Wayland
 import QtQuick
 import "../services"
 
-// Hosts the desktop widgets (clock, weather) on the wlr background layer —
+// Hosts the desktop widgets (clock, weather, audio wave) on the wlr background layer —
 // below normal windows, above the wallpaper — so they read as part of the
 // desktop rather than another panel. Covers the whole screen so each widget
 // can be dragged anywhere on it; the input mask is carved down to just the
@@ -16,6 +16,7 @@ PanelWindow {
 
     readonly property bool clockOn: widgetsService ? widgetsService.isEnabled("clock") : true
     readonly property bool weatherOn: widgetsService ? widgetsService.isEnabled("weather") : true
+    readonly property bool cavaOn: widgetsService ? widgetsService.isEnabled("cava") : true
 
     // Default corner spot (bottom-right, clock stacked above weather,
     // centered on each other) used until a widget has been dragged.
@@ -36,7 +37,7 @@ PanelWindow {
     WlrLayershell.namespace: "quickshell:desktop-widgets"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
-    visible: root.clockOn || root.weatherOn
+    visible: root.clockOn || root.weatherOn || root.cavaOn
 
     mask: Region {
         Region {
@@ -51,6 +52,13 @@ PanelWindow {
             y: weatherWidget.y
             width: weatherWidget.width
             height: weatherWidget.height
+            intersection: Intersection.Combine
+        }
+        Region {
+            x: cavaWidget.x
+            y: cavaWidget.y
+            width: cavaWidget.width
+            height: cavaWidget.height
             intersection: Intersection.Combine
         }
     }
@@ -77,5 +85,14 @@ PanelWindow {
         visible: root.weatherOn
         defaultX: root.width - root.margin - 148
         defaultY: root.height - root.margin - 76
+    }
+
+    // Bottom-left corner until dragged.
+    CavaWaveWidget {
+        id: cavaWidget
+        widgetsService: root.widgetsService
+        visible: root.cavaOn
+        defaultX: root.margin
+        defaultY: root.height - root.margin - cavaWidget.implicitHeight
     }
 }

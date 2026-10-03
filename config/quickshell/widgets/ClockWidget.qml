@@ -4,9 +4,8 @@ import QtQuick.Layouts
 import QtQuick.Effects
 import "../theme" as Palette
 
-// Immersive desktop clock: bold text sitting straight on the wallpaper —
-// no dial, no badges, no background shape. A soft drop shadow is the only
-// thing keeping it readable over busy wallpaper content.
+// Desktop clock on a translucent theme-colored card, so it stays readable
+// regardless of how bright or busy the wallpaper behind it is.
 Item {
     id: root
 
@@ -15,8 +14,8 @@ Item {
     property real defaultX: 0
     property real defaultY: 0
 
-    implicitWidth: mainColumn.implicitWidth
-    implicitHeight: mainColumn.implicitHeight
+    implicitWidth: mainColumn.implicitWidth + 56
+    implicitHeight: mainColumn.implicitHeight + 32
     width: implicitWidth
     height: implicitHeight
 
@@ -43,36 +42,60 @@ Item {
         return n < 10 ? "0" + n : "" + n;
     }
 
-    ColumnLayout {
-        id: mainColumn
-        spacing: 0
+    Rectangle {
+        id: card
+        anchors.fill: parent
+        radius: Palette.Theme.radiusExtraLarge
+        color: Qt.alpha(Palette.Theme.surfaceContainer, 0.8)
+        border.width: 1
+        border.color: Qt.alpha(Palette.Theme.outlineVariant, 0.6)
 
         layer.enabled: true
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 0.55)
-            shadowBlur: 0.7
-            shadowVerticalOffset: 2
+            shadowColor: Qt.rgba(0, 0, 0, 0.45)
+            shadowBlur: 0.8
+            shadowVerticalOffset: 4
+        }
+    }
+
+    ColumnLayout {
+        id: mainColumn
+        anchors.centerIn: parent
+        spacing: 2
+
+        RowLayout {
+            Layout.alignment: Qt.AlignHCenter
+            spacing: 4
+
+            Text {
+                Layout.alignment: Qt.AlignBaseline
+                text: root.pad(root.hours12) + ":" + root.pad(root.minutes)
+                color: Palette.Theme.textPrimary
+                font.family: Palette.Theme.fontMono
+                font.pixelSize: 56
+                font.weight: Font.Bold
+                font.letterSpacing: -1
+            }
+
+            Text {
+                Layout.alignment: Qt.AlignBaseline
+                text: root.pad(root.seconds)
+                color: Palette.Theme.accent
+                font.family: Palette.Theme.fontMono
+                font.pixelSize: 18
+                font.weight: Font.DemiBold
+            }
         }
 
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: root.pad(root.hours12) + ":" + root.pad(root.minutes)
-            color: Palette.Theme.textPrimary
-            font.family: Palette.Theme.fontMono
-            font.pixelSize: 64
-            font.weight: Font.Black
-            font.letterSpacing: -1
-        }
-
-        Text {
-            Layout.alignment: Qt.AlignHCenter
-            text: root.weekdayNames[clock.date.getDay()] + " " + root.dayOfMonth + " " + root.monthNames[clock.date.getMonth()] + "  ·  " + root.pad(root.seconds)
+            text: root.weekdayNames[clock.date.getDay()] + ", " + root.dayOfMonth + " " + root.monthNames[clock.date.getMonth()]
             color: Palette.Theme.textSecondary
-            font.family: Palette.Theme.fontMono
-            font.pixelSize: 13
-            font.weight: Font.DemiBold
-            font.letterSpacing: 2
+            font.family: Palette.Theme.fontSans
+            font.pixelSize: Palette.Theme.fontSizeBody
+            font.weight: Font.Medium
+            font.letterSpacing: 1.5
             font.capitalization: Font.AllUppercase
         }
     }

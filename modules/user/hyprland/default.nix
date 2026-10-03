@@ -22,7 +22,6 @@ in
       playerctl
       polkit_gnome
       awww
-      mpvpaper
       wiremix
       grim
       slurp

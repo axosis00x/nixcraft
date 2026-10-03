@@ -200,7 +200,7 @@ Item {
     Process {
         id: listProcess
 
-        command: ["find", root.wallpaperDir, "-maxdepth", "1", "-type", "f", "(", "-iname", "*.png", "-o", "-iname", "*.jpg", "-o", "-iname", "*.jpeg", "-o", "-iname", "*.webp", "-o", "-iname", "*.gif", "-o", "-iname", "*.mp4", "-o", "-iname", "*.webm", "-o", "-iname", "*.mkv", "-o", "-iname", "*.mov", ")"]
+        command: ["find", root.wallpaperDir, "-maxdepth", "1", "-type", "f", "(", "-iname", "*.png", "-o", "-iname", "*.jpg", "-o", "-iname", "*.jpeg", "-o", "-iname", "*.webp", "-o", "-iname", "*.gif", ")"]
 
         stdout: StdioCollector {
             onStreamFinished: {
@@ -208,9 +208,6 @@ Item {
 
                 root.wallpapers = files.sort();
                 root.applyFilter();
-                var videos = root.wallpapers.filter(path => root.isVideo(path));
-                if (videos.length > 0)
-                    thumbProcess.exec([root.liveScript, "thumbs"].concat(videos));
                 if (root.cyclePending) {
                     root.cyclePending = false;
                     root.chooseRandomWallpaper();
@@ -236,36 +233,6 @@ Item {
         }
     }
 
-    // ── live wallpapers ─────────────────────────────────────────────
-    // awww animates GIFs natively; videos play through mpvpaper via
-    // scripts/live-wallpaper.sh, which also makes their previews.
-    readonly property string liveScript: Quickshell.env("HOME") + "/.config/quickshell/scripts/live-wallpaper.sh"
-    readonly property string liveCache: Quickshell.env("HOME") + "/.cache/quickshell/wallpicker/"
-    // Bumped when new video thumbnails land, so their tiles reload.
-    property int thumbRev: 0
-
-    function isVideo(path) {
-        return /\.(mp4|webm|mkv|mov)$/i.test(path);
-    }
-    function isGif(path) {
-        return /\.gif$/i.test(path);
-    }
-    function isLive(path) {
-        return isVideo(path) || isGif(path);
-    }
-    function previewFor(path) {
-        return isVideo(path) ? "file://" + liveCache + Qt.md5(path) + ".jpg?" + thumbRev : "file://" + path;
-    }
-
-    Process {
-        id: thumbProcess
-        onExited: root.thumbRev++
-    }
-
-    Process {
-        id: videoProcess
-    }
-
     function refresh() {
         activeThemeProcess.running = true;
         refreshCurrent();
@@ -278,7 +245,7 @@ Item {
 
     Process {
         id: currentWallpaperProcess
-        command: ["sh", "-c", root.liveScript + " current || find ~/.cache/awww -type f 2>/dev/null | head -1 | xargs cat 2>/dev/null | tr '\\0' '\\n' | grep '^/' | tail -1"]
+        command: ["sh", "-c", "find ~/.cache/awww -type f 2>/dev/null | head -1 | xargs cat 2>/dev/null | tr '\\0' '\\n' | grep '^/' | tail -1"]
 
         stdout: StdioCollector {
             onStreamFinished: {
@@ -297,13 +264,6 @@ Item {
 
     function setWallpaper(path) {
         root.currentWallpaper = path;
-        if (isVideo(path)) {
-            videoProcess.exec([root.liveScript, "video", path]);
-            // Dynamic theme takes its palette from the video's thumbnail.
-            if (root.activeTheme === "dynamic" && root.themeService)
-                root.themeService.apply("dynamic", root.liveCache + Qt.md5(path) + ".jpg");
-            return;
-        }
 
         // The dynamic theme's whole palette is derived from its wallpaper,
         // so picking a new one has to go through wallust (via apply-theme.sh)
@@ -313,7 +273,7 @@ Item {
             return;
         }
 
-        setWallpaperProcess.command = ["sh", "-c", "\"$0\" stop; exec \"$@\"", root.liveScript, "awww", "img", path, "--transition-type", "any", "--transition-duration", "0.7", "--transition-fps", "60"];
+        setWallpaperProcess.command = ["awww", "img", path, "--transition-type", "any", "--transition-duration", "0.7", "--transition-fps", "60"];
 
         setWallpaperProcess.running = true;
     }
@@ -492,7 +452,7 @@ Item {
                             width: tile.width + Math.abs(panel.skewFactor) * tile.height + 4
                             height: tile.height
                             anchors.centerIn: parent
-                            source: tile.ao <= 6 ? root.previewFor(tile.modelData) : ""
+                            source: tile.ao <= 6 ? ("file://" + tile.modelData) : ""
                             sourceSize.width: 512
                             sourceSize.height: 220
                             fillMode: Image.PreserveAspectCrop
@@ -502,49 +462,6 @@ Item {
 
                             transform: Matrix4x4 {
                                 matrix: Qt.matrix4x4(1, -panel.skewFactor, 0, panel.skewFactor * tile.height / 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
-                            }
-                        }
-
-                        // Only the focused GIF actually plays, so a strip full
-                        // of live wallpapers doesn't decode them all at once.
-                        AnimatedImage {
-                            width: tile.width + Math.abs(panel.skewFactor) * tile.height + 4
-                            height: tile.height
-                            anchors.centerIn: parent
-                            readonly property bool live: !!(tile.focused && root.visible && root.isGif(tile.modelData))
-                            visible: live && status === AnimatedImage.Ready
-                            playing: live
-                            source: live ? "file://" + tile.modelData : ""
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            smooth: true
-                            cache: false
-
-                            transform: Matrix4x4 {
-                                matrix: Qt.matrix4x4(1, -panel.skewFactor, 0, panel.skewFactor * tile.height / 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
-                            }
-                        }
-
-                        // "LIVE" chip on animated and video wallpapers.
-                        Rectangle {
-                            visible: root.isLive(tile.modelData)
-                            anchors.left: parent.left
-                            anchors.top: parent.top
-                            anchors.margins: 6 * root.s
-                            z: 2
-                            width: liveLabel.implicitWidth + 10 * root.s
-                            height: 16 * root.s
-                            radius: height / 2
-                            color: Qt.rgba(0, 0, 0, 0.55)
-
-                            Text {
-                                id: liveLabel
-                                anchors.centerIn: parent
-                                text: "LIVE"
-                                color: "white"
-                                font.pixelSize: 9 * root.s
-                                font.bold: true
-                                font.letterSpacing: 0.8
                             }
                         }
 

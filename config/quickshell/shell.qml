@@ -65,6 +65,15 @@ ShellRoot {
     LockScreen {
         id: lockScreen
     }
+    // Never hot-reload while the session is locked: a reload tears down the
+    // lock surfaces mid-lock, which aborts Quickshell ("Tried to show
+    // lockscreen surfaces without active lock") and leaves Hyprland on its
+    // crashed-lockscreen screen. Edits made while locked apply on unlock.
+    Binding {
+        target: Quickshell
+        property: "watchFiles"
+        value: !lockScreen.isLocked
+    }
     IdleService {
         id: idleService
         lockScreen: lockScreen
@@ -106,7 +115,9 @@ ShellRoot {
     IpcHandler {
         target: "shell"
         function reload(): void {
-            Quickshell.reload(false);
+            // Same reason as watchFiles above.
+            if (!lockScreen.isLocked)
+                Quickshell.reload(false);
         }
     }
     // Deferred behind barLayoutService.loaded: BarLayoutService's persisted

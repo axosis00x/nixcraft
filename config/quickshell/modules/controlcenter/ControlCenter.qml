@@ -1198,9 +1198,9 @@ Item {
                                 onHoveredChanged: if (hovered)
                                     ListView.view.currentIndex = index
                                 iconGlyph: root.detailMode === "wifi" ? root.wifiIcon() : root.bluetoothIcon()
-                                title: root.detailMode === "wifi" ? modelData.ssid : modelData.name
-                                subtitle: root.detailMode === "wifi" ? (modelData.security + "  " + modelData.signal + "%") : modelData.address
-                                active: root.detailMode === "wifi" ? modelData.active : modelData.connected
+                                title: (root.detailMode === "wifi" ? modelData.ssid : modelData.name) || ""
+                                subtitle: (root.detailMode === "wifi" ? (modelData.ssid !== undefined ? modelData.security + "  " + modelData.signal + "%" : "") : modelData.address) || ""
+                                active: !!(root.detailMode === "wifi" ? modelData.active : modelData.connected)
                                 actionLabel: root.detailMode === "wifi" ? (modelData.active ? "Disconnect" : "Connect") : (modelData.connected ? "Disconnect" : "Connect")
                                 onActionClicked: {
                                     if (root.detailMode === "wifi") {

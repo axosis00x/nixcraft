@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import "../../theme" as Palette
+import "../../components/material"
 
 Item {
     id: root
@@ -38,42 +39,23 @@ Item {
                 text: root.iconGlyph
                 color: Palette.Theme.textPrimary
                 font.family: Palette.Theme.fontIcons
-                font.pixelSize: 20
+                font.pixelSize: Palette.Theme.iconSize
             }
         }
 
-        Rectangle {
+        Slider {
             Layout.fillWidth: true
-            Layout.preferredHeight: 8
-            radius: height / 2
-            color: Palette.Theme.surfaceContainerHighest
-            clip: true
             Layout.alignment: Qt.AlignVCenter
-
-            Rectangle {
-                anchors {
-                    left: parent.left
-                    top: parent.top
-                    bottom: parent.bottom
-                }
-                width: parent.width * Math.max(0, Math.min(1, root.value))
-                radius: height / 2
-                color: Palette.Theme.accent
-
-                Behavior on width {
-                    NumberAnimation {
-                        duration: 180
-                        easing.type: Easing.OutCubic
-                    }
-                }
-            }
+            interactive: false
+            trackHeight: 8
+            value: root.value
         }
 
         Text {
             text: root.label
             color: Palette.Theme.textPrimary
             font.family: Palette.Theme.fontMono
-            font.pixelSize: 12
+            font.pixelSize: Palette.Theme.fontSizeSmall
             horizontalAlignment: Text.AlignRight
             Layout.preferredWidth: 34
             Layout.alignment: Qt.AlignVCenter

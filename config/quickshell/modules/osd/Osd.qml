@@ -62,7 +62,7 @@ PanelWindow {
         anchors.bottomMargin: 72
         width: root.isMeter ? 272 : lockContent.implicitWidth + 28
         height: 42
-        radius: 12
+        radius: Palette.Theme.radiusSmall
         color: Palette.Theme.surfaceContainer
         outlineWidth: 1
         opacity: root.presented ? 1 : 0
@@ -70,10 +70,12 @@ PanelWindow {
         visible: opacity > 0
 
         Behavior on opacity {
-            NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+            EffectMotion {}
         }
         Behavior on scale {
-            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+            SpatialMotion {
+                fast: true
+            }
         }
 
         Meter {

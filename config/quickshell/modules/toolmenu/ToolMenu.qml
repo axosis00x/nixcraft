@@ -3,6 +3,7 @@ import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
 import "../../theme" as Palette
+import "../../components/material"
 
 Item {
     id: root
@@ -157,35 +158,26 @@ Item {
                     Layout.preferredWidth: 48
                     Layout.maximumWidth: 48
                     implicitHeight: 48
-                    radius: 14
-                    scale: actionMouse.pressed ? 0.90 : (actionMouse.containsMouse ? 1.08 : 1.0)
+                    radius: Palette.Theme.radiusMedium
+                    scale: actionMouse.pressed ? 0.90 : 1
                     Behavior on scale {
-                        NumberAnimation {
-                            duration: 150
-                            easing.type: Easing.OutBack
-                            easing.overshoot: 1.6
+                        SpatialMotion {
+                            fast: true
                         }
                     }
 
-                    color: index === root.selectedIndex ? Palette.Theme.accent : (actionMouse.containsMouse ? Palette.Theme.surfaceContainerHighest : Palette.Theme.surfaceContainerLow)
+                    color: index === root.selectedIndex ? Palette.Theme.accent : Palette.Theme.surfaceContainerHigh
                     border.width: 0
 
                     Behavior on color {
-                        ColorAnimation {
-                            duration: 120
-                        }
+                        ColorMotion {}
                     }
 
-                    Rectangle {
-                        anchors.fill: parent
+                    StateLayer {
                         radius: parent.radius
-                        color: index === root.selectedIndex ? "#ffffff" : Palette.Theme.accent
-                        opacity: actionMouse.pressed ? 0.18 : (actionMouse.containsMouse ? 0.08 : 0)
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: 120
-                            }
-                        }
+                        tone: index === root.selectedIndex ? Palette.Theme.accentText : Palette.Theme.textPrimary
+                        hovered: actionMouse.containsMouse
+                        pressed: actionMouse.pressed
                     }
 
                     Text {
@@ -193,7 +185,7 @@ Item {
                         text: modelData.icon
                         color: index === root.selectedIndex ? Palette.Theme.accentText : Palette.Theme.textPrimary
                         font.family: Palette.Theme.fontIcons
-                        font.pixelSize: 20
+                        font.pixelSize: Palette.Theme.iconSize
                     }
 
                     MouseArea {

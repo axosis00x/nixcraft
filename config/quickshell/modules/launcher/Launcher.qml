@@ -415,28 +415,6 @@ Item {
             width: ListView.view.width
             height: 56
 
-            Rectangle {
-                anchors {
-                    fill: parent
-                    leftMargin: 6
-                    rightMargin: 6
-                    topMargin: 2
-                    bottomMargin: 2
-                }
-                radius: 16
-                color: {
-                    if (absoluteIndex === root.selected || rowHover.containsMouse)
-                        return Palette.Theme.surfaceContainerHigh;
-                    return "transparent";
-                }
-                border.width: 0
-                Behavior on color {
-                    ColorAnimation {
-                        duration: 100
-                    }
-                }
-            }
-
             RowLayout {
                 anchors {
                     fill: parent
@@ -448,7 +426,7 @@ Item {
                 Rectangle {
                     implicitWidth: 32
                     implicitHeight: 32
-                    radius: 10
+                    radius: Palette.Theme.radiusSmall
                     color: Palette.Theme.surfaceContainerHighest
                     Layout.alignment: Qt.AlignVCenter
 
@@ -467,7 +445,7 @@ Item {
                         visible: appIcon.status !== Image.Ready
                         text: ""
                         font.family: Palette.Theme.fontIcons
-                        font.pixelSize: 18
+                        font.pixelSize: Palette.Theme.iconSize
                         color: Palette.Theme.textSecondary
                     }
                 }
@@ -482,7 +460,7 @@ Item {
                         text: (modelData && modelData.name) ? modelData.name : ""
                         color: Palette.Theme.textPrimary
                         font.family: Palette.Theme.fontSans
-                        font.pixelSize: 13
+                        font.pixelSize: Palette.Theme.fontSizeBody
                         font.weight: Font.Medium
                         elide: Text.ElideRight
                     }
@@ -493,7 +471,7 @@ Item {
                         visible: text !== ""
                         color: Palette.Theme.textMuted
                         font.family: Palette.Theme.fontSans
-                        font.pixelSize: 11
+                        font.pixelSize: Palette.Theme.fontSizeXs
                         elide: Text.ElideRight
                     }
                 }
@@ -542,28 +520,6 @@ Item {
             width: ListView.view.width
             height: 56
 
-            Rectangle {
-                anchors {
-                    fill: parent
-                    leftMargin: 6
-                    rightMargin: 6
-                    topMargin: 2
-                    bottomMargin: 2
-                }
-                radius: 16
-                color: {
-                    if (index === root.selected || commandRowHover.containsMouse)
-                        return Palette.Theme.surfaceContainerHigh;
-                    return "transparent";
-                }
-                border.width: 0
-                Behavior on color {
-                    ColorAnimation {
-                        duration: 100
-                    }
-                }
-            }
-
             RowLayout {
                 anchors {
                     fill: parent
@@ -575,7 +531,7 @@ Item {
                 Rectangle {
                     implicitWidth: 32
                     implicitHeight: 32
-                    radius: 10
+                    radius: Palette.Theme.radiusSmall
                     color: Palette.Theme.surfaceContainerHighest
                     Layout.alignment: Qt.AlignVCenter
 
@@ -583,7 +539,7 @@ Item {
                         anchors.centerIn: parent
                         text: rowIcon
                         font.family: Palette.Theme.fontIcons
-                        font.pixelSize: 18
+                        font.pixelSize: Palette.Theme.iconSize
                         color: Palette.Theme.textSecondary
                     }
                 }
@@ -598,7 +554,7 @@ Item {
                         text: rowPrimary
                         color: Palette.Theme.textPrimary
                         font.family: Palette.Theme.fontSans
-                        font.pixelSize: 13
+                        font.pixelSize: Palette.Theme.fontSizeBody
                         font.weight: Font.Medium
                         elide: Text.ElideRight
                     }
@@ -609,7 +565,7 @@ Item {
                         visible: text !== ""
                         color: Palette.Theme.textMuted
                         font.family: Palette.Theme.fontSans
-                        font.pixelSize: 11
+                        font.pixelSize: Palette.Theme.fontSizeXs
                         elide: Text.ElideRight
                     }
                 }
@@ -702,7 +658,7 @@ Item {
                         topMargin: 10
                         bottomMargin: 8
                     }
-                    radius: 16
+                    radius: Palette.Theme.radiusMedium
                     color: Palette.Theme.surfaceContainerHigh
                     border.width: 0
                 }
@@ -721,7 +677,7 @@ Item {
                     Text {
                         text: ""
                         font.family: Palette.Theme.fontIcons
-                        font.pixelSize: 18
+                        font.pixelSize: Palette.Theme.iconSize
                         color: Palette.Theme.textMuted
                         Layout.alignment: Qt.AlignVCenter
                     }
@@ -733,7 +689,7 @@ Item {
                         Layout.alignment: Qt.AlignVCenter
                         Keys.priority: Keys.BeforeItem
                         font.family: Palette.Theme.fontMono
-                        font.pixelSize: 13
+                        font.pixelSize: Palette.Theme.fontSizeBody
                         color: Palette.Theme.textPrimary
                         selectionColor: Palette.Theme.accent + "44"
                         clip: true
@@ -769,9 +725,7 @@ Item {
                         }
 
                         Behavior on opacity {
-                            NumberAnimation {
-                                duration: 120
-                            }
+                            EffectMotion {}
                         }
                     }
                 }
@@ -791,7 +745,7 @@ Item {
                         text: root.emptyStateText
                         color: Palette.Theme.textMuted
                         font.family: Palette.Theme.fontMono
-                        font.pixelSize: 12
+                        font.pixelSize: Palette.Theme.fontSizeSmall
                     }
                 }
 
@@ -802,9 +756,17 @@ Item {
                     model: root.currentList
                     currentIndex: root.selected
                     Keys.priority: Keys.BeforeItem
-                    highlightFollowsCurrentItem: true
-                    preferredHighlightBegin: 0
-                    preferredHighlightEnd: height
+                    // The selection is one highlight gliding between rows
+                    // (hover moves the selection too), not each row
+                    // recoloring itself.
+                    highlightFollowsCurrentItem: false
+                    highlight: MovingHighlight {
+                        target: appList.currentItem
+                        insetX: 6
+                        insetY: 2
+                    }
+                    onCurrentIndexChanged: if (currentIndex >= 0)
+                        positionViewAtIndex(currentIndex, ListView.Contain)
                     interactive: root.currentList.length > root.maxVisible
                     boundsBehavior: Flickable.StopAtBounds
                     spacing: 0
@@ -824,9 +786,7 @@ Item {
                             color: Palette.Theme.accent
                             opacity: parent.active ? 0.6 : 0.25
                             Behavior on opacity {
-                                NumberAnimation {
-                                    duration: 120
-                                }
+                                EffectMotion {}
                             }
                         }
                         background: Item {}

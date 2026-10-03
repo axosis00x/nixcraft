@@ -159,7 +159,7 @@ Item {
                 text: "Calendar"
                 color: Palette.Theme.textTitle
                 font.family: Palette.Theme.fontSans
-                font.pixelSize: 16
+                font.pixelSize: Palette.Theme.fontSizeTitle
                 font.weight: Font.DemiBold
                 Layout.fillWidth: true
             }
@@ -184,7 +184,7 @@ Item {
                     anchors.centerIn: parent
                     text: "‹"
                     color: Palette.Theme.textSecondary
-                    font.pixelSize: 22
+                    font.pixelSize: Palette.Theme.fontSizeHeadline
                     font.weight: Font.Bold
                 }
                 MouseArea {
@@ -212,7 +212,7 @@ Item {
                     anchors.centerIn: parent
                     text: "›"
                     color: Palette.Theme.textSecondary
-                    font.pixelSize: 22
+                    font.pixelSize: Palette.Theme.fontSizeHeadline
                     font.weight: Font.Bold
                 }
                 MouseArea {
@@ -237,7 +237,7 @@ Item {
                     text: modelData
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontMono
-                    font.pixelSize: 12
+                    font.pixelSize: Palette.Theme.fontSizeSmall
                     font.weight: Font.DemiBold
                 }
             }
@@ -282,7 +282,7 @@ Item {
                         text: parent.day
                         color: parent.today ? Palette.Theme.accentText : Palette.Theme.textPrimary
                         font.family: Palette.Theme.fontMono
-                        font.pixelSize: 14
+                        font.pixelSize: Palette.Theme.fontSizeBody
                         font.weight: parent.today || parent.selected ? Font.Bold : Font.Normal
                     }
 
@@ -307,7 +307,7 @@ Item {
             text: root.monthNames[root.selectedMonth] + " " + root.selectedDay + ", " + root.selectedYear
             color: Palette.Theme.textMuted
             font.family: Palette.Theme.fontMono
-            font.pixelSize: 12
+            font.pixelSize: Palette.Theme.fontSizeSmall
             horizontalAlignment: Text.AlignHCenter
         }
     }

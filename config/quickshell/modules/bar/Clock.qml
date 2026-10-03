@@ -15,7 +15,7 @@ Text {
 
     color: Palette.Theme.textPrimary
     font.family: Palette.Theme.fontMono
-    font.pixelSize: 12
+    font.pixelSize: Palette.Theme.fontSizeSmall
     font.weight: Font.DemiBold
 
     SystemClock {

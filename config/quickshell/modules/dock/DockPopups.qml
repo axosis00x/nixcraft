@@ -1,5 +1,6 @@
 import QtQuick
 import "../../theme" as Palette
+import "../../components/material"
 
 // Hover label and right-click menu for the dock. Lives at the overlay root
 // rather than inside the bottom notch because the notch clips its content;
@@ -23,16 +24,12 @@ Item {
         property string label: ""
         signal triggered
 
+        // The menu draws one gliding hover highlight behind its rows.
+        readonly property bool hovered: rowMouse.containsMouse
+
         implicitWidth: 168
         implicitHeight: 30
-        radius: 9
-        color: rowMouse.containsMouse ? Palette.Theme.surfaceContainerHighest : "transparent"
-
-        Behavior on color {
-            ColorAnimation {
-                duration: 100
-            }
-        }
+        color: "transparent"
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
@@ -41,7 +38,7 @@ Item {
             text: row.label
             color: Palette.Theme.textPrimary
             font.family: Palette.Theme.fontMono
-            font.pixelSize: 11
+            font.pixelSize: Palette.Theme.fontSizeXs
         }
 
         MouseArea {
@@ -72,7 +69,7 @@ Item {
             text: root.dock.hoverItem ? root.dock.hoverItem.name : ""
             color: Palette.Theme.textPrimary
             font.family: Palette.Theme.fontMono
-            font.pixelSize: 11
+            font.pixelSize: Palette.Theme.fontSizeXs
         }
     }
 
@@ -84,15 +81,30 @@ Item {
         visible: root.menuVisible
         width: 184
         height: menuColumn.implicitHeight + 16
-        radius: 14
+        radius: Palette.Theme.radiusMedium
         x: Math.max(6, Math.min(root.width - width - 6, root.menuPoint.x - width / 2))
         y: Math.max(4, root.menuPoint.y - height - 16)
         color: Palette.Theme.surfaceContainer
         border.width: 1
         border.color: Palette.Theme.outlineVariant
 
+        property Item hoveredRow: null
+
+        function trackHover(row, on) {
+            if (on)
+                hoveredRow = row;
+            else if (hoveredRow === row)
+                hoveredRow = null;
+        }
+
         HoverHandler {
             onHoveredChanged: root.dock.holdMenu(hovered)
+        }
+
+        MovingHighlight {
+            target: menu.hoveredRow
+            radius: Palette.Theme.radiusSmall
+            color: Palette.Theme.surfaceContainerHighest
         }
 
         Column {
@@ -108,12 +120,13 @@ Item {
                 text: menu.item ? menu.item.name : ""
                 color: Palette.Theme.textMuted
                 font.family: Palette.Theme.fontMono
-                font.pixelSize: 10
+                font.pixelSize: Palette.Theme.fontSizeXs
                 elide: Text.ElideRight
             }
 
             MenuRow {
                 width: parent.width
+                onHoveredChanged: menu.trackHover(this, hovered)
                 visible: menu.item !== null && menu.item.windows.length > 0 && menu.item.entry !== null
                 height: visible ? implicitHeight : 0
                 label: "New window"
@@ -125,6 +138,7 @@ Item {
 
             MenuRow {
                 width: parent.width
+                onHoveredChanged: menu.trackHover(this, hovered)
                 visible: menu.item !== null && menu.item.id !== ""
                 height: visible ? implicitHeight : 0
                 label: menu.item && menu.item.pinned ? "Unpin from dock" : "Pin to dock"
@@ -137,6 +151,7 @@ Item {
 
             MenuRow {
                 width: parent.width
+                onHoveredChanged: menu.trackHover(this, hovered)
                 visible: menu.item !== null && menu.item.windows.length > 0
                 height: visible ? implicitHeight : 0
                 label: menu.item && menu.item.windows.length > 1 ? "Close all windows" : "Close window"

@@ -51,7 +51,7 @@ Item {
                 color: Palette.Theme.textPrimary
                 opacity: root.enabled ? 1 : 0.35
                 font.family: Palette.Theme.fontIcons
-                font.pixelSize: 16
+                font.pixelSize: Palette.Theme.iconSizeSmall
             }
         }
 
@@ -59,7 +59,7 @@ Item {
                 text: root.title
                 color: Palette.Theme.textPrimary
                 font.family: Palette.Theme.fontMono
-                font.pixelSize: 12
+                font.pixelSize: Palette.Theme.fontSizeSmall
                 font.weight: Font.DemiBold
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
@@ -69,7 +69,7 @@ Item {
                 text: root.enabled ? "ON" : "OFF"
                 color: root.enabled ? Palette.Theme.accent : Palette.Theme.textMuted
                 font.family: Palette.Theme.fontMono
-                font.pixelSize: 10
+                font.pixelSize: Palette.Theme.fontSizeXs
                 font.weight: Font.Black
                 Layout.alignment: Qt.AlignVCenter
             }

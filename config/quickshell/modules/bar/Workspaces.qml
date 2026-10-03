@@ -3,6 +3,7 @@ import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 import "../../theme" as Palette
+import "../../components/material"
 
 GridLayout {
     id: root
@@ -53,15 +54,12 @@ GridLayout {
                 }
             }
             Behavior on color {
-                ColorAnimation {
-                    duration: 300
+                ColorMotion {
+                    fast: false
                 }
             }
             Behavior on scale {
-                NumberAnimation {
-                    duration: 300
-                    easing.type: Easing.OutCubic
-                }
+                SpatialMotion {}
             }
 
             MouseArea {

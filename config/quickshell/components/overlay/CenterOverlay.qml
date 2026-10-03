@@ -15,6 +15,7 @@ import "../../modules/barlayout"
 import "../../modules/wallpicker"
 import "../../modules/dock"
 import "../../services"
+import "../../components/material"
 
 PanelWindow {
     id: root
@@ -277,25 +278,14 @@ PanelWindow {
         // the idle notch "wobbling" as the bar's real edge resolves.
         Behavior on slabWidth {
             enabled: !root.barLayout || root.barLayout.loaded
-            NumberAnimation {
-                duration: 240
-                easing.type: Easing.OutBack
-                easing.overshoot: 0.6
-            }
+            SpatialMotion {}
         }
         Behavior on slabHeight {
             enabled: !root.barLayout || root.barLayout.loaded
-            NumberAnimation {
-                duration: 240
-                easing.type: Easing.OutBack
-                easing.overshoot: 0.6
-            }
+            SpatialMotion {}
         }
         Behavior on opacity {
-            NumberAnimation {
-                duration: 160
-                easing.type: Easing.OutCubic
-            }
+            EffectMotion {}
         }
 
         ControlCenter {
@@ -342,24 +332,13 @@ PanelWindow {
         opacity: panel ? 1 : 0
 
         Behavior on slabWidth {
-            NumberAnimation {
-                duration: 240
-                easing.type: Easing.OutBack
-                easing.overshoot: 0.6
-            }
+            SpatialMotion {}
         }
         Behavior on slabHeight {
-            NumberAnimation {
-                duration: 240
-                easing.type: Easing.OutBack
-                easing.overshoot: 0.6
-            }
+            SpatialMotion {}
         }
         Behavior on opacity {
-            NumberAnimation {
-                duration: 160
-                easing.type: Easing.OutCubic
-            }
+            EffectMotion {}
         }
 
         Dock {

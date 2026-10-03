@@ -3,6 +3,7 @@ import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
 import "../../theme" as Palette
+import "../../components/material"
 
 Item {
     id: root
@@ -181,41 +182,40 @@ Item {
                     Layout.preferredWidth: 48
                     Layout.maximumWidth: 48
                     implicitHeight: 48
-                    radius: 14
-                    scale: actionMouse.pressed ? 0.90 : (actionMouse.containsMouse ? 1.08 : 1.0)
+                    radius: Palette.Theme.radiusMedium
+                    scale: actionMouse.pressed ? 0.92 : 1
                     Behavior on scale {
-                        NumberAnimation {
-                            duration: 150
-                            easing.type: Easing.OutBack
-                            easing.overshoot: 1.6
+                        SpatialMotion {
+                            fast: true
                         }
                     }
 
                     color: {
                         if (index === root.selectedIndex)
-                            return modelData.dangerous ? "#ff5252" : Palette.Theme.accent;
-                        return modelData.dangerous ? (actionMouse.containsMouse ? "#4d1a1a" : "#3d1515") : (actionMouse.containsMouse ? Palette.Theme.surfaceContainerHighest : Palette.Theme.surfaceContainerLow);
+                            return modelData.dangerous ? Palette.Theme.errorColor : Palette.Theme.accent;
+                        return modelData.dangerous ? Qt.alpha(Palette.Theme.errorColor, Palette.Theme.stateSelected) : Palette.Theme.surfaceContainerHigh;
                     }
                     border.width: 0
 
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on color {
+                        ColorMotion {}
+                    }
 
-                    Rectangle {
-                        anchors.fill: parent
+                    StateLayer {
                         radius: parent.radius
-                        color: index === root.selectedIndex ? "#ffffff" : Palette.Theme.accent
-                        opacity: actionMouse.pressed ? 0.18 : (actionMouse.containsMouse ? 0.08 : 0)
-                        Behavior on opacity { NumberAnimation { duration: 120 } }
+                        tone: index === root.selectedIndex ? Palette.Theme.accentText : Palette.Theme.textPrimary
+                        hovered: actionMouse.containsMouse
+                        pressed: actionMouse.pressed
                     }
 
                     Text {
                         anchors.centerIn: parent
                         text: modelData.icon
                         color: index === root.selectedIndex
-                            ? (modelData.dangerous ? "#ffffff" : Palette.Theme.accentText)
-                            : (modelData.dangerous ? "#ff8a80" : Palette.Theme.textPrimary)
+                            ? (modelData.dangerous ? Palette.Theme.surfaceSolid : Palette.Theme.accentText)
+                            : (modelData.dangerous ? Palette.Theme.errorColor : Palette.Theme.textPrimary)
                         font.family: Palette.Theme.fontIcons
-                        font.pixelSize: 20
+                        font.pixelSize: Palette.Theme.iconSize
                     }
 
                     MouseArea {
@@ -242,17 +242,17 @@ Item {
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: 46
-                    radius: 12
+                    radius: Palette.Theme.radiusSmall
                     color: root.confirmChoiceSelected ? Palette.Theme.accent : Palette.Theme.surfaceContainerLow
-                    scale: confirmMouse.pressed ? 0.94 : (confirmMouse.containsMouse ? 1.03 : 1.0)
+                    scale: confirmMouse.pressed ? 0.94 : 1
                     Behavior on scale {
-                        NumberAnimation { duration: 150; easing.type: Easing.OutBack; easing.overshoot: 1.5 }
+                        SpatialMotion {
+                            fast: true
+                        }
                     }
 
                     Behavior on color {
-                        ColorAnimation {
-                            duration: 120
-                        }
+                        ColorMotion {}
                     }
 
                     ColumnLayout {
@@ -263,14 +263,14 @@ Item {
                             text: "\ue5ca"
                             color: root.confirmChoiceSelected ? Palette.Theme.accentText : Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontIcons
-                            font.pixelSize: 16
+                            font.pixelSize: Palette.Theme.iconSizeSmall
                         }
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             text: confirmAction
                             color: root.confirmChoiceSelected ? Palette.Theme.accentText : Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontSans
-                            font.pixelSize: 11
+                            font.pixelSize: Palette.Theme.fontSizeXs
                             font.weight: Font.Medium
                         }
                     }
@@ -288,19 +288,19 @@ Item {
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: 46
-                    radius: 12
+                    radius: Palette.Theme.radiusSmall
                     // The primary background follows keyboard/mouse focus,
                     // including the X/Cancel choice.
                     color: !root.confirmChoiceSelected ? Palette.Theme.accent : Palette.Theme.surfaceContainerLow
-                    scale: cancelMouse.pressed ? 0.94 : (cancelMouse.containsMouse ? 1.03 : 1.0)
+                    scale: cancelMouse.pressed ? 0.94 : 1
                     Behavior on scale {
-                        NumberAnimation { duration: 150; easing.type: Easing.OutBack; easing.overshoot: 1.5 }
+                        SpatialMotion {
+                            fast: true
+                        }
                     }
 
                     Behavior on color {
-                        ColorAnimation {
-                            duration: 120
-                        }
+                        ColorMotion {}
                     }
 
                     ColumnLayout {
@@ -311,14 +311,14 @@ Item {
                             text: "\ue5cd"
                             color: !root.confirmChoiceSelected ? Palette.Theme.accentText : Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontIcons
-                            font.pixelSize: 16
+                            font.pixelSize: Palette.Theme.iconSizeSmall
                         }
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Cancel"
                             color: !root.confirmChoiceSelected ? Palette.Theme.accentText : Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontSans
-                            font.pixelSize: 11
+                            font.pixelSize: Palette.Theme.fontSizeXs
                             font.weight: Font.Medium
                         }
                     }

@@ -3,6 +3,7 @@ import Quickshell.Io
 import Quickshell.Services.Mpris
 import QtQuick
 import "../../theme" as Palette
+import "../../components/material"
 
 Item {
     id: root
@@ -103,9 +104,8 @@ Item {
                     opacity: 0.45 + parent.level * 0.55
 
                     Behavior on height {
-                        NumberAnimation {
-                            duration: 70
-                            easing.type: Easing.OutQuad
+                        SpatialMotion {
+                            fast: true
                         }
                     }
                 }

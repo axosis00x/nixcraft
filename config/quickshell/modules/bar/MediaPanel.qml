@@ -105,7 +105,7 @@ Item {
             Rectangle {
                 implicitWidth: 88
                 implicitHeight: 88
-                radius: 12
+                radius: Palette.Theme.radiusSmall
                 color: Palette.Theme.surfaceContainerHigh
                 clip: true
                 Layout.alignment: Qt.AlignVCenter
@@ -119,7 +119,9 @@ Item {
                     asynchronous: true
                     opacity: status === Image.Ready ? 1 : 0
                     Behavior on opacity {
-                        NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                        EffectMotion {
+                            fast: false
+                        }
                     }
                 }
 
@@ -132,7 +134,7 @@ Item {
                     color: Palette.Theme.textSecondary
                     opacity: artImg.status === Image.Null || artImg.status === Image.Error ? 1 : 0
                     Behavior on opacity {
-                        NumberAnimation { duration: 150 }
+                        EffectMotion {}
                     }
                 }
             }
@@ -151,7 +153,7 @@ Item {
                         text: root.player ? (root.player.trackTitle || "Unknown Title") : "Nothing playing"
                         color: Palette.Theme.textTitle
                         font.family: Palette.Theme.fontMono
-                        font.pixelSize: 14
+                        font.pixelSize: Palette.Theme.fontSizeBody
                         font.weight: Font.DemiBold
                         elide: Text.ElideRight
                         Layout.fillWidth: true
@@ -166,7 +168,7 @@ Item {
                             text: Qt.formatDateTime(panelClock.date, "hh:mm")
                             color: Palette.Theme.textSecondary
                             font.family: Palette.Theme.fontMono
-                            font.pixelSize: 16
+                            font.pixelSize: Palette.Theme.fontSizeTitle
                             font.weight: Font.Bold
                             Layout.alignment: Qt.AlignRight
                         }
@@ -175,7 +177,7 @@ Item {
                             text: Qt.formatDateTime(panelClock.date, "ddd, MMM d")
                             color: Palette.Theme.textMuted
                             font.family: Palette.Theme.fontMono
-                            font.pixelSize: 10
+                            font.pixelSize: Palette.Theme.fontSizeXs
                             font.weight: Font.DemiBold
                             Layout.alignment: Qt.AlignRight
                         }
@@ -186,7 +188,7 @@ Item {
                     text: root.player ? (root.player.trackArtist || "") : ""
                     color: Palette.Theme.textSecondary
                     font.family: Palette.Theme.fontMono
-                    font.pixelSize: 13
+                    font.pixelSize: Palette.Theme.fontSizeBody
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                     Layout.topMargin: -4
@@ -206,7 +208,7 @@ Item {
                         text: "\ue045"
                         color: Palette.Theme.textPrimary
                         font.family: Palette.Theme.fontIcons
-                        font.pixelSize: 22
+                        font.pixelSize: Palette.Theme.iconSizeLarge
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         Layout.preferredWidth: 18
@@ -214,7 +216,7 @@ Item {
                         opacity: root.player && root.player.canGoPrevious ? 1.0 : 0.35
                         Layout.alignment: Qt.AlignVCenter
                         Behavior on opacity {
-                            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                            EffectMotion {}
                         }
                         MouseArea {
                             anchors.fill: parent
@@ -249,9 +251,11 @@ Item {
                             text: root.hasPlayer && root.player.isPlaying ? "\ue034" : "\ue037"
                             color: Palette.Theme.accentText
                             font.family: Palette.Theme.fontIcons
-                            font.pixelSize: 24
+                            font.pixelSize: Palette.Theme.iconSizeLarge
                             Behavior on scale {
-                                NumberAnimation { duration: 100; easing.type: Easing.OutCubic }
+                                SpatialMotion {
+                                    fast: true
+                                }
                             }
                         }
 
@@ -270,7 +274,7 @@ Item {
                         text: "\ue044"
                         color: Palette.Theme.textPrimary
                         font.family: Palette.Theme.fontIcons
-                        font.pixelSize: 22
+                        font.pixelSize: Palette.Theme.iconSizeLarge
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         Layout.preferredWidth: 18
@@ -278,7 +282,7 @@ Item {
                         opacity: root.player && root.player.canGoNext ? 1.0 : 0.35
                         Layout.alignment: Qt.AlignVCenter
                         Behavior on opacity {
-                            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                            EffectMotion {}
                         }
                         MouseArea {
                             anchors.fill: parent
@@ -322,7 +326,9 @@ Item {
                             property real animProg: waveArea.dragging ? waveArea.dragProgress : root.progress
                             Behavior on animProg {
                                 enabled: !waveArea.dragging
-                                NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
+                                EffectMotion {
+                                    fast: false
+                                }
                             }
 
                             onPhaseChanged: requestPaint()

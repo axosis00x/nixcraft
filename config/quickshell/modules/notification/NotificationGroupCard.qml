@@ -73,7 +73,7 @@ ColumnLayout {
                 text: String(root.group.items.length)
                 color: Palette.Theme.surface
                 font.family: Palette.Theme.fontMono
-                font.pixelSize: 10
+                font.pixelSize: Palette.Theme.fontSizeXs
                 font.weight: Font.Bold
             }
         }

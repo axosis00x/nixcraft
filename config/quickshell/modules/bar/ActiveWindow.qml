@@ -5,6 +5,7 @@ import Quickshell
 import QtQuick
 import QtQuick.Layouts
 import "../../theme" as Palette
+import "../../components/material"
 
 Item {
     id: root
@@ -101,10 +102,7 @@ Item {
         opacity: root.mediaPlaying ? 1 : 0
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: 140
-                easing.type: Easing.OutCubic
-            }
+            EffectMotion {}
         }
     }
 
@@ -116,10 +114,7 @@ Item {
         opacity: root.mediaPlaying ? 0 : 1
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: 140
-                easing.type: Easing.OutCubic
-            }
+            EffectMotion {}
         }
 
         IconImage {
@@ -135,7 +130,7 @@ Item {
             text: root.appTitle
             color: Palette.Theme.textTitle
             font.family: Palette.Theme.fontMono
-            font.pixelSize: 12
+            font.pixelSize: Palette.Theme.fontSizeSmall
             elide: Text.ElideRight
             Layout.maximumWidth: 240
             Layout.alignment: Qt.AlignVCenter

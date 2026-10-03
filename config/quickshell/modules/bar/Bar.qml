@@ -517,14 +517,11 @@ PanelWindow {
 
                 Divider {
                     vertical: true
-                    color: Palette.Theme.textMuted
-                    opacity: 0.85
                     Layout.alignment: Qt.AlignVCenter
                 }
 
                 IconButton {
                     icon: "\ue8b8"
-                    stateOpacity: 0
                     implicitWidth: 26
                     implicitHeight: 34
                     Layout.alignment: Qt.AlignVCenter
@@ -542,14 +539,13 @@ PanelWindow {
             anchors.verticalCenter: parent.verticalCenter
             implicitWidth: 30
             implicitHeight: 30
-            radius: 10
-
+            radius: Palette.Theme.radiusSmall
             Text {
                 anchors.centerIn: parent
                 text: "\ue8ac"
                 color: Palette.Theme.textPrimary
                 font.family: Palette.Theme.fontIcons
-                font.pixelSize: 18
+                font.pixelSize: Palette.Theme.iconSize
             }
 
             MouseArea {
@@ -667,7 +663,7 @@ PanelWindow {
                         visible: bar.appClass === ""
                         color: Palette.Theme.textPrimary
                         font.family: Palette.Theme.fontMono
-                        font.pixelSize: 12
+                        font.pixelSize: Palette.Theme.fontSizeSmall
                         font.weight: Font.DemiBold
                     }
                 }
@@ -708,14 +704,13 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             implicitWidth: parent.width
             implicitHeight: 30
-            radius: 10
-
+            radius: Palette.Theme.radiusSmall
             Text {
                 anchors.centerIn: parent
                 text: ""
                 color: Palette.Theme.textPrimary
                 font.family: Palette.Theme.fontIcons
-                font.pixelSize: 18
+                font.pixelSize: Palette.Theme.iconSize
             }
 
             MouseArea {
@@ -750,13 +745,10 @@ PanelWindow {
                 Divider {
                     Layout.preferredWidth: 20
                     Layout.alignment: Qt.AlignHCenter
-                    color: Palette.Theme.textMuted
-                    opacity: 0.85
                 }
 
                 IconButton {
                     icon: "\ue8b8"
-                    stateOpacity: 0
                     implicitWidth: 26
                     implicitHeight: 26
                     Layout.alignment: Qt.AlignHCenter
@@ -849,17 +841,13 @@ PanelWindow {
         }
 
         Behavior on slabWidth {
-            NumberAnimation {
-                duration: 120
-                easing.type: Easing.OutCubic
+            SpatialMotion {
+                fast: true
             }
         }
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: 120
-                easing.type: Easing.OutCubic
-            }
+            EffectMotion {}
         }
 
         RowLayout {
@@ -871,7 +859,7 @@ PanelWindow {
             visible: centerCapsule.activeCenterModule === "apps" && bar.appClass !== ""
             opacity: bar.centerMode === "normal" && centerCapsule.activeCenterModule === "apps" && bar.appClass !== "" ? 1 : 0
             Behavior on opacity {
-                NumberAnimation { duration: 100 }
+                EffectMotion {}
             }
 
             IconImage {
@@ -887,7 +875,7 @@ PanelWindow {
                 text: bar.appTitle
                 color: Palette.Theme.textPrimary
                 font.family: Palette.Theme.fontMono
-                font.pixelSize: 12
+                font.pixelSize: Palette.Theme.fontSizeSmall
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
                 Layout.maximumWidth: 200
@@ -901,14 +889,14 @@ PanelWindow {
             text: "~"
             color: Palette.Theme.textPrimary
             font.family: Palette.Theme.fontMono
-            font.pixelSize: 12
+            font.pixelSize: Palette.Theme.fontSizeSmall
             font.weight: Font.DemiBold
             // The only child on screen in this state — nothing else can
             // push it off-center.
             visible: centerCapsule.activeCenterModule === "apps" && bar.appClass === ""
             opacity: bar.centerMode === "normal" && centerCapsule.activeCenterModule === "apps" && bar.appClass === "" ? 1 : 0
             Behavior on opacity {
-                NumberAnimation { duration: 100 }
+                EffectMotion {}
             }
         }
 
@@ -920,7 +908,7 @@ PanelWindow {
             visible: centerCapsule.activeCenterModule === "cava"
             opacity: bar.centerMode === "normal" && centerCapsule.activeCenterModule === "cava" ? 1 : 0
             Behavior on opacity {
-                NumberAnimation { duration: 100 }
+                EffectMotion {}
             }
 
             // The visualizer only ever runs while something is actually
@@ -937,7 +925,7 @@ PanelWindow {
                 visible: bar.mediaPlaying
                 opacity: bar.mediaPlaying ? 1 : 0
                 Behavior on opacity {
-                    NumberAnimation { duration: 140 }
+                    EffectMotion {}
                 }
             }
 
@@ -949,9 +937,9 @@ PanelWindow {
                 opacity: !bar.mediaPlaying ? 1 : 0
                 color: Palette.Theme.textMuted
                 font.family: Palette.Theme.fontMono
-                font.pixelSize: 12
+                font.pixelSize: Palette.Theme.fontSizeSmall
                 Behavior on opacity {
-                    NumberAnimation { duration: 140 }
+                    EffectMotion {}
                 }
             }
         }
@@ -963,7 +951,7 @@ PanelWindow {
             visible: centerCapsule.activeCenterModule === "clock"
             opacity: bar.centerMode === "normal" && centerCapsule.activeCenterModule === "clock" ? 1 : 0
             Behavior on opacity {
-                NumberAnimation { duration: 100 }
+                EffectMotion {}
             }
 
             Clock {}

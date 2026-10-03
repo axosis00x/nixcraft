@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import "../../theme" as Palette
+import "../../components/material"
 
 GridLayout {
     id: root
@@ -43,11 +44,9 @@ GridLayout {
                 anchors.margins: -3
                 radius: 4
                 color: Palette.Theme.surfaceTint
-                opacity: ma.containsMouse ? 0.08 : 0
+                opacity: ma.containsMouse ? Palette.Theme.stateHover : 0
                 Behavior on opacity {
-                    NumberAnimation {
-                        duration: 150
-                    }
+                    EffectMotion {}
                 }
             }
 
@@ -79,7 +78,7 @@ GridLayout {
                 }
                 delay: 600
                 font.family: Palette.Theme.fontMono
-                font.pixelSize: 11
+                font.pixelSize: Palette.Theme.fontSizeXs
             }
         }
     }

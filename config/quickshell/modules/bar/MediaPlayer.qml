@@ -182,9 +182,8 @@ PopupWindow {
                 visible: false
 
                 Behavior on opacity {
-                    NumberAnimation {
-                        duration: 220
-                        easing.type: Easing.OutCubic
+                    EffectMotion {
+                        fast: false
                     }
                 }
             }
@@ -222,7 +221,7 @@ PopupWindow {
                     Rectangle {
                         implicitWidth: 88
                         implicitHeight: 88
-                        radius: 14
+                        radius: Palette.Theme.radiusMedium
                         color: Palette.Theme.surfaceContainerHigh
                         clip: true
                         Layout.alignment: Qt.AlignVCenter
@@ -236,9 +235,8 @@ PopupWindow {
                             asynchronous: true
                             opacity: status === Image.Ready ? 1 : 0
                             Behavior on opacity {
-                                NumberAnimation {
-                                    duration: 220
-                                    easing.type: Easing.OutCubic
+                                EffectMotion {
+                                    fast: false
                                 }
                             }
                         }
@@ -252,9 +250,7 @@ PopupWindow {
                             color: Palette.Theme.textSecondary
                             opacity: artImg.status === Image.Null || artImg.status === Image.Error ? 1 : 0
                             Behavior on opacity {
-                                NumberAnimation {
-                                    duration: 150
-                                }
+                                EffectMotion {}
                             }
                         }
                     }
@@ -272,7 +268,7 @@ PopupWindow {
                                 text: popup.player ? (popup.player.trackTitle || "Unknown Title") : "Nothing playing"
                                 color: Palette.Theme.textTitle
                                 font.family: Palette.Theme.fontMono
-                                font.pixelSize: 14
+                                font.pixelSize: Palette.Theme.fontSizeBody
                                 font.weight: Font.DemiBold
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
@@ -287,7 +283,7 @@ PopupWindow {
                                     text: Qt.formatDateTime(mediaClock.date, "hh:mm")
                                     color: Palette.Theme.textSecondary
                                     font.family: Palette.Theme.fontMono
-                                    font.pixelSize: 16
+                                    font.pixelSize: Palette.Theme.fontSizeTitle
                                     font.weight: Font.Bold
                                     Layout.alignment: Qt.AlignRight
                                 }
@@ -296,7 +292,7 @@ PopupWindow {
                                     text: Qt.formatDateTime(mediaClock.date, "ddd, MMM d")
                                     color: Palette.Theme.textMuted
                                     font.family: Palette.Theme.fontMono
-                                    font.pixelSize: 10
+                                    font.pixelSize: Palette.Theme.fontSizeXs
                                     font.weight: Font.DemiBold
                                     Layout.alignment: Qt.AlignRight
                                 }
@@ -307,7 +303,7 @@ PopupWindow {
                             text: popup.player ? (popup.player.trackArtist || "") : ""
                             color: Palette.Theme.textSecondary
                             font.family: Palette.Theme.fontMono
-                            font.pixelSize: 13
+                            font.pixelSize: Palette.Theme.fontSizeBody
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                             Layout.topMargin: -4
@@ -328,7 +324,7 @@ PopupWindow {
                                 text: "\ue045"
                                 color: Palette.Theme.textPrimary
                                 font.family: Palette.Theme.fontIcons
-                                font.pixelSize: 22
+                                font.pixelSize: Palette.Theme.iconSizeLarge
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
                                 Layout.preferredWidth: 18
@@ -337,10 +333,7 @@ PopupWindow {
                                 Layout.alignment: Qt.AlignVCenter
 
                                 Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: 120
-                                        easing.type: Easing.OutCubic
-                                    }
+                                    EffectMotion {}
                                 }
 
                                 MouseArea {
@@ -376,12 +369,10 @@ PopupWindow {
                                     text: popup.hasPlayer && popup.player.isPlaying ? "\ue034" : "\ue037"
                                     color: Palette.Theme.accentText
                                     font.family: Palette.Theme.fontIcons
-                                    font.pixelSize: 24
-
+                                    font.pixelSize: Palette.Theme.iconSizeLarge
                                     Behavior on scale {
-                                        NumberAnimation {
-                                            duration: 100
-                                            easing.type: Easing.OutCubic
+                                        SpatialMotion {
+                                            fast: true
                                         }
                                     }
                                 }
@@ -401,7 +392,7 @@ PopupWindow {
                                 text: "\ue044"
                                 color: Palette.Theme.textPrimary
                                 font.family: Palette.Theme.fontIcons
-                                font.pixelSize: 22
+                                font.pixelSize: Palette.Theme.iconSizeLarge
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
                                 Layout.preferredWidth: 18
@@ -410,10 +401,7 @@ PopupWindow {
                                 Layout.alignment: Qt.AlignVCenter
 
                                 Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: 120
-                                        easing.type: Easing.OutCubic
-                                    }
+                                    EffectMotion {}
                                 }
 
                                 MouseArea {
@@ -459,9 +447,8 @@ PopupWindow {
                                     property real animProg: waveArea.dragging ? waveArea.dragProgress : popup.progress
                                     Behavior on animProg {
                                         enabled: !waveArea.dragging
-                                        NumberAnimation {
-                                            duration: 400
-                                            easing.type: Easing.OutCubic
+                                        EffectMotion {
+                                            fast: false
                                         }
                                     }
 

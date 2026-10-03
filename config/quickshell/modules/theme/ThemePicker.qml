@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import "../../config/Ui.js" as Ui
 import "../../theme" as Palette
+import "../../components/material"
 
 Item {
     id: root
@@ -144,7 +145,7 @@ Item {
                     text: "Theme"
                     color: Palette.Theme.textTitle
                     font.family: Palette.Theme.fontSans
-                    font.pixelSize: 16
+                    font.pixelSize: Palette.Theme.fontSizeTitle
                     font.weight: Font.DemiBold
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignVCenter
@@ -153,7 +154,7 @@ Item {
                     text: service.activeTheme
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontMono
-                    font.pixelSize: 11
+                    font.pixelSize: Palette.Theme.fontSizeXs
                     Layout.alignment: Qt.AlignVCenter
                 }
             }
@@ -174,13 +175,11 @@ Item {
                         readonly property var pal: root.paletteFor(modelData)
                         Layout.fillWidth: true
                         Layout.preferredHeight: 66
-                        radius: 14
-                        scale: cardMouse.pressed ? 0.94 : (cardMouse.containsMouse || index === root.selected ? 1.025 : 1.0)
+                        radius: Palette.Theme.radiusMedium
+                        scale: cardMouse.pressed ? 0.94 : (index === root.selected ? 1.025 : 1)
                         Behavior on scale {
-                            NumberAnimation {
-                                duration: 150
-                                easing.type: Easing.OutBack
-                                easing.overshoot: 1.4
+                            SpatialMotion {
+                                fast: true
                             }
                         }
                         // Uniform cards in the shell's own colors; the theme is
@@ -191,14 +190,10 @@ Item {
                         border.color: root.accentFor(modelData)
 
                         Behavior on border.width {
-                            NumberAnimation {
-                                duration: 110
-                            }
+                            EffectMotion {}
                         }
                         Behavior on color {
-                            ColorAnimation {
-                                duration: 120
-                            }
+                            ColorMotion {}
                         }
 
                         Text {
@@ -211,7 +206,7 @@ Item {
                             text: modelData.charAt(0).toUpperCase() + modelData.slice(1).replace(/-/g, " ")
                             color: Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontSans
-                            font.pixelSize: 12
+                            font.pixelSize: Palette.Theme.fontSizeSmall
                             font.weight: index === root.selected ? Font.DemiBold : Font.Medium
                             elide: Text.ElideRight
                         }
@@ -260,7 +255,7 @@ Item {
                                 anchors.centerIn: parent
                                 text: "✓"
                                 color: card.pal && card.pal.onAccent ? card.pal.onAccent : Palette.Theme.accentText
-                                font.pixelSize: 10
+                                font.pixelSize: Palette.Theme.fontSizeXs
                                 font.bold: true
                             }
                         }

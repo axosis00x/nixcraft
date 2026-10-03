@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
 import "../../theme" as Palette
+import "../../components/material"
 
 Item {
     id: root
@@ -510,9 +511,7 @@ Item {
                         }
 
                         Behavior on border.color {
-                            ColorAnimation {
-                                duration: 160
-                            }
+                            ColorMotion {}
                         }
                     }
 
@@ -537,7 +536,7 @@ Item {
             text: "no wallpapers found in " + root.wallpaperDir
             color: Palette.Theme.textMuted
             font.family: Palette.Theme.fontMono
-            font.pixelSize: 12
+            font.pixelSize: Palette.Theme.fontSizeSmall
         }
 
         Text {
@@ -552,8 +551,8 @@ Item {
             font.pixelSize: 10 * root.s
 
             Behavior on opacity {
-                NumberAnimation {
-                    duration: 180
+                EffectMotion {
+                    fast: false
                 }
             }
         }

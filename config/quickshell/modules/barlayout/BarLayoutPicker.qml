@@ -2,6 +2,7 @@ import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
 import "../../theme" as Palette
+import "../../components/material"
 
 // Picks between the horizontal (top) and vertical (left) bar. Deliberately
 // not a search list like ThemePicker/ShaderPicker — there are only ever two
@@ -118,24 +119,20 @@ Item {
 
                 Layout.fillWidth: true
                 implicitHeight: root.itemH
-                scale: rowHover.pressed ? 0.95 : (rowHover.containsMouse || row.isSelected ? 1.02 : 1.0)
+                scale: rowHover.pressed ? 0.95 : (row.isSelected ? 1.02 : 1)
                 Behavior on scale {
-                    NumberAnimation {
-                        duration: 150
-                        easing.type: Easing.OutBack
-                        easing.overshoot: 1.4
+                    SpatialMotion {
+                        fast: true
                     }
                 }
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: 12
+                    radius: Palette.Theme.radiusSmall
                     color: Palette.Theme.surfaceContainerHigh
                     opacity: row.isSelected ? 1 : (row.isActive ? 0.7 : (rowHover.containsMouse ? 0.4 : 0))
                     Behavior on opacity {
-                        NumberAnimation {
-                            duration: 100
-                        }
+                        EffectMotion {}
                     }
                 }
 
@@ -153,14 +150,14 @@ Item {
                             text: row.modelData.label
                             color: Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontSans
-                            font.pixelSize: 13
+                            font.pixelSize: Palette.Theme.fontSizeBody
                             font.weight: Font.Medium
                         }
                         Text {
                             text: row.modelData.desc
                             color: Palette.Theme.textMuted
                             font.family: Palette.Theme.fontSans
-                            font.pixelSize: 11
+                            font.pixelSize: Palette.Theme.fontSizeXs
                         }
                     }
 
@@ -168,7 +165,7 @@ Item {
                         visible: row.isActive
                         text: ""
                         font.family: Palette.Theme.fontIcons
-                        font.pixelSize: 16
+                        font.pixelSize: Palette.Theme.iconSizeSmall
                         color: Palette.Theme.accent
                         Layout.alignment: Qt.AlignVCenter
                     }

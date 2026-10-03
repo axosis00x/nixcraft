@@ -63,9 +63,7 @@ Surface {
         color: Palette.Theme.surfaceTint
         opacity: cardMouse.containsMouse ? 0.06 : 0.025
         Behavior on opacity {
-            NumberAnimation {
-                duration: 120
-            }
+            EffectMotion {}
         }
     }
     MouseArea {
@@ -92,7 +90,7 @@ Surface {
         Rectangle {
             implicitWidth: 56
             implicitHeight: 56
-            radius: 16
+            radius: Palette.Theme.radiusMedium
             color: Palette.Theme.surfaceContainerHigh
             clip: true
             // Top-aligned rather than centered on the row: a bulky body
@@ -113,9 +111,8 @@ Surface {
                 sourceSize.height: 128
                 opacity: status === Image.Ready ? 1 : 0
                 Behavior on opacity {
-                    NumberAnimation {
-                        duration: 180
-                        easing.type: Easing.OutCubic
+                    EffectMotion {
+                        fast: false
                     }
                 }
             }
@@ -130,9 +127,7 @@ Surface {
                 verticalAlignment: Text.AlignVCenter
                 opacity: icon.status === Image.Null || icon.status === Image.Error ? 1 : 0
                 Behavior on opacity {
-                    NumberAnimation {
-                        duration: 150
-                    }
+                    EffectMotion {}
                 }
             }
         }
@@ -146,7 +141,7 @@ Surface {
                     text: card.notification ? (card.notification.appName || "Application") : ""
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontMono
-                    font.pixelSize: 11
+                    font.pixelSize: Palette.Theme.fontSizeXs
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                 }
@@ -155,7 +150,7 @@ Surface {
                     text: card.notification ? card.timeAgo(card.notification.receivedAt) : ""
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontMono
-                    font.pixelSize: 10
+                    font.pixelSize: Palette.Theme.fontSizeXs
                     visible: text !== ""
                 }
             }
@@ -163,7 +158,7 @@ Surface {
                 text: card.notification ? (card.notification.summary || "Notification") : ""
                 color: Palette.Theme.textPrimary
                 font.family: Palette.Theme.fontMono
-                font.pixelSize: 14
+                font.pixelSize: Palette.Theme.fontSizeBody
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
                 Layout.fillWidth: true
@@ -172,7 +167,7 @@ Surface {
                 text: card.bodyText
                 color: Palette.Theme.textSecondary
                 font.family: Palette.Theme.fontMono
-                font.pixelSize: 12
+                font.pixelSize: Palette.Theme.fontSizeSmall
                 lineHeight: 1.15
                 wrapMode: Text.WordWrap
                 maximumLineCount: card.compact ? 2 : 5

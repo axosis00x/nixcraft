@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import "../../theme" as Palette
+import "../../components/material"
 
 Item {
     id: root
@@ -12,11 +13,12 @@ Item {
     readonly property bool available: bar ? bar.batteryAvailable : false
     readonly property string iconFontFamily: Palette.Theme.fontIcons || "Material Symbols Outlined"
 
-    readonly property color colorCritical: "#f38ba8" // red
-    readonly property color colorLow: "#fab387"       // peach
-    readonly property color colorMedium: "#f9e2af"    // yellow
-    readonly property color colorGood: "#a6e3a1"      // green
-    readonly property color colorCharging: "#89b4fa"  // blue
+    // Neutral by default; color only signals something worth noticing.
+    readonly property color colorCritical: Palette.Theme.errorColor
+    readonly property color colorLow: Palette.Theme.warning
+    readonly property color colorMedium: Palette.Theme.textSecondary
+    readonly property color colorGood: Palette.Theme.textSecondary
+    readonly property color colorCharging: Palette.Theme.accent
 
     readonly property string iconGlyph: {
         if (!available)
@@ -60,13 +62,13 @@ Item {
         Text {
             text: root.iconGlyph
             font.family: root.iconFontFamily
-            font.pixelSize: 14
+            font.pixelSize: Palette.Theme.fontSizeBody
             color: root.iconColor
             verticalAlignment: Text.AlignVCenter
             Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
             Behavior on color {
-                ColorAnimation {
-                    duration: 200
+                ColorMotion {
+                    fast: false
                 }
             }
         }
@@ -75,11 +77,11 @@ Item {
             text: root.percent + "%"
             color: root.iconColor
             font.family: Palette.Theme.fontMono
-            font.pixelSize: 13
+            font.pixelSize: Palette.Theme.fontSizeBody
             Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
             Behavior on color {
-                ColorAnimation {
-                    duration: 200
+                ColorMotion {
+                    fast: false
                 }
             }
         }

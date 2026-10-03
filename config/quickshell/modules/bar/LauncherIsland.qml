@@ -10,12 +10,10 @@ BarSection {
     implicitWidth: 30
     implicitHeight: 30
 
-    scale: launcherButtonHover.pressed ? 0.88 : (launcherButtonHover.containsMouse ? 1.08 : 1.0)
+    scale: launcherButtonHover.pressed ? 0.88 : 1
     Behavior on scale {
-        NumberAnimation {
-            duration: 150
-            easing.type: Easing.OutBack
-            easing.overshoot: 1.6
+        SpatialMotion {
+            fast: true
         }
     }
 
@@ -26,9 +24,7 @@ BarSection {
         opacity: launcherButtonHover.pressed ? 0.22 : (launcherButtonHover.containsMouse ? 0.14 : 0.05)
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: 120
-            }
+            EffectMotion {}
         }
     }
 

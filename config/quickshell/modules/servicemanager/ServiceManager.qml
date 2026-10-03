@@ -126,7 +126,7 @@ Item {
                     text: "Services"
                     color: Palette.Theme.textTitle
                     font.family: Palette.Theme.fontSans
-                    font.pixelSize: 16
+                    font.pixelSize: Palette.Theme.fontSizeTitle
                     font.weight: Font.DemiBold
                     Layout.fillWidth: true
                 }
@@ -134,7 +134,7 @@ Item {
                     text: root.entries.length + " units"
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontSans
-                    font.pixelSize: 11
+                    font.pixelSize: Palette.Theme.fontSizeXs
                 }
                 ActionChip {
                     label: "Refresh"
@@ -145,7 +145,7 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 40
-                radius: 16
+                radius: Palette.Theme.radiusMedium
                 color: Palette.Theme.surfaceContainerHigh
                 border.width: search.activeFocus ? 1 : 0
                 border.color: Palette.Theme.accent
@@ -156,7 +156,7 @@ Item {
                     text: "\ue8b6"
                     color: search.activeFocus ? Palette.Theme.accent : Palette.Theme.textMuted
                     font.family: Palette.Theme.fontIcons
-                    font.pixelSize: 17
+                    font.pixelSize: Palette.Theme.iconSizeSmall
                 }
                 TextInput {
                     id: search
@@ -168,7 +168,7 @@ Item {
                     anchors.bottom: parent.bottom
                     color: Palette.Theme.textPrimary
                     font.family: Palette.Theme.fontMono
-                    font.pixelSize: 12
+                    font.pixelSize: Palette.Theme.fontSizeSmall
                     verticalAlignment: TextInput.AlignVCenter
                     text: root.query
                     selectByMouse: true
@@ -186,7 +186,7 @@ Item {
                     text: "Filter user services"
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontMono
-                    font.pixelSize: 12
+                    font.pixelSize: Palette.Theme.fontSizeSmall
                 }
             }
 
@@ -197,21 +197,27 @@ Item {
                 clip: true
                 spacing: 6
                 model: root.filtered
+                currentIndex: root.selected
+                // Accent ring that glides over the cards to the selection.
+                highlightFollowsCurrentItem: false
+                highlight: MovingHighlight {
+                    target: serviceList.currentItem
+                    z: 2
+                    radius: Palette.Theme.radiusSmall
+                    color: "transparent"
+                    border.width: 1
+                    border.color: Palette.Theme.accent
+                }
                 delegate: Rectangle {
                     required property var modelData
                     required property int index
                     width: serviceList.width
                     height: 58
-                    radius: 10
+                    radius: Palette.Theme.radiusSmall
                     color: index === root.selected ? Palette.Theme.surfaceContainerHigh : Palette.Theme.surfaceContainerLow
-                    border.width: index === root.selected ? 1 : 0
-                    border.color: Palette.Theme.accent
 
                     Behavior on color {
-                        ColorAnimation { duration: 120 }
-                    }
-                    Behavior on border.width {
-                        NumberAnimation { duration: 120 }
+                        ColorMotion {}
                     }
 
                     Rectangle {
@@ -221,7 +227,7 @@ Item {
                         width: 7
                         height: 7
                         radius: 4
-                        color: modelData.active === "active" ? Palette.Theme.success : Palette.Theme.textMuted
+                        color: modelData.active === "active" ? Palette.Theme.accent : Palette.Theme.textMuted
                     }
                     ColumnLayout {
                         anchors.left: parent.left
@@ -234,7 +240,7 @@ Item {
                             text: modelData.unit
                             color: Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontMono
-                            font.pixelSize: 11
+                            font.pixelSize: Palette.Theme.fontSizeXs
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                         }

@@ -7,6 +7,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Widgets
 import "../../theme" as Palette
+import "../../components/material"
 
 PanelWindow {
     id: root
@@ -59,9 +60,7 @@ PanelWindow {
         color: "#000000"
         opacity: root.active ? 0.35 : 0
         Behavior on opacity {
-            NumberAnimation {
-                duration: 140
-            }
+            EffectMotion {}
         }
     }
 
@@ -135,21 +134,18 @@ PanelWindow {
                     opacity: focused ? 1.0 : 0.85
 
                     Behavior on scale {
-                        NumberAnimation {
-                            duration: 140
-                            easing.type: Easing.OutCubic
+                        SpatialMotion {
+                            fast: true
                         }
                     }
                     Behavior on opacity {
-                        NumberAnimation {
-                            duration: 140
-                        }
+                        EffectMotion {}
                     }
 
                     Rectangle {
                         id: card
                         anchors.fill: parent
-                        radius: 10
+                        radius: Palette.Theme.radiusSmall
                         color: cell.hasWindows ? Palette.Theme.surfaceContainerHigh : Palette.Theme.surfaceContainerLow
 
                         // Soft tint + ring instead of a flat saturated stroke —
@@ -181,7 +177,7 @@ PanelWindow {
                             color: Palette.Theme.textMuted
                             opacity: 0.4
                             font.family: Palette.Theme.fontMono
-                            font.pixelSize: 22
+                            font.pixelSize: Palette.Theme.fontSizeHeadline
                         }
 
                         // up to 4 windows tiled in a mini 2×2; a 5th+ just
@@ -220,9 +216,8 @@ PanelWindow {
                                     scale: winTile.hovered ? 1.04 : 1.0
 
                                     Behavior on scale {
-                                        NumberAnimation {
-                                            duration: 100
-                                            easing.type: Easing.OutCubic
+                                        SpatialMotion {
+                                            fast: true
                                         }
                                     }
 
@@ -246,13 +241,11 @@ PanelWindow {
                                         Rectangle {
                                             anchors.fill: parent
                                             visible: !winTile.overflow
-                                            color: "#ffffff"
-                                            opacity: winTile.hovered ? 0.08 : 0
+                                            color: Palette.Theme.textPrimary
+                                            opacity: winTile.hovered ? Palette.Theme.stateHover : 0
 
                                             Behavior on opacity {
-                                                NumberAnimation {
-                                                    duration: 120
-                                                }
+                                                EffectMotion {}
                                             }
                                         }
 
@@ -266,7 +259,7 @@ PanelWindow {
                                                 text: "+" + (winRepeater.count - 3)
                                                 color: Palette.Theme.textMuted
                                                 font.family: Palette.Theme.fontMono
-                                                font.pixelSize: 13
+                                                font.pixelSize: Palette.Theme.fontSizeBody
                                             }
                                         }
 

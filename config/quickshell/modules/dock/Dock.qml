@@ -7,6 +7,7 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import QtQuick
 import "../../theme" as Palette
+import "../../components/material"
 
 // The bottom notch's resting state: pinned apps plus anything currently
 // running. Hosted by the bottom stage in components/overlay/CenterOverlay.qml,
@@ -394,22 +395,15 @@ Item {
 
                     Behavior on x {
                         enabled: !cell.dragging
-                        NumberAnimation {
-                            duration: 200
-                            easing.type: Easing.OutCubic
+                        SpatialMotion {
+                            fast: true
                         }
                     }
                     Behavior on scale {
-                        NumberAnimation {
-                            duration: 260
-                            easing.type: Easing.OutBack
-                            easing.overshoot: 1.6
-                        }
+                        SpatialMotion {}
                     }
                     Behavior on opacity {
-                        NumberAnimation {
-                            duration: 160
-                        }
+                        EffectMotion {}
                     }
 
                     IconImage {
@@ -423,10 +417,8 @@ Item {
                         scale: cell.dragging ? 1.15 : (cell.hovered ? 1.28 : 1)
 
                         Behavior on scale {
-                            NumberAnimation {
-                                duration: 180
-                                easing.type: Easing.OutBack
-                                easing.overshoot: 1.6
+                            SpatialMotion {
+                                fast: true
                             }
                         }
                     }
@@ -441,9 +433,8 @@ Item {
                         color: cell.focused ? Palette.Theme.accent : Palette.Theme.textMuted
 
                         Behavior on width {
-                            NumberAnimation {
-                                duration: 160
-                                easing.type: Easing.OutCubic
+                            SpatialMotion {
+                                fast: true
                             }
                         }
                     }

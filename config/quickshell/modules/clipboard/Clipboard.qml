@@ -105,7 +105,7 @@ Item {
                     text: "Clipboard"
                     color: Palette.Theme.textTitle
                     font.family: Palette.Theme.fontSans
-                    font.pixelSize: 16
+                    font.pixelSize: Palette.Theme.fontSizeTitle
                     font.weight: Font.DemiBold
                     Layout.fillWidth: true
                 }
@@ -113,7 +113,7 @@ Item {
                     text: root.entries.length + " items"
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontSans
-                    font.pixelSize: 11
+                    font.pixelSize: Palette.Theme.fontSizeXs
                 }
                 ActionChip {
                     label: "Clear"
@@ -125,7 +125,7 @@ Item {
                 Layout.preferredHeight: 46
                 Layout.minimumHeight: 46
                 Layout.maximumHeight: 46
-                radius: 16
+                radius: Palette.Theme.radiusMedium
                 color: Palette.Theme.surfaceContainerHigh
                 border.width: search.activeFocus ? 1 : 0
                 border.color: Palette.Theme.accent
@@ -137,7 +137,7 @@ Item {
                     text: "\ue8b6"
                     color: search.activeFocus ? Palette.Theme.accent : Palette.Theme.textMuted
                     font.family: Palette.Theme.fontIcons
-                    font.pixelSize: 18
+                    font.pixelSize: Palette.Theme.iconSize
                 }
                 TextInput {
                     id: search
@@ -149,7 +149,7 @@ Item {
                     anchors.bottom: parent.bottom
                     color: Palette.Theme.textPrimary
                     font.family: Palette.Theme.fontMono
-                    font.pixelSize: 13
+                    font.pixelSize: Palette.Theme.fontSizeBody
                     verticalAlignment: TextInput.AlignVCenter
                     selectByMouse: true
                     text: root.query
@@ -169,7 +169,7 @@ Item {
                     text: "Search clipboard history"
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontMono
-                    font.pixelSize: 13
+                    font.pixelSize: Palette.Theme.fontSizeBody
                 }
             }
             GridView {
@@ -180,6 +180,20 @@ Item {
                 cellWidth: width
                 cellHeight: 70
                 model: root.entries
+                currentIndex: root.selected
+                onCurrentIndexChanged: if (currentIndex >= 0)
+                    positionViewAtIndex(currentIndex, GridView.Contain)
+                // Accent ring that glides over the cards to the selection.
+                highlightFollowsCurrentItem: false
+                highlight: MovingHighlight {
+                    target: grid.currentItem
+                    insetY: 3
+                    z: 2
+                    radius: Palette.Theme.radiusSmall
+                    color: "transparent"
+                    border.width: 2
+                    border.color: Palette.Theme.accent
+                }
                 delegate: Item {
                     required property var modelData
                     required property int index
@@ -187,18 +201,13 @@ Item {
                     height: grid.cellHeight
                     Rectangle {
                         anchors.fill: parent
-                        anchors.topMargin: 2
-                        anchors.bottomMargin: 4
-                        radius: 12
+                        anchors.topMargin: 3
+                        anchors.bottomMargin: 3
+                        radius: Palette.Theme.radiusSmall
                         color: index === root.selected ? Palette.Theme.surfaceContainerHigh : Palette.Theme.surfaceContainerLow
-                        border.width: index === root.selected ? 2 : 0
-                        border.color: Palette.Theme.accent
 
                         Behavior on color {
-                            ColorAnimation { duration: 120 }
-                        }
-                        Behavior on border.width {
-                            NumberAnimation { duration: 120 }
+                            ColorMotion {}
                         }
                         Rectangle {
                             anchors.left: parent.left
@@ -206,14 +215,14 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             width: 32
                             height: 32
-                            radius: 10
-                            color: root.isBinary(modelData) ? Palette.Theme.secondaryContainer : Palette.Theme.accentLight
+                            radius: Palette.Theme.radiusSmall
+                            color: root.isBinary(modelData) ? Palette.Theme.surfaceContainerHighest : Palette.Theme.accentTonal
                             Text {
                                 anchors.centerIn: parent
                                 text: root.isBinary(modelData) ? "\ue2c4" : "\ue14d"
-                                color: root.isBinary(modelData) ? Palette.Theme.secondaryText : Palette.Theme.accent
+                                color: root.isBinary(modelData) ? Palette.Theme.textSecondary : Palette.Theme.accent
                                 font.family: Palette.Theme.fontIcons
-                                font.pixelSize: 17
+                                font.pixelSize: Palette.Theme.iconSizeSmall
                             }
                         }
                         Text {
@@ -229,7 +238,7 @@ Item {
                             textFormat: Text.PlainText
                             color: Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontMono
-                            font.pixelSize: 11
+                            font.pixelSize: Palette.Theme.fontSizeXs
                             wrapMode: Text.Wrap
                             maximumLineCount: 2
                             elide: Text.ElideRight
@@ -250,7 +259,7 @@ Item {
                 text: "Clipboard history is empty"
                 color: Palette.Theme.textMuted
                 font.family: Palette.Theme.fontMono
-                font.pixelSize: 10
+                font.pixelSize: Palette.Theme.fontSizeXs
                 horizontalAlignment: Text.AlignHCenter
             }
         }

@@ -139,7 +139,7 @@ WlSessionLockSurface {
             text: "hi, " + Quickshell.env("USER")
             color: Palette.Theme.textPrimary
             font.family: Palette.Theme.fontMono
-            font.pixelSize: 14
+            font.pixelSize: Palette.Theme.fontSizeBody
         }
 
         Text {
@@ -156,7 +156,7 @@ WlSessionLockSurface {
             text: Qt.formatDateTime(clock.date, "ddd, MMM d")
             color: Palette.Theme.textSecondary
             font.family: Palette.Theme.fontMono
-            font.pixelSize: 13
+            font.pixelSize: Palette.Theme.fontSizeBody
         }
 
         ColumnLayout {
@@ -183,11 +183,11 @@ WlSessionLockSurface {
                     radius: height / 2
                     color: Qt.alpha(Palette.Theme.surfaceContainer, 0.72)
                     border.width: 1.5
-                    border.color: root.lockScreen.authFailed ? Palette.Theme.errorColor : (pwFieldWrapper.hasText ? Palette.Theme.accent : Qt.alpha(Palette.Theme.border, 0.8))
+                    border.color: root.lockScreen.authFailed ? Palette.Theme.errorColor : (pwFieldWrapper.hasText ? Palette.Theme.accent : Palette.Theme.outlineSoft)
 
                     Behavior on border.color {
-                        ColorAnimation {
-                            duration: 180
+                        ColorMotion {
+                            fast: false
                         }
                     }
                 }
@@ -199,11 +199,10 @@ WlSessionLockSurface {
                     text: ""
                     color: pwFieldWrapper.hasText ? pwFieldWrapper.stateColor : Palette.Theme.textMuted
                     font.family: Palette.Theme.fontIcons
-                    font.pixelSize: 18
-
+                    font.pixelSize: Palette.Theme.iconSize
                     Behavior on color {
-                        ColorAnimation {
-                            duration: 180
+                        ColorMotion {
+                            fast: false
                         }
                     }
                 }
@@ -214,13 +213,11 @@ WlSessionLockSurface {
                     text: root.lockScreen.authBusy ? "Verifying…" : "Password"
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontMono
-                    font.pixelSize: 13
+                    font.pixelSize: Palette.Theme.fontSizeBody
                     opacity: pwFieldWrapper.hasText ? 0 : 1
 
                     Behavior on opacity {
-                        NumberAnimation {
-                            duration: 140
-                        }
+                        EffectMotion {}
                     }
 
                     SequentialAnimation on opacity {
@@ -245,9 +242,7 @@ WlSessionLockSurface {
                     opacity: pwFieldWrapper.hasText ? 1 : 0
 
                     Behavior on opacity {
-                        NumberAnimation {
-                            duration: 140
-                        }
+                        EffectMotion {}
                     }
 
                     Repeater {
@@ -261,15 +256,12 @@ WlSessionLockSurface {
                             scale: 0
 
                             Behavior on color {
-                                ColorAnimation {
-                                    duration: 150
-                                }
+                                ColorMotion {}
                             }
                             Behavior on scale {
-                                NumberAnimation {
-                                    duration: 200
-                                    easing.type: Easing.OutBack
-                                    easing.overshoot: 2
+                                SpatialMotion {
+                                    fast: true
+                                    bouncy: true
                                 }
                             }
 
@@ -289,13 +281,13 @@ WlSessionLockSurface {
                     scale: submitMouse.pressed && pwFieldWrapper.canSubmit ? 0.92 : 1
 
                     Behavior on color {
-                        ColorAnimation {
-                            duration: 180
+                        ColorMotion {
+                            fast: false
                         }
                     }
                     Behavior on scale {
-                        NumberAnimation {
-                            duration: 120
+                        SpatialMotion {
+                            fast: true
                         }
                     }
 
@@ -304,11 +296,10 @@ WlSessionLockSurface {
                         text: ""
                         color: pwFieldWrapper.canSubmit ? Palette.Theme.accentText : Palette.Theme.textMuted
                         font.family: Palette.Theme.fontIcons
-                        font.pixelSize: 20
-
+                        font.pixelSize: Palette.Theme.iconSize
                         Behavior on color {
-                            ColorAnimation {
-                                duration: 180
+                            ColorMotion {
+                                fast: false
                             }
                         }
                     }
@@ -329,7 +320,7 @@ WlSessionLockSurface {
                 text: root.lockScreen.failedAttempts + (root.lockScreen.failedAttempts === 1 ? " attempt failed" : " attempts failed")
                 color: Palette.Theme.errorColor
                 font.family: Palette.Theme.fontMono
-                font.pixelSize: 11
+                font.pixelSize: Palette.Theme.fontSizeXs
             }
         }
     }

@@ -5,74 +5,130 @@ import QtQuick.Layouts
 import "../../theme" as Palette
 import "../../components/material"
 
-GridLayout {
+// Workspace dots with one accent indicator that travels between them. When
+// the focused workspace changes, the indicator's leading edge springs ahead
+// and its trailing edge follows, so it stretches toward the destination and
+// settles into shape there — the same gliding language as the launcher's
+// selection. The active slot opens up underneath it at the same time.
+Item {
     id: root
 
     // Stacks the dots top-to-bottom instead of left-to-right, and grows the
-    // active pill vertically instead of horizontally — matching the
-    // vertical workspace-switch animation already used at the Hyprland
-    // compositor level (config/hypr/modules/vertAni.lua's "slidevert").
+    // active slot vertically instead of horizontally — matching the
+    // vertical workspace-switch animation used at the Hyprland compositor
+    // level.
     property bool vertical: false
     // Set by Bar.qml so each dot can open the overview parked on the
     // workspace it represents instead of one relative to whatever's focused.
     property var service: null
 
-    columns: vertical ? 1 : 999
-    rowSpacing: 3
-    columnSpacing: 3
+    readonly property int count: 10
+    readonly property real dotSize: 10
+    readonly property real activeLength: 45
+    readonly property real gap: 3
 
-    Repeater {
-        model: 10
+    readonly property int activeIndex: {
+        var id = Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : -1;
+        return id >= 1 && id <= count ? id - 1 : -1;
+    }
 
-        Rectangle {
-            property bool isActive: Hyprland.focusedWorkspace?.id === (index + 1)
+    implicitWidth: grid.implicitWidth
+    implicitHeight: grid.implicitHeight
 
-            // Layout.preferredWidth/Height (not implicitWidth/Height) is
-            // what GridLayout actually watches for live re-layout — driving
-            // the pill's grow/shrink through implicit sizing left it static
-            // in vertical mode since GridLayout only re-read it on the next
-            // unrelated relayout, not on every animation frame.
-            Layout.preferredWidth: root.vertical ? 10 : (isActive ? 45 : 10)
-            Layout.preferredHeight: root.vertical ? (isActive ? 45 : 10) : 10
-            radius: Math.min(width, height) / 2
-            // Text-muted is opaque in every palette, unlike transparent
-            // surface outlines used by AMOLED themes such as Ryo.
-            color: isActive ? Palette.Theme.accent : Palette.Theme.textMuted
-            border.width: 0
-            scale: isActive ? 1.0 : 0.9
+    GridLayout {
+        id: grid
 
-            Behavior on Layout.preferredWidth {
-                NumberAnimation {
-                    duration: 600
-                    easing.type: Easing.OutCubic
+        columns: root.vertical ? 1 : 999
+        rowSpacing: root.gap
+        columnSpacing: root.gap
+
+        Repeater {
+            model: root.count
+
+            Rectangle {
+                id: dot
+
+                required property int index
+                readonly property bool isActive: root.activeIndex === index
+                readonly property real length: isActive ? root.activeLength : root.dotSize
+
+                // Layout.preferredWidth/Height (not implicitWidth/Height) is
+                // what GridLayout re-lays out on every animation frame.
+                Layout.preferredWidth: root.vertical ? root.dotSize : length
+                Layout.preferredHeight: root.vertical ? length : root.dotSize
+                radius: root.dotSize / 2
+                // The active slot is left empty for the indicator to fill.
+                color: isActive ? "transparent" : (dotMouse.containsMouse ? Palette.Theme.textSecondary : Palette.Theme.textMuted)
+                scale: isActive ? 1 : 0.9
+
+                Behavior on Layout.preferredWidth {
+                    SpatialMotion {}
+                }
+                Behavior on Layout.preferredHeight {
+                    SpatialMotion {}
+                }
+                Behavior on color {
+                    ColorMotion {}
+                }
+                Behavior on scale {
+                    SpatialMotion {}
+                }
+
+                MouseArea {
+                    id: dotMouse
+                    anchors.fill: parent
+                    // Dots are small (10-45px); grow the hit area so they're
+                    // easy to click without touching the surrounding capsule.
+                    anchors.margins: -4
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (root.service)
+                            root.service.openAt(dot.index);
+                    }
                 }
             }
-            Behavior on Layout.preferredHeight {
-                NumberAnimation {
-                    duration: 600
-                    easing.type: Easing.OutCubic
-                }
-            }
-            Behavior on color {
-                ColorMotion {
-                    fast: false
-                }
-            }
-            Behavior on scale {
-                SpatialMotion {}
-            }
+        }
+    }
 
-            MouseArea {
-                anchors.fill: parent
-                // Dots are small (10-45px); grow the hit area so they're
-                // easy to click without touching the surrounding capsule.
-                anchors.margins: -4
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    if (root.service)
-                        root.service.openAt(index);
-                }
+    // The indicator's resting span along the main axis, computed from the
+    // final layout (every slot before the active one is a plain dot) rather
+    // than read from the animating slots, so each edge springs exactly once
+    // per switch instead of chasing a moving target.
+    Rectangle {
+        id: indicator
+
+        readonly property real targetStart: Math.max(0, root.activeIndex) * (root.dotSize + root.gap)
+        readonly property real targetEnd: targetStart + root.activeLength
+
+        property real leadStart: targetStart
+        property real leadEnd: targetEnd
+
+        // Whichever edge points the way the indicator is travelling moves
+        // fast; the other trails, stretching the pill mid-flight.
+        Behavior on leadStart {
+            SpatialMotion {
+                fast: indicator.targetStart < indicator.leadStart
             }
+        }
+        Behavior on leadEnd {
+            SpatialMotion {
+                fast: indicator.targetEnd > indicator.leadEnd
+            }
+        }
+        onTargetStartChanged: leadStart = targetStart
+        onTargetEndChanged: leadEnd = targetEnd
+
+        x: root.vertical ? 0 : leadStart
+        y: root.vertical ? leadStart : 0
+        width: root.vertical ? root.dotSize : Math.max(root.dotSize, leadEnd - leadStart)
+        height: root.vertical ? Math.max(root.dotSize, leadEnd - leadStart) : root.dotSize
+        radius: root.dotSize / 2
+        color: Palette.Theme.accent
+        opacity: root.activeIndex >= 0 ? 1 : 0
+
+        Behavior on opacity {
+            EffectMotion {}
         }
     }
 }

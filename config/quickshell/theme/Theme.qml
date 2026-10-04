@@ -87,8 +87,8 @@ QtObject {
     readonly property int motionSlow: 480
     readonly property int effectFast: 110
     readonly property int effectDefault: 200
-    readonly property real springOvershoot: 1.3
-    readonly property real springBouncy: 2.2
+    readonly property real springOvershoot: 0.6
+    readonly property real springBouncy: 1.0
 
     // State layers: a tint of the content color laid over a surface.
     readonly property real stateHover: 0.08

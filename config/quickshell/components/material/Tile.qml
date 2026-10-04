@@ -40,7 +40,7 @@ Item {
         NumberAnimation {
             target: root
             property: "scale"
-            to: 1.06
+            to: 1.03
             duration: Palette.Theme.effectFast
             easing.type: Easing.OutCubic
         }

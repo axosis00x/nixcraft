@@ -24,8 +24,8 @@ hl.config({
 	},
 
 	decoration = {
-		rounding = 6,
-		rounding_power = 4,
+		rounding = 7,
+		rounding_power = 7,
 		active_opacity = 0.88,
 		inactive_opacity = 0.95,
 		screen_shader = screen_shader,

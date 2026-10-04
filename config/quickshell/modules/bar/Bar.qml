@@ -34,7 +34,19 @@ PanelWindow {
     // actually applies: implicitHeight governs thickness in horizontal mode,
     // implicitWidth governs thickness in vertical mode.
     implicitHeight: 34
-    implicitWidth: Ui.barThickness
+    // The vertical window is a little wider than the strip so the concave
+    // fillets can hang off it; only the strip reserves space and takes
+    // input.
+    implicitWidth: Ui.barThickness + verticalBar.filletSize
+    exclusiveZone: bar.vertical ? Ui.barThickness : implicitHeight
+    mask: bar.vertical ? verticalMask : null
+
+    property Region verticalMask: Region {
+        x: 0
+        y: 0
+        width: Ui.barThickness
+        height: bar.height
+    }
     color: "transparent"
 
     property string centerMode: "normal"
@@ -565,230 +577,16 @@ PanelWindow {
         }
     }
 
-    // Vertical dock layout: launcher + workspaces pinned to the top, a
-    // static clock/app-icon/cava stack centered in the middle, and
-    // tray/battery/tools/power stacked upward from the bottom. There is no
-    // center notch here — popups grow from CenterOverlay's shared stage
-    // instead (top-anchored for control center/power/tools, bottom-anchored
-    // for everything else — see services/BarLayoutService.qml).
-    Item {
-        id: barColumn
+    // Left-edge bar (see VerticalBar.qml). Popups grow from CenterOverlay's
+    // shared stage instead of a notch here (top-anchored for control
+    // center/power/tools, bottom-anchored for everything else — see
+    // services/BarLayoutService.qml).
+    VerticalBar {
+        id: verticalBar
         visible: bar.vertical
-        anchors {
-            top: parent.top
-            left: parent.left
-            right: parent.right
-            bottom: parent.bottom
-            topMargin: 4
-            // Mirrors barRow's topMargin: 4 above — the same small reveal
-            // gap, just rotated onto the leading (left) edge instead of the
-            // top one.
-            leftMargin: 4
-            rightMargin: 0
-            bottomMargin: 4
-        }
-
-        LauncherIsland {
-            id: launcherIslandV
-            anchors.top: parent.top
-            anchors.horizontalCenter: parent.horizontalCenter
-            implicitWidth: parent.width
-            bar: bar
-        }
-
-        BarSection {
-            id: workspacesCapsuleV
-            anchors.top: launcherIslandV.bottom
-            anchors.topMargin: 10
-            anchors.horizontalCenter: parent.horizontalCenter
-            // Every vertical-bar capsule spans the bar's full width so the
-            // stack reads as one consistent column instead of a jumble of
-            // differently-sized pills.
-            implicitWidth: parent.width
-            implicitHeight: Math.max(workspacesV.implicitHeight + 24, 155)
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    if (bar.workspacesService)
-                        bar.workspacesService.step(1);
-                }
-            }
-
-            Workspaces {
-                id: workspacesV
-                vertical: true
-                anchors.centerIn: parent
-                service: bar.workspacesService
-            }
-        }
-
-        // Static vertical stand-in for the horizontal notch's scroll-cycled
-        // clock/apps/cava — there's no room to cycle in a narrow column, so
-        // all three sit stacked together, always visible, centered in the
-        // bar.
-        BarSection {
-            id: middleCapsuleV
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.horizontalCenter: parent.horizontalCenter
-            implicitWidth: parent.width
-            implicitHeight: middleColumnV.implicitHeight + 20
-
-            ColumnLayout {
-                id: middleColumnV
-                anchors.centerIn: parent
-                spacing: 12
-
-                Clock {
-                    stacked: true
-                    Layout.alignment: Qt.AlignHCenter
-                }
-
-                // The "desktop icon shower" — the focused window's icon, or
-                // a bare desktop glyph when nothing is focused. Same data
-                // the horizontal notch's "apps" module shows.
-                Item {
-                    id: appIconV
-                    Layout.alignment: Qt.AlignHCenter
-                    implicitWidth: 18
-                    implicitHeight: 18
-
-                    IconImage {
-                        anchors.centerIn: parent
-                        implicitSize: 16
-                        source: bar.iconForClass(bar.appClass)
-                        visible: bar.appClass !== "" && source !== ""
-                        smooth: true
-                        mipmap: true
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "~"
-                        visible: bar.appClass === ""
-                        color: Palette.Theme.textPrimary
-                        font.family: Palette.Theme.fontMono
-                        font.pixelSize: Palette.Theme.fontSizeSmall
-                        font.weight: Font.DemiBold
-                    }
-                }
-
-                // Cava.qml always paints its bars left-to-right (varying in
-                // height); rotating the whole visualizer 90° turns that into
-                // bars stacked top-to-bottom (varying in width), which is
-                // what actually fits a narrow vertical bar. The wrapper Item
-                // reports the *post-rotation* footprint to the layout, while
-                // the Cava inside it keeps its natural landscape size and
-                // just spins in place — avoids overflowing its layout cell.
-                Item {
-                    id: cavaWrapV
-                    Layout.alignment: Qt.AlignHCenter
-                    implicitWidth: 14
-                    implicitHeight: 24
-                    visible: bar.mediaPlaying
-
-                    Cava {
-                        id: cavaVisualizerV
-                        anchors.centerIn: parent
-                        implicitWidth: 24
-                        implicitHeight: 14
-                        rotation: 90
-                        barCount: 3
-                        // Mirrors the horizontal notch's cava gating (see
-                        // cavaVisualizer above) so only whichever bar is
-                        // actually showing keeps a cava process running.
-                        active: bar.mediaPlaying && bar.vertical
-                    }
-                }
-            }
-        }
-
-        BarSection {
-            id: powerCapsuleV
-            anchors.bottom: parent.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
-            implicitWidth: parent.width
-            implicitHeight: 30
-            radius: Palette.Theme.radiusSmall
-            Text {
-                anchors.centerIn: parent
-                text: ""
-                color: Palette.Theme.textPrimary
-                font.family: Palette.Theme.fontIcons
-                font.pixelSize: Palette.Theme.iconSize
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    if (bar.powerMenu && typeof bar.powerMenu.togglePowerMenu === "function")
-                        bar.powerMenu.togglePowerMenu();
-                }
-            }
-        }
-
-        BarSection {
-            id: toolCapsuleV
-            anchors.bottom: powerCapsuleV.top
-            anchors.bottomMargin: 10
-            anchors.horizontalCenter: parent.horizontalCenter
-            implicitWidth: parent.width
-            // The settings button sits flush in the capsule's end with an
-            // even inset on its three outer sides.
-            readonly property real buttonInset: 3
-            implicitHeight: toolColumnV.implicitHeight + 10 + buttonInset
-
-            ColumnLayout {
-                id: toolColumnV
-                anchors.top: parent.top
-                anchors.topMargin: 10
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 8
-
-                Tray {
-                    parentWindow: bar
-                    vertical: true
-                    Layout.alignment: Qt.AlignHCenter
-                }
-
-                Divider {
-                    Layout.preferredWidth: 20
-                    Layout.alignment: Qt.AlignHCenter
-                }
-
-                IconButton {
-                    icon: "\ue8b8"
-                    implicitWidth: toolCapsuleV.width - toolCapsuleV.buttonInset * 2
-                    implicitHeight: implicitWidth
-                    stateRadius: toolCapsuleV.radius - toolCapsuleV.buttonInset
-                    Layout.alignment: Qt.AlignHCenter
-                    onClicked: {
-                        Quickshell.execDetached(["quickshell", "ipc", "call", "settings", "toggle"]);
-                    }
-                }
-            }
-        }
-
-        BarSection {
-            id: batteryCapsuleV
-            anchors.bottom: toolCapsuleV.top
-            anchors.bottomMargin: 10
-            anchors.horizontalCenter: parent.horizontalCenter
-            implicitWidth: parent.width
-            implicitHeight: batteryContentV.implicitHeight + 24
-            visible: bar.batteryAvailable
-
-            Battery {
-                id: batteryContentV
-                vertical: true
-                showPercent: false
-                anchors.centerIn: parent
-                bar: bar
-            }
-        }
-
+        anchors.fill: parent
+        bar: bar
+        thickness: Ui.barThickness
     }
 
     Weather {

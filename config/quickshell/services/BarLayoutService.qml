@@ -34,6 +34,16 @@ Item {
         id: applyOrientation
     }
 
+    IpcHandler {
+        target: "bar"
+        function toggle(): void {
+            root.setVertical(!root.vertical);
+        }
+        function setVertical(value: bool): void {
+            root.setVertical(value);
+        }
+    }
+
     // blockLoading forces the initial read to happen synchronously, so the
     // bar renders with its real saved edge immediately — without it, the
     // bar briefly renders vertical (the declared default below) then snaps

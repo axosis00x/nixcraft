@@ -81,6 +81,14 @@ Item {
 
                 required property int index
                 readonly property bool isActive: root.activeIndex === index
+                readonly property bool isUrgent: {
+                    var list = Hyprland.workspaces.values;
+                    for (var i = 0; i < list.length; i++) {
+                        if (list[i].id === index + 1)
+                            return list[i].urgent;
+                    }
+                    return false;
+                }
                 readonly property real length: isActive ? root.activeLength : root.dotSize
 
                 // Layout.preferredWidth/Height (not implicitWidth/Height) is
@@ -88,9 +96,11 @@ Item {
                 Layout.preferredWidth: root.vertical ? root.dotSize : length
                 Layout.preferredHeight: root.vertical ? length : root.dotSize
                 radius: root.dotSize / 2
-                // Text-muted is opaque in every palette, unlike transparent
-                // surface outlines used by AMOLED themes such as Ryo.
-                color: isActive ? Palette.Theme.accent : (dotMouse.containsMouse ? Palette.Theme.textSecondary : Palette.Theme.textMuted)
+                // Urgent (a window there wants attention) wins over everything,
+                // in the theme's danger colour. Text-muted is opaque in every
+                // palette, unlike transparent surface outlines used by AMOLED
+                // themes such as Ryo.
+                color: isUrgent ? Palette.Theme.errorColor : (isActive ? Palette.Theme.accent : (dotMouse.containsMouse ? Palette.Theme.textSecondary : Palette.Theme.textMuted))
                 scale: isActive ? 1 : 0.9
 
                 Behavior on Layout.preferredWidth {

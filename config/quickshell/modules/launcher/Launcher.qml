@@ -180,7 +180,6 @@ Item {
     property var displayApps: []
 
     readonly property int maxVisible: 5
-    readonly property int visibleCount: Math.min(root.displayApps.length, root.maxVisible)
 
     function rebuildApps() {
         var entries = [...DesktopEntries.applications.values].filter(d => d && d.name && !d.noDisplay).sort((a, b) => a.name.localeCompare(b.name));

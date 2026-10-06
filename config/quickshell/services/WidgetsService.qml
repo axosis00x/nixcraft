@@ -21,10 +21,6 @@ Item {
     // Desktop-file ids pinned to the dock (widgets/Dock.qml), in order.
     readonly property var dockPinned: state.dockPinned
 
-    function isPinned(appId) {
-        return state.dockPinned.indexOf(appId) !== -1;
-    }
-
     function setPinOrder(ids) {
         state.dockPinned = ids;
         stateFile.writeAdapter();

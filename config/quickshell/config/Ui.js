@@ -5,7 +5,6 @@
 // position, and radius.
 const themeOverlayWidth = 560
 const clipboardOverlayWidth = 468
-const wayclickOverlayWidth = 560
 
 // Width of the vertical bar's solid strip (when active — see
 // services/BarLayoutService.qml, which owns the live-toggleable, persisted

@@ -92,7 +92,6 @@ if [ -n "$zed_theme" ] && [ -f "$HOME/.config/zed/settings.json" ]; then
     }' "$HOME/.config/zed/settings.json"
 fi
 
-"$HOME/.config/quickshell/scripts/build-theme.sh" || true
 hyprctl reload >/dev/null || true
 pgrep tmux >/dev/null && tmux source-file "$HOME/.config/tmux/tmux.conf" 2>/dev/null || true
 notify-send -i "$wallpaper" "Theme Activated" "Applied $theme_name"

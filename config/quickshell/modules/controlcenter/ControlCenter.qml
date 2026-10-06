@@ -54,7 +54,7 @@ Item {
     readonly property bool showingDetail: detailMode !== "none"
 
     implicitWidth: Math.max(380, Math.min(maxWidth - 2, 450))
-    implicitHeight: showingDetail ? Math.max(320, Math.min(maxHeight - 4, 400)) : Math.max(464, Math.min(maxHeight - 4, 500))
+    implicitHeight: showingDetail ? Math.max(320, Math.min(maxHeight - 4, 400)) : Math.max(420, Math.min(maxHeight - 4, 460))
 
     signal aboutToOpen
     signal aboutToClose

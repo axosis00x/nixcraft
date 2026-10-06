@@ -50,8 +50,6 @@ Flickable {
                     height: rows.implicitHeight
                     radius: Palette.Theme.radiusMedium
                     color: Palette.Theme.surfaceContainer
-                    border.width: 1
-                    border.color: Palette.Theme.outlineSoft
 
                     Column {
                         id: rows

@@ -33,7 +33,7 @@ Item {
     implicitWidth: iconOnly ? 54 : 180
     implicitHeight: iconOnly ? 54 : 64
 
-    readonly property real restRadius: shapeRadius >= 0 ? shapeRadius : (active ? Palette.Theme.radiusLarge : Palette.Theme.radiusMedium)
+    readonly property real restRadius: shapeRadius >= 0 ? shapeRadius : (active ? Palette.Theme.radiusLarge : Palette.Theme.radiusLarge - 3)
 
     SequentialAnimation {
         id: pulse
@@ -70,8 +70,10 @@ Item {
         id: bg
         anchors.fill: parent
         radius: tileMouse.pressed ? Math.min(root.restRadius, Palette.Theme.radiusSmall) : root.restRadius
-        color: root.iconOnly ? (root.active ? root.tint : Palette.Theme.surfaceContainerHigh) : (root.active ? Qt.alpha(root.tint, Palette.Theme.stateSelected) : Palette.Theme.surfaceContainer)
-        border.width: root.iconOnly ? 0 : 1
+        // Off tiles separate by tone alone (no outline); on tiles keep a
+        // faint tinted edge.
+        color: root.iconOnly ? (root.active ? root.tint : Palette.Theme.surfaceContainerHigh) : (root.active ? Qt.alpha(root.tint, Palette.Theme.stateSelected) : Palette.Theme.surfaceContainerHigh)
+        border.width: root.iconOnly || !root.active ? 0 : 1
         border.color: root.active ? Qt.alpha(root.tint, 0.1) : Palette.Theme.outlineSoft
 
         Behavior on radius {

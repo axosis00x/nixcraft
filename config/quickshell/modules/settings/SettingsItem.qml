@@ -74,9 +74,10 @@ Item {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.leftMargin: root.icon !== "" ? 48 : Palette.Theme.spacingLarge
-        height: 1
-        color: Palette.Theme.outlineSoft
+        // A thin gap in the window colour splits the group into segments
+        // (as in the control center) rather than an outlined hairline.
+        height: 2
+        color: Palette.Theme.surfaceSolid
     }
 
     MouseArea {

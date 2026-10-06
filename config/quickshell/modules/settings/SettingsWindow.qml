@@ -96,6 +96,17 @@ FloatingWindow {
         searchInput.text = "";
     }
 
+    // Up/Down step through the sidebar pages (wrapping); clears any search.
+    function stepPage(delta) {
+        var i = 0;
+        for (var k = 0; k < categories.length; k++) {
+            if (categories[k].id === page)
+                i = k;
+        }
+        searchInput.text = "";
+        page = categories[(i + delta + categories.length) % categories.length].id;
+    }
+
     // Escape peels back one layer: search text first, then the window.
     function back() {
         if (searchInput.text !== "")
@@ -500,16 +511,24 @@ FloatingWindow {
             root.back();
             event.accepted = true;
         }
+        Keys.onUpPressed: event => {
+            root.stepPage(-1);
+            event.accepted = true;
+        }
+        Keys.onDownPressed: event => {
+            root.stepPage(1);
+            event.accepted = true;
+        }
 
         // Always opaque, even under translucent themes, so whatever is
         // behind the window never bleeds through the text.
         Rectangle {
             id: cardBg
             anchors.fill: parent
-            radius: Palette.Theme.radiusExtraLarge
+            // Same panel corner as the shell's notch/island panels; no
+            // outline — like the rest of the shell, it separates by tone.
+            radius: Palette.Theme.radiusLarge
             color: Palette.Theme.surfaceSolid
-            border.width: 1
-            border.color: Palette.Theme.outlineSoft
         }
 
         RowLayout {
@@ -576,10 +595,10 @@ FloatingWindow {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 36
-                    radius: searchInput.activeFocus ? height / 2 : Palette.Theme.radiusSmall
-                    color: Palette.Theme.surfaceContainer
-                    border.width: 1
-                    border.color: searchInput.activeFocus ? Palette.Theme.accent : Palette.Theme.outlineSoft
+                    radius: Palette.Theme.radiusSmall
+                    color: Palette.Theme.surfaceContainerHigh
+                    border.width: searchInput.activeFocus ? 1 : 0
+                    border.color: Palette.Theme.accent
 
                     Behavior on radius {
                         SpatialMotion {}
@@ -656,7 +675,7 @@ FloatingWindow {
                             }
                             return null;
                         }
-                        radius: height / 2
+                        radius: Palette.Theme.radiusSmall
                         color: Palette.Theme.accentTonal
                     }
 
@@ -688,12 +707,6 @@ FloatingWindow {
                 Item {
                     Layout.fillHeight: true
                 }
-            }
-
-            Rectangle {
-                Layout.fillHeight: true
-                Layout.preferredWidth: 1
-                color: Palette.Theme.outlineSoft
             }
 
             // ── right: page header + content ────────────────────────

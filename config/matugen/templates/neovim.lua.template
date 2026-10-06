@@ -1,1 +1,1 @@
-return "matugen-dynamic"
+return "dynamic"

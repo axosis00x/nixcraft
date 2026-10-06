@@ -1,4 +1,4 @@
--- matugen-dynamic: generated from the active dynamic wallpaper by matugen.
+-- dynamic: generated from the active dynamic wallpaper by matugen.
 -- Palette shared with kitty/tmux/yazi/hyprland's dynamic theme.
 
 vim.cmd("hi clear")
@@ -7,32 +7,32 @@ if vim.fn.exists("syntax_on") then
 end
 vim.o.termguicolors = true
 vim.o.background = "dark"
-vim.g.colors_name = "matugen-dynamic"
+vim.g.colors_name = "dynamic"
 
 local p = {
-  bg = "#1c1014",
-  bg_float = "#2a1c20",
-  bg_highlight = "#35262a",
-  bg_visual = "#403135",
-  bg_search = "#403135",
-  border = "#534247",
+  bg = "#1c1107",
+  bg_float = "#291d12",
+  bg_highlight = "#34271c",
+  bg_visual = "#403226",
+  bg_search = "#403226",
+  border = "#534437",
 
-  fg = "#f5dce2",
-  fg_dark = "#d8c1c6",
-  fg_dim = "#a18b91",
-  comment = "#a18b91",
-  disabled = "#534247",
+  fg = "#f5decc",
+  fg_dark = "#d8c3b1",
+  fg_dim = "#a08d7d",
+  comment = "#a08d7d",
+  disabled = "#534437",
 
-  blue = "#ffb0c9",
-  blue2 = "#ffd9e3",
-  cyan = "#f3b7bd",
-  teal = "#ffd9dc",
-  green = "#ffb4ac",
-  purple = "#ffb4ac",
-  magenta = "#ffdad6",
+  blue = "#ffb872",
+  blue2 = "#ffdcbf",
+  cyan = "#e8c08e",
+  teal = "#ffddb4",
+  green = "#e8c177",
+  purple = "#e8c177",
+  magenta = "#ffdea4",
   red = "#ffb4ab",
-  orange = "#ffb0c9",
-  yellow = "#f3b7bd",
+  orange = "#ffb872",
+  yellow = "#e8c08e",
 
   none = "NONE",
 }
@@ -257,19 +257,19 @@ hl("NoiceCmdlinePopup", { fg = p.fg, bg = p.bg_float })
 hl("NoiceCmdlinePopupBorder", { fg = p.border, bg = p.bg_float })
 
 -- Terminal colors
-vim.g.terminal_color_0 = "#170b0f"
+vim.g.terminal_color_0 = "#160c04"
 vim.g.terminal_color_1 = "#ffb4ab"
-vim.g.terminal_color_2 = "#ffb4ac"
-vim.g.terminal_color_3 = "#f3b7bd"
-vim.g.terminal_color_4 = "#ffb0c9"
-vim.g.terminal_color_5 = "#ffb4ac"
-vim.g.terminal_color_6 = "#f3b7bd"
-vim.g.terminal_color_7 = "#f5dce2"
-vim.g.terminal_color_8 = "#a18b91"
+vim.g.terminal_color_2 = "#e8c177"
+vim.g.terminal_color_3 = "#e8c08e"
+vim.g.terminal_color_4 = "#ffb872"
+vim.g.terminal_color_5 = "#e8c177"
+vim.g.terminal_color_6 = "#e8c08e"
+vim.g.terminal_color_7 = "#f5decc"
+vim.g.terminal_color_8 = "#a08d7d"
 vim.g.terminal_color_9 = "#ffdad6"
-vim.g.terminal_color_10 = "#ffdad6"
-vim.g.terminal_color_11 = "#ffd9dc"
-vim.g.terminal_color_12 = "#ffd9e3"
-vim.g.terminal_color_13 = "#ffdad6"
-vim.g.terminal_color_14 = "#ffd9dc"
-vim.g.terminal_color_15 = "#f5dce2"
+vim.g.terminal_color_10 = "#ffdea4"
+vim.g.terminal_color_11 = "#ffddb4"
+vim.g.terminal_color_12 = "#ffdcbf"
+vim.g.terminal_color_13 = "#ffdea4"
+vim.g.terminal_color_14 = "#ffddb4"
+vim.g.terminal_color_15 = "#f5decc"

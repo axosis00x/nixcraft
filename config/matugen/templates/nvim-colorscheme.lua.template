@@ -1,4 +1,4 @@
--- matugen-dynamic: generated from the active dynamic wallpaper by matugen.
+-- dynamic: generated from the active dynamic wallpaper by matugen.
 -- Palette shared with kitty/tmux/yazi/hyprland's dynamic theme.
 
 vim.cmd("hi clear")
@@ -7,7 +7,7 @@ if vim.fn.exists("syntax_on") then
 end
 vim.o.termguicolors = true
 vim.o.background = "dark"
-vim.g.colors_name = "matugen-dynamic"
+vim.g.colors_name = "dynamic"
 
 local p = {
   bg = "{{colors.surface.default.hex}}",

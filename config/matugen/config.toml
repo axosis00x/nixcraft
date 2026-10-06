@@ -45,4 +45,4 @@ output_path = "~/.config/themes/dynamic/neovim.lua"
 
 [templates.nvim_colorscheme]
 input_path = "templates/nvim-colorscheme.lua.template"
-output_path = "~/.config/nvim/colors/matugen-dynamic.lua"
+output_path = "~/.config/nvim/colors/dynamic.lua"

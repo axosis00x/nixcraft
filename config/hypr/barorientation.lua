@@ -1,1 +1,1 @@
-return "vertical"
+return "horizontal"

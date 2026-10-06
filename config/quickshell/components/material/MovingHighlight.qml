@@ -2,10 +2,10 @@ import QtQuick
 import "../../theme" as Palette
 
 // One highlight that glides between list rows instead of each row lighting
-// up on its own: it springs to whichever item `target` points at, resizes to
-// fit it, and fades in place when `target` goes null (pointer left the list).
-// Appearing from hidden snaps straight to the target rather than sliding in
-// from wherever it last was.
+// up on its own: it springs to whichever item `target` points at and fades
+// in place when `target` goes null (pointer left the list). Its size never
+// animates, and it snaps (no slide) when it appears or when the target's own
+// geometry changes, so opening a list never sweeps the highlight in.
 //
 // As a ListView/GridView highlight:
 //   highlightFollowsCurrentItem: false
@@ -46,17 +46,19 @@ Rectangle {
         enabled: !root.instant
         SpatialMotion {}
     }
-    Behavior on targetWidth {
-        enabled: !root.instant
-        SpatialMotion {}
-    }
-    Behavior on targetHeight {
-        enabled: !root.instant
-        SpatialMotion {}
-    }
     Behavior on opacity {
         EffectMotion {}
     }
+
+    // Snap instead of glide: when the list (re)opens, and whenever the target
+    // itself moves or resizes (layout settling) — only switching rows glides.
+    function snap() {
+        instant = true;
+        sync();
+        instant = false;
+    }
+    onVisibleChanged: if (visible)
+        snap()
 
     function sync() {
         if (!target || !parent)
@@ -79,16 +81,16 @@ Rectangle {
         target: root.target
         ignoreUnknownSignals: true
         function onXChanged() {
-            root.sync();
+            root.snap();
         }
         function onYChanged() {
-            root.sync();
+            root.snap();
         }
         function onWidthChanged() {
-            root.sync();
+            root.snap();
         }
         function onHeightChanged() {
-            root.sync();
+            root.snap();
         }
     }
 }

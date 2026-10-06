@@ -129,10 +129,9 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: Palette.Theme.radiusExtraLarge
-        color: Qt.alpha(Palette.Theme.surfaceContainer, 0.8)
-        border.width: 1
-        border.color: Palette.Theme.outlineSoft
+        radius: Palette.Theme.radiusLarge
+        // Same language as the rest of the shell: tonal surface, no outline.
+        color: Qt.alpha(Palette.Theme.surfaceContainer, 0.85)
 
         layer.enabled: true
         layer.effect: MultiEffect {

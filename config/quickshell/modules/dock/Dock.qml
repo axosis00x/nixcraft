@@ -69,7 +69,7 @@ Item {
     property Item menuCell: null
 
     readonly property real cellSize: 40
-    readonly property real cellSpacing: 6
+    readonly property real cellSpacing: 3
 
     implicitWidth: Math.min(maxWidth - 40, row.implicitWidth + 18)
     implicitHeight: cellSize + 14

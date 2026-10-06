@@ -5,11 +5,8 @@ import QtQuick.Layouts
 import "../../theme" as Palette
 import "../../components/material"
 
-// Workspace dots with one accent indicator that travels between them. When
-// the focused workspace changes, the indicator's leading edge springs ahead
-// and its trailing edge follows, so it stretches toward the destination and
-// settles into shape there — the same gliding language as the launcher's
-// selection. The active slot opens up underneath it at the same time.
+// Workspace dots. The focused workspace's dot stretches into an accent pill
+// while the previous one eases back down to a dot.
 Item {
     id: root
 
@@ -22,14 +19,47 @@ Item {
     // workspace it represents instead of one relative to whatever's focused.
     property var service: null
 
-    readonly property int count: 10
-    readonly property real dotSize: 10
-    readonly property real activeLength: 45
-    readonly property real gap: 3
+    // Compact use (the compact bar's status notch) shows only as many dots
+    // as are in use — up to the highest occupied or active workspace — but
+    // never fewer than three.
+    property bool trimToUsed: false
+    readonly property int count: {
+        if (!trimToUsed)
+            return 10;
+        var highest = Math.max(3, activeIndex + 1);
+        var list = Hyprland.workspaces.values;
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].id >= 1 && list[i].id <= 10)
+                highest = Math.max(highest, list[i].id);
+        }
+        return highest;
+    }
+    property real dotSize: 10
+    property real activeLength: 45
+    property real gap: 3
 
     readonly property int activeIndex: {
         var id = Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : -1;
-        return id >= 1 && id <= count ? id - 1 : -1;
+        return id >= 1 && id <= 10 ? id - 1 : -1;
+    }
+
+    // Opens the overview at the dot under (px, py) in this item's
+    // coordinates, or at the current workspace when between dots — for
+    // hosts whose own mouse area sits on top (the compact status notch).
+    function openAtPosition(px, py) {
+        if (!service)
+            return;
+        for (var i = 0; i < dots.count; i++) {
+            var d = dots.itemAt(i);
+            if (!d)
+                continue;
+            var p = d.mapToItem(root, 0, 0);
+            if (px >= p.x - 4 && px <= p.x + d.width + 4 && py >= p.y - 6 && py <= p.y + d.height + 6) {
+                service.openAt(i);
+                return;
+            }
+        }
+        service.openAt(Math.max(0, activeIndex));
     }
 
     implicitWidth: grid.implicitWidth
@@ -43,6 +73,7 @@ Item {
         columnSpacing: root.gap
 
         Repeater {
+            id: dots
             model: root.count
 
             Rectangle {
@@ -57,18 +88,27 @@ Item {
                 Layout.preferredWidth: root.vertical ? root.dotSize : length
                 Layout.preferredHeight: root.vertical ? length : root.dotSize
                 radius: root.dotSize / 2
-                // The active slot is left empty for the indicator to fill.
-                color: isActive ? "transparent" : (dotMouse.containsMouse ? Palette.Theme.textSecondary : Palette.Theme.textMuted)
+                // Text-muted is opaque in every palette, unlike transparent
+                // surface outlines used by AMOLED themes such as Ryo.
+                color: isActive ? Palette.Theme.accent : (dotMouse.containsMouse ? Palette.Theme.textSecondary : Palette.Theme.textMuted)
                 scale: isActive ? 1 : 0.9
 
                 Behavior on Layout.preferredWidth {
-                    SpatialMotion {}
+                    NumberAnimation {
+                        duration: 600
+                        easing.type: Easing.OutCubic
+                    }
                 }
                 Behavior on Layout.preferredHeight {
-                    SpatialMotion {}
+                    NumberAnimation {
+                        duration: 600
+                        easing.type: Easing.OutCubic
+                    }
                 }
                 Behavior on color {
-                    ColorMotion {}
+                    ColorMotion {
+                        fast: false
+                    }
                 }
                 Behavior on scale {
                     SpatialMotion {}
@@ -88,47 +128,6 @@ Item {
                     }
                 }
             }
-        }
-    }
-
-    // The indicator's resting span along the main axis, computed from the
-    // final layout (every slot before the active one is a plain dot) rather
-    // than read from the animating slots, so each edge springs exactly once
-    // per switch instead of chasing a moving target.
-    Rectangle {
-        id: indicator
-
-        readonly property real targetStart: Math.max(0, root.activeIndex) * (root.dotSize + root.gap)
-        readonly property real targetEnd: targetStart + root.activeLength
-
-        property real leadStart: targetStart
-        property real leadEnd: targetEnd
-
-        // Whichever edge points the way the indicator is travelling moves
-        // fast; the other trails, stretching the pill mid-flight.
-        Behavior on leadStart {
-            SpatialMotion {
-                fast: indicator.targetStart < indicator.leadStart
-            }
-        }
-        Behavior on leadEnd {
-            SpatialMotion {
-                fast: indicator.targetEnd > indicator.leadEnd
-            }
-        }
-        onTargetStartChanged: leadStart = targetStart
-        onTargetEndChanged: leadEnd = targetEnd
-
-        x: root.vertical ? 0 : leadStart
-        y: root.vertical ? leadStart : 0
-        width: root.vertical ? root.dotSize : Math.max(root.dotSize, leadEnd - leadStart)
-        height: root.vertical ? Math.max(root.dotSize, leadEnd - leadStart) : root.dotSize
-        radius: root.dotSize / 2
-        color: Palette.Theme.accent
-        opacity: root.activeIndex >= 0 ? 1 : 0
-
-        Behavior on opacity {
-            EffectMotion {}
         }
     }
 }

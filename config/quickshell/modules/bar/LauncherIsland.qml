@@ -19,7 +19,7 @@ BarSection {
 
     Rectangle {
         anchors.fill: parent
-        radius: width / 2
+        radius: root.radius
         color: Palette.Theme.textPrimary
         opacity: launcherButtonHover.pressed ? 0.22 : (launcherButtonHover.containsMouse ? 0.14 : 0.05)
 

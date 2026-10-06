@@ -30,6 +30,20 @@ Item {
     // which has no top bar to seed from.
     property bool bottomAligned: false
 
+    // Island mode: instead of hanging from the screen edge with concave
+    // wings, the slab floats `islandGap` away from the edge as a fully
+    // rounded island (a "dynamic island"). Size morphing is unchanged; the
+    // switch itself crossfades the two silhouettes while the content slides
+    // off the edge.
+    property bool island: false
+    property real islandGap: 6
+    property real islandRadius: slabRadius
+    property real islandness: island ? 1 : 0
+    Behavior on islandness {
+        SpatialMotion {}
+    }
+    readonly property real islandOffset: islandGap * islandness
+
     property color color: Palette.Theme.surfaceContainer
     property color tint: Palette.Theme.surfaceTint
     property real tintOpacity: Palette.Theme.surfaceTintOpacity
@@ -39,7 +53,8 @@ Item {
     default property alias content: contentHolder.data
 
     implicitWidth: slabWidth + wingSize * 2
-    implicitHeight: slabHeight
+    // The island's gap from the edge is part of the item, on the edge side.
+    implicitHeight: slabHeight + islandOffset
 
     readonly property real wing: Math.max(0, Math.min(wingSize, height))
     readonly property real effectiveRadius: Math.max(0, Math.min(slabRadius, height - wing, slabWidth / 2))
@@ -49,6 +64,8 @@ Item {
     // identical in quality to Rectangle.radius.
     Shape {
         anchors.fill: parent
+        opacity: 1 - root.islandness
+        visible: opacity > 0.01
         antialiasing: true
         // CurveRenderer (Qt 6.6+) gives best sub-pixel quality; falls back
         // to GeometryRenderer on older builds.
@@ -110,13 +127,26 @@ Item {
         }
     }
 
+    // The island silhouette: the slab, rounded on all four corners, offset
+    // from the screen edge by the gap.
+    Rectangle {
+        x: root.wing
+        y: root.bottomAligned ? 0 : root.islandOffset
+        width: root.slabWidth
+        height: root.slabHeight
+        radius: Math.min(root.islandRadius, root.slabWidth / 2, root.slabHeight / 2)
+        color: Qt.tint(root.color, Qt.rgba(root.tint.r, root.tint.g, root.tint.b, root.tintOpacity))
+        opacity: root.islandness
+        visible: opacity > 0.01
+    }
+
     Item {
         id: contentHolder
         x: root.wing
         // When bottom-aligned the rounded corners move to the top, so the
         // padding that used to protect the bottom corners now needs to
         // protect the top ones instead.
-        y: root.bottomAligned ? root.contentBottomPadding : 0
+        y: root.bottomAligned ? root.contentBottomPadding : root.islandOffset
         width: root.slabWidth
         height: Math.max(0, root.slabHeight - root.contentBottomPadding)
         clip: root.clipContent

@@ -4,9 +4,10 @@ import QtQuick.Layouts
 import "../../theme" as Palette
 import "../../components/material"
 
-// Picks between the horizontal (top) and vertical (left) bar. Deliberately
-// not a search list like ThemePicker/ShaderPicker — there are only ever two
-// options, so a couple of plain rows is simpler than reusing that machinery.
+// Picks the bar style: spread along the top, a vertical bar on the left, or
+// compact (the top bar's modules gathered in the center). Deliberately not a
+// search list like ThemePicker/ShaderPicker — with only a few options, plain
+// rows are simpler than reusing that machinery.
 Item {
     id: root
 
@@ -19,13 +20,17 @@ Item {
     property var powerMenu: null
 
     readonly property var options: [
-        { value: false, label: "Top", desc: "Horizontal strip along the top edge" },
-        { value: true, label: "Left", desc: "Vertical dock along the left edge" }
+        { value: "top", label: "Top", desc: "Horizontal strip along the top edge" },
+        { value: "compact", label: "Compact", desc: "Everything gathered in the top center" },
+        { value: "left", label: "Left", desc: "Vertical bar along the left edge" }
     ]
     readonly property int itemH: 52
 
     implicitWidth: 280
-    implicitHeight: options.length * itemH + 16
+    // Rows, the spacing between them, and the 8px padding on both ends — so
+    // the gap below the last row matches the gap above the first.
+    readonly property int rowSpacing: 4
+    implicitHeight: options.length * itemH + (options.length - 1) * rowSpacing + 16
 
     property int selected: 0
 
@@ -65,8 +70,8 @@ Item {
         }
     }
 
-    function select(vertical) {
-        service.setVertical(vertical);
+    function select(style) {
+        service.setStyle(style);
         close();
     }
 
@@ -77,7 +82,11 @@ Item {
             controlCenter.closeControlCenter(true);
         if (powerMenu && powerMenu.visible)
             powerMenu.closePowerMenu(true);
-        selected = (service && service.vertical) ? 1 : 0;
+        selected = 0;
+        for (var i = 0; i < options.length; i++) {
+            if (service && options[i].value === service.style)
+                selected = i;
+        }
         aboutToOpen();
         visible = true;
         forceActiveFocus();
@@ -104,7 +113,7 @@ Item {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 8
-        spacing: 4
+        spacing: root.rowSpacing
 
         Repeater {
             model: root.options
@@ -114,7 +123,7 @@ Item {
                 required property var modelData
                 required property int index
 
-                readonly property bool isActive: root.service && modelData.value === root.service.vertical
+                readonly property bool isActive: root.service && modelData.value === root.service.style
                 readonly property bool isSelected: index === root.selected
 
                 Layout.fillWidth: true

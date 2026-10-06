@@ -154,8 +154,6 @@ PanelWindow {
         }
     }
 
-    readonly property var activePanel: activeTopPanel ? activeTopPanel : activeBottomPanel
-    readonly property bool activeIsTopOrigin: activeTopPanel !== null
 
     property alias launcher: launcherItem
     property alias controlCenter: controlCenterItem
@@ -254,7 +252,9 @@ PanelWindow {
     // seed from, so the stage just starts flat (zero height) and grows
     // from whichever edge (top or bottom) the next panel opens from.
     readonly property real barSlabWidth: bar ? (bar.centerCapsuleSlabWidth || 120) : 120
-    readonly property real barSlabHeight: root.verticalBar ? 0 : (bar ? bar.height : 34)
+    readonly property bool island: barLayout ? barLayout.island : false
+    // In island mode the bar's island is inset like the other bar capsules.
+    readonly property real barSlabHeight: root.verticalBar ? 0 : (bar ? bar.height - (root.island ? bar.islandGap : 0) : 34)
 
     // ── TOP STAGE (Control Center, Power Menu, Tool Menu, Media Panel) ───
     Notch {
@@ -262,6 +262,8 @@ PanelWindow {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         bottomAligned: false
+        island: root.island
+        islandGap: bar ? bar.islandGap : 4
         wingSize: 9
         slabRadius: 20
 
@@ -322,6 +324,8 @@ PanelWindow {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         bottomAligned: true
+        island: root.island
+        islandGap: 8
         wingSize: 9
         slabRadius: 20
 

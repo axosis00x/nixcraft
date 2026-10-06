@@ -1,6 +1,5 @@
 import Quickshell
 import Quickshell.Bluetooth
-import Quickshell.Networking
 import Quickshell.Widgets
 import QtQuick
 import QtQuick.Layouts
@@ -178,13 +177,15 @@ Item {
         Pill {
             Layout.alignment: Qt.AlignHCenter
             visible: tray.implicitHeight > 0
-            implicitHeight: tray.implicitHeight + 20
+            implicitHeight: tray.implicitHeight + 8
 
             Tray {
                 id: tray
                 anchors.centerIn: parent
                 parentWindow: root.bar
                 vertical: true
+                cellSize: root.pillWidth - 8
+                cellRadius: Palette.Theme.radiusSmall - 4
             }
         }
 
@@ -194,45 +195,6 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             implicitHeight: statusColumn.implicitHeight + 20
 
-            readonly property var wifiDevice: {
-                var list = Networking.devices.values;
-                for (var i = 0; i < list.length; i++) {
-                    if (list[i].type === DeviceType.Wifi)
-                        return list[i];
-                }
-                return null;
-            }
-            readonly property bool wired: {
-                var list = Networking.devices.values;
-                for (var i = 0; i < list.length; i++) {
-                    if (list[i].type === DeviceType.Wired && list[i].connected)
-                        return true;
-                }
-                return false;
-            }
-            readonly property real wifiSignal: {
-                if (!wifiDevice || !wifiDevice.connected)
-                    return -1;
-                var nets = wifiDevice.networks.values;
-                for (var i = 0; i < nets.length; i++) {
-                    if (nets[i].connected)
-                        return nets[i].signalStrength;
-                }
-                return -1;
-            }
-            readonly property string networkIcon: {
-                if (wired)
-                    return "lan";
-                if (!Networking.wifiEnabled)
-                    return "wifi_off";
-                if (wifiSignal < 0)
-                    return "signal_wifi_0_bar";
-                if (wifiSignal > 0.66)
-                    return "wifi";
-                if (wifiSignal > 0.33)
-                    return "wifi_2_bar";
-                return "wifi_1_bar";
-            }
             readonly property bool bluetoothOn: Bluetooth.defaultAdapter ? Bluetooth.defaultAdapter.enabled : false
 
             StateLayer {
@@ -254,9 +216,8 @@ Item {
                 anchors.centerIn: parent
                 spacing: 10
 
-                StatusIcon {
-                    text: status.networkIcon
-                    dim: !status.wired && status.wifiSignal < 0
+                NetworkIcon {
+                    Layout.alignment: Qt.AlignHCenter
                 }
 
                 StatusIcon {
@@ -266,10 +227,9 @@ Item {
 
                 Battery {
                     Layout.alignment: Qt.AlignHCenter
-                    visible: root.bar.batteryAvailable
+                    bar: root.bar
                     vertical: true
                     showPercent: false
-                    bar: root.bar
                 }
             }
         }

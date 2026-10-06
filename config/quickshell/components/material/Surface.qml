@@ -8,7 +8,9 @@ Rectangle {
     property color tint: Palette.Theme.surfaceTint
     property real tintOpacity: Palette.Theme.surfaceTintOpacity
     property color outlineColor: Palette.Theme.outlineSoft
-    property real outlineWidth: 1
+    // No outline by default: surfaces separate by tone, not by a border.
+    // Opt in with outlineWidth where a hairline is genuinely needed.
+    property real outlineWidth: 0
 
     radius: Palette.Theme.radiusLarge
     color: Palette.Theme.surfaceContainer

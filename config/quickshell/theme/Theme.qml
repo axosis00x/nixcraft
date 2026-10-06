@@ -52,8 +52,8 @@ QtObject {
     // into a pill when switched on); radiusFull is "as round as the item
     // is tall", resolved by the user as height / 2.
     readonly property int radiusXs: 6
-    readonly property int radiusSmall: 10
-    readonly property int radiusMedium: 14
+    readonly property int radiusSmall: 13
+    readonly property int radiusMedium: 13
     readonly property int radiusLarge: 20
     readonly property int radiusExtraLarge: 28
 
@@ -100,7 +100,7 @@ QtObject {
     // Scales the outline's own alpha rather than replacing it (Qt.alpha
     // sets alpha), so themes with already-translucent outlines stay subtle.
     readonly property color outlineColor: outlineVariant
-    readonly property color outlineSoft: Qt.rgba(outlineColor.r, outlineColor.g, outlineColor.b, outlineColor.a * 0.6)
+    readonly property color outlineSoft: Qt.rgba(outlineColor.r, outlineColor.g, outlineColor.b, outlineColor.a * 0.35)
     readonly property color surfaceSolid: Qt.alpha(bg, 1)
 
     function apply(values) {

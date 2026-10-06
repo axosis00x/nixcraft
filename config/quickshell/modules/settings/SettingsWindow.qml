@@ -19,6 +19,7 @@ FloatingWindow {
     property var controlCenter: null
     property var widgetsService: null
     property var themeService: null
+    property var barLayout: null
 
     property string page: "overview"
     property string query: ""
@@ -128,6 +129,8 @@ FloatingWindow {
         case "weather":
         case "cava":
             return widgetsService ? widgetsService.isEnabled(key) : false;
+        case "island":
+            return barLayout ? barLayout.island : false;
         default:
             return false;
         }
@@ -175,6 +178,10 @@ FloatingWindow {
         case "cava":
             if (widgetsService)
                 widgetsService.toggle(key);
+            break;
+        case "island":
+            if (barLayout)
+                barLayout.setIsland(on);
             break;
         }
     }
@@ -303,12 +310,12 @@ FloatingWindow {
     // ── content ─────────────────────────────────────────────────────
     readonly property var categories: [
         { id: "overview", icon: "", title: "Overview", sub: "overview" },
+        { id: "appearance", icon: "", title: "Appearance", sub: "appearance" },
         { id: "network", icon: "", title: "Network & internet", sub: "net" },
         { id: "display", icon: "", title: "Display", sub: "display" },
         { id: "sound", icon: "", title: "Sound", sub: "sound" },
         { id: "notifications", icon: "", title: "Notifications", sub: "notifications" },
         { id: "power", icon: "", title: "Battery & power", sub: "power" },
-        { id: "appearance", icon: "", title: "Appearance", sub: "appearance" },
         { id: "about", icon: "", title: "About device", sub: "about" }
     ]
 
@@ -437,7 +444,8 @@ FloatingWindow {
                     rows: [
                         { kind: "nav", open: "theme", icon: "", title: "Theme", sub: "appearance" },
                         { kind: "nav", open: "wallpaper", icon: "", title: "Wallpaper", subtitle: "Pick a wallpaper for this theme" },
-                        { kind: "nav", open: "barlayout", icon: "", title: "Bar position", subtitle: "Move the bar between the top and the side" }
+                        { kind: "nav", open: "barlayout", icon: "", title: "Bar style", subtitle: "Top, compact in the center, or on the left side" },
+                        { kind: "switch", key: "island", icon: "rounded_corner", title: "Island mode", subtitle: "Float the notch and its panels as rounded islands" }
                     ]
                 },
                 {

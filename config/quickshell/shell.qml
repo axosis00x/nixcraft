@@ -41,6 +41,7 @@ ShellRoot {
         controlCenter: overlay.controlCenter
         widgetsService: widgetsService
         themeService: overlay.themes
+        barLayout: barLayoutService
         // A centered window and the overlay both grab the keyboard, so only one at a time.
         onAboutToOpen: overlay.closeActive()
         onRequestOpen: what => {

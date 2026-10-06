@@ -11,6 +11,14 @@ Item {
     visible: false
 
     readonly property bool vertical: state.vertical
+    // Notch mode (panels hang from the screen edge) vs island mode (they
+    // float off it as rounded islands) — see components/material/Notch.qml.
+    readonly property bool island: state.island
+    // Compact: the horizontal bar's modules gather around the center notch
+    // instead of spreading to the screen edges. Only applies when horizontal.
+    readonly property bool compact: !state.vertical && state.compact
+    // "top" | "left" | "compact" — the three bar styles the picker offers.
+    readonly property string style: state.vertical ? "left" : (state.compact ? "compact" : "top")
     // Lets consumers tell a genuine layout change from the transient
     // default-then-loaded resolution on startup/reload: shell.qml defers
     // constructing Bar until this is true (its anchors bind to `vertical`
@@ -21,6 +29,21 @@ Item {
     // loaded with the defaults — otherwise the bar would wait forever.
     property bool missing: false
     readonly property bool loaded: stateFile.loaded || missing
+
+    function setStyle(value) {
+        if (value !== "top" && value !== "left" && value !== "compact")
+            return;
+        state.compact = value === "compact";
+        if (state.vertical !== (value === "left"))
+            setVertical(value === "left");
+        else
+            stateFile.writeAdapter();
+    }
+
+    function setIsland(value) {
+        state.island = value;
+        stateFile.writeAdapter();
+    }
 
     function setVertical(value) {
         state.vertical = value;
@@ -41,6 +64,12 @@ Item {
         }
         function setVertical(value: bool): void {
             root.setVertical(value);
+        }
+        function setIsland(value: bool): void {
+            root.setIsland(value);
+        }
+        function setStyle(value: string): void {
+            root.setStyle(value);
         }
     }
 
@@ -65,6 +94,8 @@ Item {
             // Matches the value you had set directly in config/Ui.js before
             // this became a live-toggleable, persisted setting.
             property bool vertical: true
+            property bool island: false
+            property bool compact: false
         }
     }
 }

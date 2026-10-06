@@ -13,10 +13,14 @@ GridLayout {
     // Pass the enclosing PanelWindow so right-click menus can position correctly.
     required property var parentWindow
     property bool vertical: false
+    // Each item is a square, hoverable cell the same size as the bar's icon
+    // buttons (e.g. the settings button beside it), so they line up evenly.
+    property real cellSize: 24
+    property real cellRadius: Palette.Theme.radiusSmall - 3
 
     columns: vertical ? 1 : 999
-    rowSpacing: 5
-    columnSpacing: 5
+    rowSpacing: 0
+    columnSpacing: 0
 
     Repeater {
         model: SystemTray.items
@@ -25,9 +29,9 @@ GridLayout {
             id: trayIcon
             required property SystemTrayItem modelData
 
-            implicitWidth: 16
-            implicitHeight: 16
-            Layout.alignment: Qt.AlignVCenter
+            implicitWidth: root.cellSize
+            implicitHeight: root.cellSize
+            Layout.alignment: Qt.AlignCenter
 
             // ── icon ─────────────────────────────────────────────
             IconImage {
@@ -39,22 +43,16 @@ GridLayout {
             }
 
             // ── hover state layer ────────────────────────────────
-            Rectangle {
-                anchors.fill: parent
-                anchors.margins: -3
-                radius: 4
-                color: Palette.Theme.surfaceTint
-                opacity: ma.containsMouse ? Palette.Theme.stateHover : 0
-                Behavior on opacity {
-                    EffectMotion {}
-                }
+            StateLayer {
+                radius: root.cellRadius
+                hovered: ma.containsMouse
+                pressed: ma.pressed
             }
 
             // ── mouse handling ───────────────────────────────────
             MouseArea {
                 id: ma
                 anchors.fill: parent
-                anchors.margins: -3
                 hoverEnabled: true
                 acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 

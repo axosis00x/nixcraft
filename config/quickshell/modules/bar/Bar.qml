@@ -17,6 +17,17 @@ PanelWindow {
     // via `quickshell ipc call bar toggle` (bound to SUPER+SHIFT+B).
     property var barLayout: null
     readonly property bool vertical: barLayout ? barLayout.vertical : false
+    readonly property bool island: barLayout ? barLayout.island : false
+    // Gap between the screen edge and the center island in island mode;
+    // matches barRow's top margin so it lines up with the other capsules.
+    readonly property real islandGap: 4
+    // Corner radius shared by the horizontal bar's capsules and its center
+    // notch/island, so they all read as one family.
+    readonly property real capsuleRadius: Palette.Theme.radiusSmall
+
+    // Compact style: the separate capsules hide and the center notch becomes
+    // a phone-style status notch (workspaces, time, network, battery).
+    readonly property bool compact: barLayout ? barLayout.compact : false
 
     anchors {
         top: true
@@ -443,7 +454,11 @@ PanelWindow {
 
     Item {
         id: barRow
-        visible: !bar.vertical
+        visible: !bar.vertical && opacity > 0.01
+        opacity: bar.compact ? 0 : 1
+        Behavior on opacity {
+            EffectMotion {}
+        }
         anchors {
             top: parent.top
             left: parent.left
@@ -454,6 +469,7 @@ PanelWindow {
 
         LauncherIsland {
             id: launcherIsland
+            radius: bar.capsuleRadius
             anchors.left: parent.left
             anchors.leftMargin: 4
             anchors.verticalCenter: parent.verticalCenter
@@ -462,6 +478,7 @@ PanelWindow {
 
         BarSection {
             id: workspacesCapsule
+            radius: bar.capsuleRadius
             anchors.left: launcherIsland.right
             anchors.leftMargin: 6
             anchors.verticalCenter: parent.verticalCenter
@@ -489,6 +506,7 @@ PanelWindow {
 
         BarSection {
             id: weatherCapsule
+            radius: bar.capsuleRadius
             anchors.left: workspacesCapsule.right
             anchors.leftMargin: 6
             anchors.verticalCenter: parent.verticalCenter
@@ -498,6 +516,7 @@ PanelWindow {
 
         BarSection {
             id: batteryCapsule
+            radius: bar.capsuleRadius
             anchors.right: rightCapsule.left
             anchors.rightMargin: 6
             anchors.verticalCenter: parent.verticalCenter
@@ -513,23 +532,26 @@ PanelWindow {
 
         BarSection {
             id: rightCapsule
+            radius: bar.capsuleRadius
             anchors.right: powerCapsule.left
             anchors.rightMargin: 6
             anchors.verticalCenter: parent.verticalCenter
             // The settings button sits flush in the capsule's end with an
             // even inset on its three outer sides.
             readonly property real buttonInset: 3
-            implicitWidth: rightRow.implicitWidth + 10 + buttonInset
+            implicitWidth: rightRow.implicitWidth + buttonInset * 2
 
             RowLayout {
                 id: rightRow
                 anchors.left: parent.left
-                anchors.leftMargin: 10
+                anchors.leftMargin: rightCapsule.buttonInset
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 8
+                spacing: 4
 
                 Tray {
                     parentWindow: bar
+                    cellSize: rightCapsule.height - rightCapsule.buttonInset * 2
+                    cellRadius: rightCapsule.radius - rightCapsule.buttonInset
                 }
 
                 Divider {
@@ -557,7 +579,7 @@ PanelWindow {
             anchors.verticalCenter: parent.verticalCenter
             implicitWidth: 30
             implicitHeight: 30
-            radius: Palette.Theme.radiusSmall
+            radius: bar.capsuleRadius
             Text {
                 anchors.centerIn: parent
                 text: "\ue8ac"
@@ -601,12 +623,14 @@ PanelWindow {
         visible: !bar.vertical
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
+        island: bar.island
+        islandGap: bar.islandGap
         slabWidth: centerContentWidth + 24
-        slabRadius: 13
+        slabRadius: bar.capsuleRadius
         wingSize: 9
         clipContent: false
 
-        readonly property string activeCenterModule: bar.centerModules[bar.centerModuleIndex]
+        readonly property string activeCenterModule: bar.compact ? "compact" : bar.centerModules[bar.centerModuleIndex]
 
         // "~" and the clock share this width so the notch doesn't resize
         // when cycling between them — cava sizes itself independently, and
@@ -615,6 +639,8 @@ PanelWindow {
 
         readonly property real centerContentWidth: {
             switch (centerCapsule.activeCenterModule) {
+            case "compact":
+                return compactContent.implicitWidth;
             case "cava":
                 return cavaContent.implicitWidth;
             case "clock":
@@ -634,8 +660,15 @@ PanelWindow {
         // overshoot the first time the shell starts; animating the height
         // rather than sliding the whole notch down keeps the wings welded to
         // the edge for the entire drop.
-        readonly property real restHeight: bar.height
+        // In island mode the island is inset like the other bar capsules
+        // (barRow's 4px top margin), so it's that much shorter.
+        readonly property real restHeight: bar.island ? bar.height - bar.islandGap : bar.height
         slabHeight: 0
+
+        Behavior on slabHeight {
+            enabled: !dropInAnim.running
+            SpatialMotion {}
+        }
 
         Component.onCompleted: dropInAnim.start()
 
@@ -648,6 +681,9 @@ PanelWindow {
             easing.type: Easing.OutBack
             // Kept modest so the bounce peak stays inside the window's height.
             easing.overshoot: 1.0
+            // From here on, follow the resting height (e.g. when island mode
+            // changes) — including a change that landed mid-drop.
+            onStopped: centerCapsule.slabHeight = Qt.binding(() => centerCapsule.restHeight)
         }
 
         Behavior on slabWidth {
@@ -753,6 +789,51 @@ PanelWindow {
                 }
             }
         }
+        // Compact style: a phone-style status notch.
+        RowLayout {
+            id: compactContent
+            anchors.centerIn: parent
+            spacing: 12
+            visible: centerCapsule.activeCenterModule === "compact"
+            opacity: visible ? 1 : 0
+            Behavior on opacity {
+                EffectMotion {}
+            }
+
+            Workspaces {
+                id: compactWorkspaces
+                Layout.alignment: Qt.AlignVCenter
+                service: bar.workspacesService
+                trimToUsed: true
+                dotSize: 7
+                activeLength: 18
+                gap: 4
+            }
+
+            Text {
+                Layout.alignment: Qt.AlignVCenter
+                text: Qt.formatDateTime(compactClock.date, "hh:mm")
+                color: Palette.Theme.textPrimary
+                font.family: Palette.Theme.fontSans
+                font.pixelSize: Palette.Theme.fontSizeBody
+                font.weight: Font.DemiBold
+
+                SystemClock {
+                    id: compactClock
+                    precision: SystemClock.Minutes
+                }
+            }
+
+            NetworkIcon {
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            BatteryPill {
+                Layout.alignment: Qt.AlignVCenter
+                bar: bar
+            }
+        }
+
 
         RowLayout {
             id: clockContent
@@ -789,6 +870,15 @@ PanelWindow {
                 wheel.accepted = true;
                 if (bar.centerMode !== "normal" || wheelLocked)
                     return;
+                // Compact has no modules to cycle; scrolling switches
+                // workspaces instead.
+                if (bar.compact) {
+                    if (bar.workspacesService)
+                        bar.workspacesService.step(wheel.angleDelta.y > 0 ? -1 : 1);
+                    wheelLocked = true;
+                    wheelUnlock.restart();
+                    return;
+                }
                 var len = bar.centerModules.length;
                 var dir = wheel.angleDelta.y > 0 ? 1 : -1;
                 bar.centerModuleIndex = (bar.centerModuleIndex + dir + len) % len;
@@ -801,6 +891,15 @@ PanelWindow {
                     if (bar.mediaPanel)
                         bar.mediaPanel.toggleMediaPanel();
                     return;
+                }
+
+                // Compact: clicks on the workspace dots open the overview.
+                if (bar.compact) {
+                    var p = mapToItem(compactWorkspaces, mouse.x, mouse.y);
+                    if (p.x >= -6 && p.x <= compactWorkspaces.width + 6) {
+                        compactWorkspaces.openAtPosition(p.x, p.y);
+                        return;
+                    }
                 }
 
                 bar.toggleControlCenter();

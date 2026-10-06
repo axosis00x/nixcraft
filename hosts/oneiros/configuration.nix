@@ -44,6 +44,10 @@
     networking.hostName = "oneiros";
     networking.networkmanager.enable = true;
     time.timeZone = "Asia/Kathmandu";
+    # Qt only looks for tzdata in /usr/share/zoneinfo (or /usr/lib), which
+    # NixOS doesn't have; without this Qt apps such as Quickshell warn
+    # "Unable to determine system time zone".
+    systemd.tmpfiles.rules = [ "L+ /usr/share/zoneinfo - - - - /etc/zoneinfo" ];
     i18n.defaultLocale = "en_US.UTF-8";
     services.xserver.xkb = {
       layout = "us";

@@ -43,7 +43,8 @@ Surface {
     height: implicitHeight
     implicitHeight: content.implicitHeight + 22
     radius: Palette.Theme.radiusMedium
-    color: Palette.Theme.surfaceContainer
+    // One step above the panel/section it sits on, so cards read as cards.
+    color: Palette.Theme.surfaceContainerHigh
     tint: notification && notification.urgency === NotificationUrgency.Critical ? Palette.Theme.accent : Palette.Theme.surfaceTint
     tintOpacity: notification && notification.urgency === NotificationUrgency.Critical ? 0.16 : 0.04
 
@@ -88,10 +89,10 @@ Surface {
         }
         spacing: 12
         Rectangle {
-            implicitWidth: 56
-            implicitHeight: 56
-            radius: Palette.Theme.radiusMedium
-            color: Palette.Theme.surfaceContainerHigh
+            implicitWidth: 44
+            implicitHeight: 44
+            radius: Palette.Theme.radiusSmall
+            color: Palette.Theme.surfaceContainerHighest
             clip: true
             // Top-aligned rather than centered on the row: a bulky body
             // (long text, action chips) makes the text column taller than
@@ -140,7 +141,7 @@ Surface {
                 Text {
                     text: card.notification ? (card.notification.appName || "Application") : ""
                     color: Palette.Theme.textMuted
-                    font.family: Palette.Theme.fontMono
+                    font.family: Palette.Theme.fontSans
                     font.pixelSize: Palette.Theme.fontSizeXs
                     elide: Text.ElideRight
                     Layout.fillWidth: true
@@ -149,7 +150,7 @@ Surface {
                     id: timeAgoText
                     text: card.notification ? card.timeAgo(card.notification.receivedAt) : ""
                     color: Palette.Theme.textMuted
-                    font.family: Palette.Theme.fontMono
+                    font.family: Palette.Theme.fontSans
                     font.pixelSize: Palette.Theme.fontSizeXs
                     visible: text !== ""
                 }
@@ -157,7 +158,7 @@ Surface {
             Text {
                 text: card.notification ? (card.notification.summary || "Notification") : ""
                 color: Palette.Theme.textPrimary
-                font.family: Palette.Theme.fontMono
+                font.family: Palette.Theme.fontSans
                 font.pixelSize: Palette.Theme.fontSizeBody
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
@@ -166,7 +167,7 @@ Surface {
             Text {
                 text: card.bodyText
                 color: Palette.Theme.textSecondary
-                font.family: Palette.Theme.fontMono
+                font.family: Palette.Theme.fontSans
                 font.pixelSize: Palette.Theme.fontSizeSmall
                 lineHeight: 1.15
                 wrapMode: Text.WordWrap

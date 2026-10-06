@@ -54,7 +54,7 @@ Item {
     readonly property bool showingDetail: detailMode !== "none"
 
     implicitWidth: Math.max(380, Math.min(maxWidth - 2, 450))
-    implicitHeight: showingDetail ? Math.max(320, Math.min(maxHeight - 4, 400)) : Math.max(420, Math.min(maxHeight - 4, 460))
+    implicitHeight: showingDetail ? Math.max(320, Math.min(maxHeight - 4, 400)) : Math.max(440, Math.min(maxHeight - 4, 480))
 
     signal aboutToOpen
     signal aboutToClose
@@ -1020,62 +1020,119 @@ Item {
                         }
                     }
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.topMargin: 2
-                        spacing: 8
-
-                        Text {
-                            text: "Notifications"
-                            color: Palette.Theme.textPrimary
-                            font.family: Palette.Theme.fontSans
-                            font.pixelSize: Palette.Theme.fontSizeBody
-                            font.weight: Font.DemiBold
-                            Layout.alignment: Qt.AlignVCenter
-                        }
-
-                        Item {
-                            Layout.fillWidth: true
-                        }
-
-                        ActionChip {
-                            label: "Clear all"
-                            visible: root.notificationCount > 0
-                            onClicked: root.clearAllNotifications()
-                        }
-                    }
-
-                    Divider {
-                        Layout.fillWidth: true
-                    }
-
-                    Item {
+                    // Notifications: a tonal card like the groups above, with a
+                    // header (icon, title, count, DND state, clear) and either
+                    // the list or a calm empty state.
+                    Surface {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
+                        Layout.topMargin: 2
+                        // No container fill — the cards carry the surface.
+                        color: "transparent"
+                        tintOpacity: 0
 
-                        Text {
-                            anchors.centerIn: parent
-                            text: "No notifications"
-                            color: Palette.Theme.textMuted
-                            font.family: Palette.Theme.fontMono
-                            font.pixelSize: Palette.Theme.fontSizeSmall
-                            visible: root.notificationCount === 0
-                        }
-
-                        ListView {
+                        ColumnLayout {
                             anchors.fill: parent
-                            clip: true
-                            spacing: 10
-                            model: root.notificationCenter ? root.notificationCenter.groupedNotifications : []
-                            visible: root.notificationCount > 0
-                            reuseItems: true
-                            cacheBuffer: 320
+                            anchors.margins: 0
+                            spacing: 8
 
-                            delegate: NotificationGroupCard {
-                                required property var modelData
-                                width: ListView.view.width
-                                notificationCenter: root.notificationCenter
-                                group: modelData
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Layout.leftMargin: 4
+                                spacing: 8
+
+                                Text {
+                                    text: root.dndEnabled ? "notifications_off" : "notifications"
+                                    color: root.dndEnabled ? Palette.Theme.textMuted : Palette.Theme.accent
+                                    font.family: Palette.Theme.fontIcons
+                                    font.pixelSize: Palette.Theme.iconSize
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
+
+                                Text {
+                                    text: "Notifications"
+                                    color: Palette.Theme.textPrimary
+                                    font.family: Palette.Theme.fontSans
+                                    font.pixelSize: Palette.Theme.fontSizeBody
+                                    font.weight: Font.DemiBold
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
+
+                                // Count badge.
+                                Rectangle {
+                                    visible: root.notificationCount > 0
+                                    Layout.alignment: Qt.AlignVCenter
+                                    implicitWidth: Math.max(20, countText.implicitWidth + 12)
+                                    implicitHeight: 20
+                                    radius: height / 2
+                                    color: Palette.Theme.accentTonal
+
+                                    Text {
+                                        id: countText
+                                        anchors.centerIn: parent
+                                        text: root.notificationCount
+                                        color: Palette.Theme.accent
+                                        font.family: Palette.Theme.fontSans
+                                        font.pixelSize: Palette.Theme.fontSizeXs
+                                        font.weight: Font.DemiBold
+                                    }
+                                }
+
+                                Item {
+                                    Layout.fillWidth: true
+                                }
+
+                                ActionChip {
+                                    label: "Clear all"
+                                    visible: root.notificationCount > 0
+                                    onClicked: root.clearAllNotifications()
+                                }
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+
+                                // Empty state.
+                                Column {
+                                    anchors.centerIn: parent
+                                    spacing: 6
+                                    visible: root.notificationCount === 0
+
+                                    Text {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        text: root.dndEnabled ? "do_not_disturb_on" : "notifications_paused"
+                                        color: Palette.Theme.textMuted
+                                        font.family: Palette.Theme.fontIcons
+                                        font.pixelSize: 30
+                                        opacity: 0.6
+                                    }
+
+                                    Text {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        text: root.dndEnabled ? "Do not disturb is on" : "You're all caught up"
+                                        color: Palette.Theme.textSecondary
+                                        font.family: Palette.Theme.fontSans
+                                        font.pixelSize: Palette.Theme.fontSizeBody
+                                    }
+                                }
+
+                                ListView {
+                                    anchors.fill: parent
+                                    clip: true
+                                    spacing: 10
+                                    model: root.notificationCenter ? root.notificationCenter.groupedNotifications : []
+                                    visible: root.notificationCount > 0
+                                    reuseItems: true
+                                    cacheBuffer: 320
+
+                                    delegate: NotificationGroupCard {
+                                        required property var modelData
+                                        width: ListView.view.width
+                                        notificationCenter: root.notificationCenter
+                                        group: modelData
+                                    }
+                                }
                             }
                         }
                     }

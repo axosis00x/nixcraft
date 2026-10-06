@@ -139,6 +139,17 @@ Scope {
             items[i].dismiss();
     }
 
+    function hideToast() {
+        toastTimer.stop();
+        toast.visible = false;
+        toastNotification = null;
+    }
+
+    // A destroyed notification object reads back as null — never show an
+    // empty popup for it.
+    onToastNotificationChanged: if (!toastNotification)
+        toast.visible = false
+
     function toggleDnd() {
         root.doNotDisturb = !root.doNotDisturb;
     }
@@ -170,6 +181,12 @@ Scope {
             notification.tracked = true;
             root.remember(notification);
             root.toastNotification = notification;
+            // If the sender closes or replaces it (or it expires) while the
+            // popup is up, hide the popup instead of leaving an empty card.
+            notification.closed.connect(() => {
+                if (root.toastNotification === notification)
+                    root.hideToast();
+            });
 
             if (!root.doNotDisturb) {
                 toast.visible = true;

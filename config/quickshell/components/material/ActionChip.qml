@@ -16,9 +16,8 @@ Rectangle {
     implicitHeight: root.chipHeight
     implicitWidth: chipText.implicitWidth + root.horizontalPadding
     radius: root.active ? height / 2 : Palette.Theme.radiusSmall
-    color: root.active ? Palette.Theme.accent : "transparent"
-    border.color: Palette.Theme.outlineSoft
-    border.width: root.active ? 0 : 1
+    // Idle chips are filled (tonal) so they read on any surface.
+    color: root.active ? Palette.Theme.accent : Palette.Theme.surfaceContainerHighest
 
     Behavior on radius {
         SpatialMotion {}
@@ -46,7 +45,7 @@ Rectangle {
         id: chipText
         anchors.centerIn: parent
         text: root.label
-        color: root.active ? Palette.Theme.accentText : Palette.Theme.textSecondary
+        color: root.active ? Palette.Theme.accentText : Palette.Theme.textPrimary
         font.family: Palette.Theme.fontSans
         font.pixelSize: root.fontPixelSize
         font.weight: root.active ? Font.DemiBold : Font.Medium

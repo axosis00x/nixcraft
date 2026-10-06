@@ -32,7 +32,7 @@ ColumnLayout {
                 }
                 height: topCard.implicitHeight
                 radius: Palette.Theme.radiusMedium
-                color: Palette.Theme.surfaceContainer
+                color: Palette.Theme.surfaceContainerHigh
                 opacity: 0.5 - depth * 0.15
                 z: -depth
             }
@@ -72,7 +72,7 @@ ColumnLayout {
                 anchors.centerIn: parent
                 text: String(root.group.items.length)
                 color: Palette.Theme.surface
-                font.family: Palette.Theme.fontMono
+                font.family: Palette.Theme.fontSans
                 font.pixelSize: Palette.Theme.fontSizeXs
                 font.weight: Font.Bold
             }

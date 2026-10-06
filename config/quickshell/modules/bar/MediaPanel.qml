@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Mpris
 import Quickshell.Widgets
 import QtQuick
@@ -66,10 +67,58 @@ Item {
 
     property bool hasPlayer: player !== null
 
+    // Browsers (Zen/Firefox playing YouTube) do publish mpris:length, but
+    // Quickshell's MPRIS service sometimes misses it, reporting
+    // lengthSupported=false and mirroring the position into `length`. When
+    // that happens, read the length straight from the player over D-Bus.
+    readonly property bool nativeLength: !!player && player.lengthSupported && player.length > 0
+    property real fallbackLength: 0
+    readonly property real trackLength: nativeLength ? player.length : fallbackLength
+    readonly property bool lengthKnown: !!player && trackLength > 0
+
+    // Read once per track (and refreshed while the panel is open, since the
+    // browser can publish the length a moment after the title).
+    function readFallbackLength() {
+        if (!player || nativeLength || lengthRead.running)
+            return;
+        lengthRead.exec(["busctl", "--user", "get-property", player.dbusName, "/org/mpris/MediaPlayer2", "org.mpris.MediaPlayer2.Player", "Metadata"]);
+    }
+
+    Process {
+        id: lengthRead
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var m = text.match(/"mpris:length" [xt] (\d+)/);
+                root.fallbackLength = m ? Number(m[1]) / 1000000 : 0;
+            }
+        }
+    }
+
+    Timer {
+        interval: 3000
+        repeat: true
+        running: root.visible && root.hasPlayer && !root.nativeLength
+        triggeredOnStart: true
+        onTriggered: root.readFallbackLength()
+    }
+
+    Connections {
+        target: root.player
+        ignoreUnknownSignals: true
+        function onTrackTitleChanged() {
+            root.fallbackLength = 0;
+            root.readFallbackLength();
+        }
+    }
+    onPlayerChanged: {
+        fallbackLength = 0;
+        readFallbackLength();
+    }
+
     property real progress: {
-        if (!player || !player.length || player.length <= 0)
+        if (!lengthKnown)
             return 0;
-        return Math.min(1, Math.max(0, player.position / player.length));
+        return Math.min(1, Math.max(0, player.position / trackLength));
     }
 
     // Poll position while playing so the progress bar animates.
@@ -369,8 +418,10 @@ Item {
 
                 Text {
                     Layout.fillWidth: true
-                    text: root.player ? (root.player.trackArtist || "") : ""
-                    visible: text !== ""
+                    // Always present (never hidden), so the panel — and the
+                    // art sized to this column — is the same height whether
+                    // or not anything is playing.
+                    text: root.player ? (root.player.trackArtist || "Unknown artist") : "Enjoy the void of nothing"
                     color: Palette.Theme.textSecondary
                     font.family: Palette.Theme.fontMono
                     font.pixelSize: Palette.Theme.fontSizeSmall
@@ -384,7 +435,7 @@ Item {
                 spacing: 10
 
                 Text {
-                    text: root.formatTime(waveArea.dragging ? waveArea.dragProgress * (root.player ? root.player.length : 0) : (root.player ? root.player.position : 0))
+                    text: root.formatTime(waveArea.dragging ? waveArea.dragProgress * root.trackLength : (root.player ? root.player.position : 0))
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontMono
                     font.pixelSize: Palette.Theme.fontSizeXs
@@ -398,7 +449,7 @@ Item {
                     property bool dragging: false
                     property bool hovering: false
                     property real dragProgress: 0
-                    readonly property bool canSeek: root.hasPlayer && root.player.canSeek
+                    readonly property bool canSeek: root.lengthKnown && root.player.canSeek
 
                     Canvas {
                         id: wave
@@ -451,7 +502,8 @@ Item {
                             var ctx = getContext("2d");
                             ctx.reset();
                             var w = width, mid = height / 2, gap = 4;
-                            var splitX = 2 + (w - 4) * shown;
+                            // Length unknown: the wave runs the full width, no handle.
+                            var splitX = root.lengthKnown ? 2 + (w - 4) * shown : w + gap;
                             ctx.lineCap = "round";
                             ctx.lineJoin = "round";
 
@@ -477,6 +529,8 @@ Item {
                                 ctx.stroke();
                             }
 
+                            if (!root.lengthKnown)
+                                return;
                             ctx.strokeStyle = activeColor;
                             ctx.lineWidth = 4;
                             ctx.beginPath();
@@ -510,23 +564,24 @@ Item {
                                 waveArea.dragProgress = fraction(mouse.x);
                         }
                         onReleased: mouse => {
-                            if (root.player && root.player.length > 0)
-                                root.player.position = fraction(mouse.x) * root.player.length;
+                            if (root.player && root.lengthKnown)
+                                root.player.position = fraction(mouse.x) * root.trackLength;
                             waveArea.dragging = false;
                         }
                         onCanceled: waveArea.dragging = false
                         // Scroll to nudge ±5 s.
                         onWheel: wheel => {
-                            if (!root.player || !(root.player.length > 0))
+                            if (!root.player || !root.lengthKnown)
                                 return;
                             var step = wheel.angleDelta.y > 0 ? 5 : -5;
-                            root.player.position = Math.max(0, Math.min(root.player.length - 1, root.player.position + step));
+                            root.player.position = Math.max(0, Math.min(root.trackLength - 1, root.player.position + step));
                         }
                     }
                 }
 
                 Text {
-                    text: root.formatTime(root.player ? root.player.length : 0)
+                    visible: root.lengthKnown
+                    text: root.formatTime(root.trackLength)
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontMono
                     font.pixelSize: Palette.Theme.fontSizeXs

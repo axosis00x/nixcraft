@@ -406,19 +406,59 @@ Item {
                         EffectMotion {}
                     }
 
-                    IconImage {
-                        anchors.centerIn: parent
-                        anchors.verticalCenterOffset: -2
-                        implicitSize: 28
-                        source: cell.modelData.icon
-                        smooth: true
-                        mipmap: true
-                        transformOrigin: Item.Bottom
-                        scale: cell.dragging ? 1.15 : (cell.hovered ? 1.28 : 1)
+                    // Two copies of the icon, each rasterized at the exact size
+                    // it's shown at — 28px at rest, 36px zoomed — so both
+                    // states are pixel-crisp (scaling a single raster up or
+                    // down always softens it). They animate together and
+                    // crossfade, so mid-animation looks continuous.
+                    Item {
+                        id: iconBox
 
-                        Behavior on scale {
+                        readonly property real restSize: 28
+                        readonly property real hoverSize: 36
+                        readonly property bool zoomed: cell.hovered && !cell.dragging
+                        // Shared animated size, in pixels.
+                        property real size: cell.dragging ? 32 : (zoomed ? hoverSize : restSize)
+                        Behavior on size {
                             SpatialMotion {
                                 fast: true
+                            }
+                        }
+
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        // Bottom-anchored growth, matching the old icon's
+                        // resting position (centered, nudged up by 2px).
+                        anchors.bottom: parent.verticalCenter
+                        anchors.bottomMargin: 2 - restSize / 2
+                        width: hoverSize
+                        height: hoverSize
+
+                        IconImage {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: parent.bottom
+                            implicitSize: iconBox.restSize
+                            source: cell.modelData.icon
+                            smooth: true
+                            transformOrigin: Item.Bottom
+                            scale: iconBox.size / iconBox.restSize
+                            opacity: iconBox.zoomed ? 0 : 1
+                            Behavior on opacity {
+                                EffectMotion {}
+                            }
+                        }
+
+                        IconImage {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: parent.bottom
+                            implicitSize: iconBox.hoverSize
+                            source: cell.modelData.icon
+                            smooth: true
+                            transformOrigin: Item.Bottom
+                            scale: iconBox.size / iconBox.hoverSize
+                            opacity: iconBox.zoomed ? 1 : 0
+                            visible: opacity > 0.01
+                            Behavior on opacity {
+                                EffectMotion {}
                             }
                         }
                     }

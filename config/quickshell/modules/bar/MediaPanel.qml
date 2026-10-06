@@ -223,8 +223,8 @@ Item {
             blur: 1
             blurMax: 48
             saturation: 0.2
-            brightness: -0.1
-            opacity: 0.3
+            brightness: -0.3
+            opacity: 0.22
             maskEnabled: true
             maskSource: backdropMask
             // Soft mask edge so the curve blends into the notch outline.

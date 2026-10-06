@@ -183,17 +183,6 @@ Item {
                 currentIndex: root.selected
                 onCurrentIndexChanged: if (currentIndex >= 0)
                     positionViewAtIndex(currentIndex, GridView.Contain)
-                // Accent ring that glides over the cards to the selection.
-                highlightFollowsCurrentItem: false
-                highlight: MovingHighlight {
-                    target: grid.currentItem
-                    insetY: 3
-                    z: 2
-                    radius: Palette.Theme.radiusSmall
-                    color: "transparent"
-                    border.width: 2
-                    border.color: Palette.Theme.accent
-                }
                 delegate: Item {
                     required property var modelData
                     required property int index
@@ -205,6 +194,9 @@ Item {
                         anchors.bottomMargin: 3
                         radius: Palette.Theme.radiusSmall
                         color: index === root.selected ? Palette.Theme.surfaceContainerHigh : Palette.Theme.surfaceContainerLow
+                        // Static accent ring on the selected card.
+                        border.width: index === root.selected ? 2 : 0
+                        border.color: Palette.Theme.accent
 
                         Behavior on color {
                             ColorMotion {}

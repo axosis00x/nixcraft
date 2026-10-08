@@ -15,6 +15,20 @@ Item {
     property bool authFailed: false
     property int failedAttempts: 0
     property string wallpaperPath: ""
+    // Subject cut out of the wallpaper (transparent PNG, same size) for the
+    // depth effect; empty until one exists. Generated once per wallpaper and
+    // cached, so only the first lock with a new wallpaper waits for it.
+    property string depthPath: ""
+
+    readonly property string lockscreenDir: Quickshell.env("HOME") + "/Pictures/wallpapers/lockscreen"
+    readonly property string depthScript: Quickshell.env("HOME") + "/.config/quickshell/scripts/depth-cutout.sh"
+
+    // Depth cutouts only for images in the lock screen folder.
+    onWallpaperPathChanged: {
+        depthPath = "";
+        if (wallpaperPath.indexOf(lockscreenDir + "/") === 0)
+            depthRead.exec([depthScript, wallpaperPath]);
+    }
 
     readonly property bool isLocked: sessionLock.locked
 
@@ -34,6 +48,8 @@ Item {
         root.authBusy = false;
         root.failedAttempts = 0;
         refreshWallpaper();
+        if (!depthWarm.running)
+            depthWarm.running = true;
         sessionLock.locked = true;
         root.engaged();
         // Best-effort: keeps logind's own LockedHint/Lock signal in sync so
@@ -115,15 +131,38 @@ Item {
 
     Process {
         id: wallpaperRead
-        command: ["sh", "-c", "theme=$(sed -n 's/.*dofile(\"\\(.*\\)\").*/\\1/p' \"$HOME/.config/hypr/theme.lua\" 2>/dev/null | head -n1 | xargs -r dirname | xargs -r basename); find \"$HOME/Pictures/wallpapers/$theme\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) 2>/dev/null | shuf -n 1"]
+        // Next image from the lock screen folder, without repeats until
+        // every image has been shown. Nothing when the folder is empty — the
+        // lock screen then shows a plain background.
+        command: [Quickshell.env("HOME") + "/.config/quickshell/scripts/lockscreen-wallpaper.sh"]
         stdout: StdioCollector {
             onStreamFinished: {
-                var path = text.trim();
-                if (path !== "")
-                    root.wallpaperPath = path;
+                root.wallpaperPath = text.trim();
             }
         }
     }
 
-    Component.onCompleted: refreshWallpaper()
+    Process {
+        id: depthRead
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var path = text.trim();
+                // Ignore a result for a wallpaper that's since been replaced.
+                if (path !== "" && !depthRead.running)
+                    root.depthPath = path;
+            }
+        }
+    }
+
+    // Make any missing cutouts for the lock screen folder in the background,
+    // so new images are ready by the time they're picked.
+    Process {
+        id: depthWarm
+        command: ["nice", "-n", "19", root.depthScript, "--all", root.lockscreenDir]
+    }
+
+    Component.onCompleted: {
+        refreshWallpaper();
+        depthWarm.running = true;
+    }
 }

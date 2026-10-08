@@ -30,6 +30,7 @@ in
       hyprshade
       zenity
       matugen
+      rembg 
     ]) ++ [
       (pkgs.callPackage ./hyprglass.nix { })
     ];

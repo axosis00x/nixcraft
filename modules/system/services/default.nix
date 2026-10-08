@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -44,6 +45,8 @@ in
 
     services.timesyncd.enable = true;
     services.xserver.enable = true;
+    # NixOS adds xterm as a fallback terminal whenever X is enabled; not needed.
+    services.xserver.excludePackages = [ pkgs.xterm ];
 
     services.openssh = {
       enable = false;

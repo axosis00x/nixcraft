@@ -1,5 +1,5 @@
 {
-  description = "axosis' nix configs";
+  description = "axosis00x' nix configs";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     apple-fonts = {

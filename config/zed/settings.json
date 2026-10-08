@@ -18,7 +18,9 @@
     "font_size": 14.0,
   },
   "agent": {
-    "sidebar_side": "right",
+    "threads_sidebar": {
+      "position": "right"
+    },
     "dock": "right",
     "favorite_models": [],
     "model_parameters": [],

@@ -5,7 +5,7 @@
 local terminal = "kitty"
 local fileManager = "nautilus"
 local browser = "zen-twilight"
-local secondBrowser = "brave"
+local secondBrowser = "helium"
 local mainMod = "SUPER"
 local guiEditor = "zeditor"
 

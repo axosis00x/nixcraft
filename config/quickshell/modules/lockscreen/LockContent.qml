@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Widgets
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
@@ -164,6 +165,54 @@ Item {
         }
     }
 
+    // ── who ─────────────────────────────────────────────────────────
+    // Profile picture with the username, sitting just above the password.
+    Column {
+        anchors.horizontalCenter: field.horizontalCenter
+        anchors.bottom: field.top
+        anchors.bottomMargin: 20
+        spacing: 10
+        opacity: field.opacity
+
+        ClippingRectangle {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 72
+            height: 72
+            radius: width / 2
+            color: Qt.rgba(1, 1, 1, 0.12)
+
+            // Initial if the picture is missing.
+            Text {
+                anchors.centerIn: parent
+                visible: avatar.status !== Image.Ready
+                text: (Quickshell.env("USER") || "?").charAt(0).toUpperCase()
+                color: Palette.Theme.textPrimary
+                font.family: Palette.Theme.fontSans
+                font.pixelSize: 28
+                font.weight: Font.DemiBold
+            }
+
+            Image {
+                id: avatar
+                anchors.fill: parent
+                source: "file://" + Quickshell.env("HOME") + "/Pictures/misc/pfp.png"
+                sourceSize: Qt.size(144, 144)
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                smooth: true
+            }
+        }
+
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: Quickshell.env("USER")
+            color: Palette.Theme.textPrimary
+            font.family: Palette.Theme.fontSans
+            font.pixelSize: Palette.Theme.fontSizeTitle
+            font.weight: Font.DemiBold
+        }
+    }
+
     // ── password ────────────────────────────────────────────────────
     Item {
         id: field
@@ -213,11 +262,22 @@ Item {
             }
         }
 
+        // Typed-character dots. The row glides to stay centred as dots are
+        // added or removed (rather than jumping by half a dot), and each new
+        // dot eases in from small and transparent — smooth, no bounce.
         Row {
-            anchors.centerIn: parent
+            id: dots
+            anchors.verticalCenter: parent.verticalCenter
+            x: (parent.width - implicitWidth) / 2
             spacing: 8
             opacity: root.hasText ? 1 : 0
 
+            Behavior on x {
+                NumberAnimation {
+                    duration: 180
+                    easing.type: Easing.OutCubic
+                }
+            }
             Behavior on opacity {
                 EffectMotion {}
             }
@@ -225,20 +285,37 @@ Item {
             Repeater {
                 model: Math.min(root.lockScreen.typed.length, 16)
                 delegate: Rectangle {
+                    id: dot
                     width: 7
                     height: 7
                     radius: 3.5
                     color: root.stateColor
-                    scale: 0
+                    scale: 0.3
+                    opacity: 0
 
-                    Behavior on scale {
-                        SpatialMotion {
-                            fast: true
-                            bouncy: true
-                        }
+                    Behavior on color {
+                        ColorMotion {}
                     }
 
-                    Component.onCompleted: scale = 1
+                    Component.onCompleted: appear.start()
+
+                    ParallelAnimation {
+                        id: appear
+                        NumberAnimation {
+                            target: dot
+                            property: "scale"
+                            to: 1
+                            duration: 220
+                            easing.type: Easing.OutCubic
+                        }
+                        NumberAnimation {
+                            target: dot
+                            property: "opacity"
+                            to: 1
+                            duration: 160
+                            easing.type: Easing.OutCubic
+                        }
+                    }
                 }
             }
         }

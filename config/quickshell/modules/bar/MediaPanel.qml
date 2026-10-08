@@ -67,6 +67,38 @@ Item {
 
     property bool hasPlayer: player !== null
 
+    // ── Album art ─────────────────────────────────────────────────────────────
+    // Remote covers (Spotify's https URLs) are fetched with curl into a small
+    // cache and shown from disk. Qt's own network loader hung on them, and
+    // binding an Image straight to MPRIS metadata is the path that crashed
+    // Quickshell after hot reloads; a plain local file avoids both.
+    readonly property string artUrl: player ? (player.trackArtUrl || "") : ""
+    property string artSource: ""
+    onArtUrlChanged: fetchArt()
+    Component.onCompleted: fetchArt()
+
+    function fetchArt() {
+        if (artUrl === "") {
+            artSource = "";
+        } else if (artUrl.indexOf("file://") === 0) {
+            artSource = artUrl;
+        } else {
+            var file = Quickshell.cachePath("media-art/" + Qt.md5(artUrl));
+            artFetch.exec(["sh", "-c", "mkdir -p \"${2%/*}\" && { [ -s \"$2\" ] || curl -sfL --max-time 10 -o \"$2\" \"$1\"; } && [ -s \"$2\" ] && printf '%s' \"$2\"", "art", artUrl, file]);
+        }
+    }
+
+    Process {
+        id: artFetch
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var path = text.trim();
+                if (path !== "")
+                    root.artSource = "file://" + path;
+            }
+        }
+    }
+
     // Browsers (Zen/Firefox playing YouTube) do publish mpris:length, but
     // Quickshell's MPRIS service sometimes misses it, reporting
     // lengthSupported=false and mirroring the position into `length`. When
@@ -258,7 +290,7 @@ Item {
             Image {
                 id: artImg
                 anchors.fill: parent
-                source: root.player ? root.player.trackArtUrl : ""
+                source: root.artSource
                 sourceSize: Qt.size(240, 240)
                 fillMode: Image.PreserveAspectCrop
                 smooth: true

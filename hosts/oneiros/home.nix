@@ -7,8 +7,8 @@
 
   wayland.windowManager.hyprland.systemd.enable = false;
 
-  home.username = "axosis";
-  home.homeDirectory = "/home/axosis";
+  home.username = "axosis00x";
+  home.homeDirectory = "/home/axosis00x";
 
   userSettings.applications.enable = true;
   userSettings.utils.enable = true;

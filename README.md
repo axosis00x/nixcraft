@@ -25,7 +25,7 @@ Curiosity brought me here. This is nixcraft, a NixOS configuration for my deskto
 
 ## Installation
 
-This configuration is currently for the `oneiros` host and the `axosis`
+This configuration is currently for the `oneiros` host and the `axosis00x`
 user. It contains machine-specific hardware, user, display, and theme
 settings. Change those values before using it on another machine.
 
@@ -35,8 +35,8 @@ settings. Change those values before using it on another machine.
 2. Clone this repository into the target user's home directory:
 
    ```bash
-   git clone https://github.com/frgnc-subash/nixcraft /home/axosis/nixcraft
-   cd /home/axosis/nixcraft
+   git clone https://github.com/frgnc-subash/nixcraft /home/axosis00x/nixcraft
+   cd /home/axosis00x/nixcraft
    ```
 
 3. Generate the new machine's hardware configuration and replace
@@ -56,7 +56,7 @@ settings. Change those values before using it on another machine.
 
    ```bash
    git add -A
-   sudo nixos-rebuild switch --flake /home/axosis/nixcraft#oneiros
+   sudo nixos-rebuild switch --flake /home/axosis00x/nixcraft#oneiros
    ```
 
 6. Log out and back in. Home Manager links the editable application configs

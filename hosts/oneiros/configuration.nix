@@ -22,7 +22,7 @@
   config = {
     boot.kernelPackages = pkgs.linuxPackages_latest;
 
-    systemSettings.users = [ "axosis" ];
+    systemSettings.users = [ "axosis00x" ];
     systemSettings.services.enable = true;
     systemSettings.gpu.enable = true;
     systemSettings.storage.enable = true;
@@ -54,8 +54,9 @@
       variant = "";
     };
 
-    users.users.axosis = {
+    users.users.axosis00x = {
       isNormalUser = true;
+      uid = 1000;
       description = "axosis incon";
       extraGroups = [
         "networkmanager"

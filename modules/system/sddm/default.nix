@@ -18,7 +18,7 @@ in
     };
     user = lib.mkOption {
       type = lib.types.str;
-      default = "axosis";
+      default = "axosis00x";
       description = "User to set the SDDM avatar for.";
     };
     avatar = lib.mkOption {

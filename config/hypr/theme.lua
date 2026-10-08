@@ -1,1 +1,1 @@
-return dofile("/home/axosis/.config/themes/ryo/hyprland.lua")
+return dofile("/home/axosis00x/.config/themes/ryo/hyprland.lua")

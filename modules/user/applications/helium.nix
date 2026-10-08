@@ -1,8 +1,8 @@
 { appimageTools, fetchurl }:
 
 # Helium browser, packaged from the official AppImage (it isn't in nixpkgs).
-# To update: bump `version`, then refresh `hash` with
-#   nix store prefetch-file <url>
+# To update to the newest release, run ./update-helium.sh (next to this file)
+# and rebuild.
 let
   pname = "helium";
   version = "0.18.3.1";

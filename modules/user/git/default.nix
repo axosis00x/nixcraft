@@ -38,8 +38,8 @@ in
       enable = true;
 
       settings = {
-        user.name = "axosis";
-        user.email = "130370071+frgnc-subash@users.noreply.github.com";
+        user.name = "axosis00x";
+        user.email = "130370071+axosis00x@users.noreply.github.com";
         init.defaultBranch = "main";
 
         pull.rebase = true;

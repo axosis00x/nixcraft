@@ -44,7 +44,9 @@ Surface {
     implicitHeight: content.implicitHeight + 22
     radius: Palette.Theme.radiusMedium
     // One step above the panel/section it sits on, so cards read as cards.
-    color: Palette.Theme.surfaceContainerHigh
+    // Layered over surfaceContainer so translucent themes (whose "high"
+    // surfaces are thin white washes) still get a solid-enough card.
+    color: Qt.tint(Palette.Theme.surfaceContainer, Palette.Theme.surfaceContainerHigh)
     tint: notification && notification.urgency === NotificationUrgency.Critical ? Palette.Theme.accent : Palette.Theme.surfaceTint
     tintOpacity: notification && notification.urgency === NotificationUrgency.Critical ? 0.16 : 0.04
 

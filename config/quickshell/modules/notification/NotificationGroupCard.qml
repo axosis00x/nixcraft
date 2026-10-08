@@ -32,7 +32,7 @@ ColumnLayout {
                 }
                 height: topCard.implicitHeight
                 radius: Palette.Theme.radiusMedium
-                color: Palette.Theme.surfaceContainerHigh
+                color: Qt.tint(Palette.Theme.surfaceContainer, Palette.Theme.surfaceContainerHigh)
                 opacity: 0.5 - depth * 0.15
                 z: -depth
             }

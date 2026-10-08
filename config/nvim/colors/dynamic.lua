@@ -10,29 +10,29 @@ vim.o.background = "dark"
 vim.g.colors_name = "dynamic"
 
 local p = {
-  bg = "#1c1107",
-  bg_float = "#291d12",
-  bg_highlight = "#34271c",
-  bg_visual = "#403226",
-  bg_search = "#403226",
-  border = "#534437",
+  bg = "#1e100d",
+  bg_float = "#2b1c19",
+  bg_highlight = "#372623",
+  bg_visual = "#42312d",
+  bg_search = "#42312d",
+  border = "#55423f",
 
-  fg = "#f5decc",
-  fg_dark = "#d8c3b1",
-  fg_dim = "#a08d7d",
-  comment = "#a08d7d",
-  disabled = "#534437",
+  fg = "#f9dcd7",
+  fg_dark = "#dcc0bc",
+  fg_dim = "#a38b87",
+  comment = "#a38b87",
+  disabled = "#55423f",
 
-  blue = "#ffb872",
-  blue2 = "#ffdcbf",
-  cyan = "#e8c08e",
-  teal = "#ffddb4",
-  green = "#e8c177",
-  purple = "#e8c177",
-  magenta = "#ffdea4",
+  blue = "#ffb4a6",
+  blue2 = "#ffdad4",
+  cyan = "#f3ba9d",
+  teal = "#ffdbca",
+  green = "#f8ba7f",
+  purple = "#f8ba7f",
+  magenta = "#ffdcbe",
   red = "#ffb4ab",
-  orange = "#ffb872",
-  yellow = "#e8c08e",
+  orange = "#ffb4a6",
+  yellow = "#f3ba9d",
 
   none = "NONE",
 }
@@ -257,19 +257,19 @@ hl("NoiceCmdlinePopup", { fg = p.fg, bg = p.bg_float })
 hl("NoiceCmdlinePopupBorder", { fg = p.border, bg = p.bg_float })
 
 -- Terminal colors
-vim.g.terminal_color_0 = "#160c04"
+vim.g.terminal_color_0 = "#180b08"
 vim.g.terminal_color_1 = "#ffb4ab"
-vim.g.terminal_color_2 = "#e8c177"
-vim.g.terminal_color_3 = "#e8c08e"
-vim.g.terminal_color_4 = "#ffb872"
-vim.g.terminal_color_5 = "#e8c177"
-vim.g.terminal_color_6 = "#e8c08e"
-vim.g.terminal_color_7 = "#f5decc"
-vim.g.terminal_color_8 = "#a08d7d"
+vim.g.terminal_color_2 = "#f8ba7f"
+vim.g.terminal_color_3 = "#f3ba9d"
+vim.g.terminal_color_4 = "#ffb4a6"
+vim.g.terminal_color_5 = "#f8ba7f"
+vim.g.terminal_color_6 = "#f3ba9d"
+vim.g.terminal_color_7 = "#f9dcd7"
+vim.g.terminal_color_8 = "#a38b87"
 vim.g.terminal_color_9 = "#ffdad6"
-vim.g.terminal_color_10 = "#ffdea4"
-vim.g.terminal_color_11 = "#ffddb4"
-vim.g.terminal_color_12 = "#ffdcbf"
-vim.g.terminal_color_13 = "#ffdea4"
-vim.g.terminal_color_14 = "#ffddb4"
-vim.g.terminal_color_15 = "#f5decc"
+vim.g.terminal_color_10 = "#ffdcbe"
+vim.g.terminal_color_11 = "#ffdbca"
+vim.g.terminal_color_12 = "#ffdad4"
+vim.g.terminal_color_13 = "#ffdcbe"
+vim.g.terminal_color_14 = "#ffdbca"
+vim.g.terminal_color_15 = "#f9dcd7"

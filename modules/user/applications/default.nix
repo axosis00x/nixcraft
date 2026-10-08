@@ -31,6 +31,7 @@ in
       proton-vpn
       wireguard-tools
       brave
+      (callPackage ./helium.nix { })
       libreoffice-stable
       errands
       zathura

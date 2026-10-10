@@ -3,7 +3,9 @@ import "../../components/material"
 import "../../theme" as Palette
 
 // A scrolling stack of titled sections. A section is either a card of rows
-// separated by hairlines or (layout: "tiles") a grid of quick-settings tiles.
+// separated by hairlines, (layout: "tiles") a grid of quick-settings tiles, or
+// (layout: "themes" / "wallpapers" / "usage") a custom block. A custom
+// block's `rows` are only there so search can find it.
 Flickable {
     id: root
 
@@ -28,6 +30,7 @@ Flickable {
 
                 required property var modelData
                 readonly property bool tiles: modelData.layout === "tiles"
+                readonly property bool gallery: ["themes", "wallpapers", "usage"].indexOf(modelData.layout) !== -1
 
                 width: column.width
                 spacing: Palette.Theme.spacingSmall
@@ -45,7 +48,7 @@ Flickable {
                 }
 
                 Rectangle {
-                    visible: !section.tiles
+                    visible: !section.tiles && !section.gallery
                     width: section.width
                     height: rows.implicitHeight
                     radius: Palette.Theme.radiusMedium
@@ -56,7 +59,7 @@ Flickable {
                         width: parent.width
 
                         Repeater {
-                            model: section.tiles ? [] : section.modelData.rows
+                            model: section.tiles || section.gallery ? [] : section.modelData.rows
 
                             delegate: SettingsEntry {
                                 required property var modelData
@@ -92,7 +95,39 @@ Flickable {
                         }
                     }
                 }
+
+                // Only built while the window is open: the wallpaper gallery
+                // decodes a thumbnail per file, and both re-read their lists
+                // each time it opens.
+                Loader {
+                    active: section.gallery && root.panel.shown
+                    visible: active
+                    width: section.width
+                    height: item ? item.implicitHeight : 0
+                    sourceComponent: ({ themes: themeGrid, wallpapers: wallpaperGrid, usage: usageCards })[section.modelData.layout]
+                }
             }
+        }
+    }
+
+    Component {
+        id: themeGrid
+        SettingsThemeGrid {
+            service: root.panel.themeService
+        }
+    }
+
+    Component {
+        id: usageCards
+        SettingsUsageCards {
+            panel: root.panel
+        }
+    }
+
+    Component {
+        id: wallpaperGrid
+        SettingsWallpaperGrid {
+            service: root.panel.themeService
         }
     }
 }

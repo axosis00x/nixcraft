@@ -259,24 +259,10 @@ Item {
         }
     }
 
-    Process {
-        id: setWallpaperProcess
-    }
-
     function setWallpaper(path) {
         root.currentWallpaper = path;
-
-        // The dynamic theme's whole palette is derived from its wallpaper,
-        // so picking a new one has to go through wallust (via apply-theme.sh)
-        // rather than just swapping the image.
-        if (root.activeTheme === "dynamic" && root.themeService) {
-            root.themeService.apply("dynamic", path);
-            return;
-        }
-
-        setWallpaperProcess.command = ["awww", "img", path, "--transition-type", "any", "--transition-duration", "0.7", "--transition-fps", "60"];
-
-        setWallpaperProcess.running = true;
+        if (root.themeService)
+            root.themeService.setWallpaper(path);
     }
 
     function refreshCurrent() {

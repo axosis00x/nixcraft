@@ -79,8 +79,10 @@ hl.window_rule({
 })
 
 -- Quickshell's settings window (quickshell/modules/settings/SettingsWindow.qml):
--- a rounded card drawn on a transparent window, so Hyprland's own translucency,
--- blur, border and rounding must stay out of the way.
+-- a rounded card drawn on a transparent window in the theme's background, so
+-- Hyprland's own translucency and border stay out of the way. Blur is kept for
+-- translucent themes, clipped by a rounding that matches the card's corners
+-- (Theme.radiusLarge) so it doesn't spill past them.
 hl.window_rule({
     name = "nixcraft-settings",
     match = {
@@ -91,8 +93,8 @@ hl.window_rule({
     -- size = "940 600",
     center = true,
     opacity = "1.0 override",
-    no_blur = true,
     no_shadow = true,
     border_size = 0,
-    rounding = 0,
+    rounding = 20,
+    rounding_power = 2,
 })

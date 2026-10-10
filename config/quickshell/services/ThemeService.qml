@@ -11,6 +11,8 @@ Item {
     // theme name -> { bg, surfaceContainerHigh, border, textPrimary, accent, info, success, warning, error }
     property var palettes: ({})
     property string activeTheme: ""
+    // Path of the wallpaper on screen, as awww last cached it.
+    property string currentWallpaper: ""
     signal applied(string themeName)
 
     Component.onCompleted: refresh()
@@ -18,6 +20,58 @@ Item {
     function refresh() {
         themeList.running = true;
         readSwatches();
+        refreshWallpaper();
+    }
+
+    function refreshWallpaper() {
+        wallpaperRead.running = true;
+    }
+
+    function setWallpaper(path) {
+        currentWallpaper = path;
+        // The dynamic theme's whole palette is derived from its wallpaper,
+        // so picking a new one has to go through wallust (via apply-theme.sh)
+        // rather than just swapping the image.
+        if (activeTheme === "dynamic") {
+            apply("dynamic", path);
+            return;
+        }
+        setWallpaperProcess.exec(["awww", "img", path, "--transition-type", "any", "--transition-duration", "0.7", "--transition-fps", "60"]);
+    }
+
+    // Five distinct colors to preview a theme by: its UI accents first, then
+    // its terminal colors to fill in wherever the UI palette repeats itself.
+    function swatchesFor(themeName) {
+        var pal = palettes[themeName];
+        if (!pal)
+            return [];
+        var candidates = [pal.accent, pal.info, pal.success, pal.warning, pal.error, pal.ansi5, pal.ansi4, pal.ansi6, pal.ansi2, pal.ansi3, pal.ansi1];
+        var out = [];
+        var seen = {};
+        for (var i = 0; i < candidates.length && out.length < 5; i++) {
+            var c = candidates[i];
+            if (!c || seen[c.toLowerCase()])
+                continue;
+            seen[c.toLowerCase()] = true;
+            out.push(c);
+        }
+        return out;
+    }
+
+    Process {
+        id: setWallpaperProcess
+    }
+
+    Process {
+        id: wallpaperRead
+        command: ["sh", "-c", "find ~/.cache/awww -type f 2>/dev/null | head -1 | xargs cat 2>/dev/null | tr '\\0' '\\n' | grep '^/' | tail -1"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var path = text.trim();
+                if (path.length > 0)
+                    root.currentWallpaper = path;
+            }
+        }
     }
 
     function readSwatches() {
@@ -123,6 +177,8 @@ Item {
                 root.readPalette(root.activeTheme);
                 // The dynamic theme's colors were just rewritten.
                 root.readSwatches();
+                // A theme switch also swaps the wallpaper.
+                root.refreshWallpaper();
             }
             root.pendingTheme = "";
         }

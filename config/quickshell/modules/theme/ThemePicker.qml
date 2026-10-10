@@ -87,25 +87,6 @@ Item {
         return service && service.palettes ? service.palettes[themeName] : undefined;
     }
 
-    // Five distinct colors for a card: the theme's UI accents first, then its
-    // terminal colors to fill in wherever the UI palette repeats itself.
-    function swatchesFor(themeName) {
-        var pal = paletteFor(themeName);
-        if (!pal)
-            return [];
-        var candidates = [pal.accent, pal.info, pal.success, pal.warning, pal.error, pal.ansi5, pal.ansi4, pal.ansi6, pal.ansi2, pal.ansi3, pal.ansi1];
-        var out = [];
-        var seen = {};
-        for (var i = 0; i < candidates.length && out.length < 5; i++) {
-            var c = candidates[i];
-            if (!c || seen[c.toLowerCase()])
-                continue;
-            seen[c.toLowerCase()] = true;
-            out.push(c);
-        }
-        return out;
-    }
-
     function accentFor(themeName) {
         var pal = paletteFor(themeName);
         return pal && pal.accent ? pal.accent : Palette.Theme.accent;
@@ -223,7 +204,7 @@ Item {
                             height: 8
                             spacing: 2
 
-                            readonly property var colors: root.swatchesFor(card.modelData)
+                            readonly property var colors: root.service.swatchesFor(card.modelData)
 
                             Repeater {
                                 model: strip.colors

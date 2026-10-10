@@ -29,8 +29,6 @@ FloatingWindow {
     property bool shown: false
 
     signal aboutToOpen
-    // Ask the shell to open one of the overlay pickers ("theme", "wallpaper", "barlayout").
-    signal requestOpen(string what)
 
     readonly property real cardWidth: 860
     readonly property real cardHeight: 560
@@ -81,6 +79,8 @@ FloatingWindow {
         shown = true;
         if (controlCenter)
             controlCenter.refreshAll();
+        if (themeService)
+            themeService.refresh();
         aboutProcess.running = true;
         searchInput.forceActiveFocus();
     }
@@ -199,7 +199,7 @@ FloatingWindow {
 
     function level(key) {
         var c = controlCenter;
-        if (!c)
+        if (!c && key !== "cpu" && key !== "ram")
             return 0;
         switch (key) {
         case "volume":
@@ -208,6 +208,10 @@ FloatingWindow {
             return c.brightnessValue;
         case "mic":
             return c.micValue;
+        case "cpu":
+            return cpuUsage;
+        case "ram":
+            return memUsage;
         default:
             return 0;
         }
@@ -231,12 +235,18 @@ FloatingWindow {
     }
 
     function choice(key) {
-        return key === "powerprofile" && controlCenter ? controlCenter.powerProfile : "";
+        if (key === "powerprofile")
+            return controlCenter ? controlCenter.powerProfile : "";
+        if (key === "barstyle")
+            return barLayout ? barLayout.style : "";
+        return "";
     }
 
     function setChoice(key, id) {
         if (key === "powerprofile" && controlCenter)
             controlCenter.setPowerProfile(id);
+        else if (key === "barstyle" && barLayout)
+            barLayout.setStyle(id);
     }
 
     // Battery comes straight from sysfs (same source as the bar) — UPower
@@ -281,10 +291,65 @@ FloatingWindow {
 
     function infoFor(key) {
         switch (key) {
+        case "cpu":
+            return cpuThreads > 0 ? cpuThreads + " threads" : "";
+        case "ram":
+            return memTotalKb > 0 ? gb(memTotalKb - memAvailKb) + " of " + gb(memTotalKb) + " GB" : "";
         case "battery":
             return batteryPercent >= 0 ? batteryPercent + "%" + (batteryCharging ? " · charging" : "") : "No battery";
         default:
             return about[key] || "…";
+        }
+    }
+
+    // ── system usage ────────────────────────────────────────────────
+    // CPU is the busy share of jiffies between two /proc/stat samples; RAM
+    // is MemTotal minus MemAvailable. Sampled only while the window is open.
+    property real cpuUsage: 0
+    property real memUsage: 0
+    property real memTotalKb: 0
+    property real memAvailKb: 0
+    property var cpuPrev: null
+    property int cpuThreads: 0
+
+    function gb(kb) {
+        return (kb / 1048576).toFixed(1);
+    }
+
+    Timer {
+        interval: 2000
+        repeat: true
+        triggeredOnStart: true
+        running: root.shown
+        onTriggered: usageProcess.running = true
+    }
+
+    Process {
+        id: usageProcess
+        command: ["sh", "-c", "head -n1 /proc/stat; grep -E '^(MemTotal|MemAvailable):' /proc/meminfo; echo threads $(nproc)"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                text.split("\n").forEach(line => {
+                    var f = line.trim().split(/\s+/);
+                    if (f[0] === "cpu") {
+                        var v = f.slice(1).map(Number);
+                        var idle = v[3] + (v[4] || 0);
+                        var total = v.reduce((a, b) => a + b, 0);
+                        var prev = root.cpuPrev;
+                        if (prev && total > prev.total)
+                            root.cpuUsage = 1 - (idle - prev.idle) / (total - prev.total);
+                        root.cpuPrev = { idle: idle, total: total };
+                    } else if (f[0] === "MemTotal:") {
+                        root.memTotalKb = Number(f[1]);
+                    } else if (f[0] === "MemAvailable:") {
+                        root.memAvailKb = Number(f[1]);
+                    } else if (f[0] === "threads") {
+                        root.cpuThreads = Number(f[1]);
+                    }
+                });
+                if (root.memTotalKb > 0)
+                    root.memUsage = 1 - root.memAvailKb / root.memTotalKb;
+            }
         }
     }
 
@@ -305,10 +370,10 @@ FloatingWindow {
     }
 
     function activate(spec) {
-        if (spec.open) {
-            // Hand keyboard focus over: close first, then let the shell open the picker.
-            close();
-            requestOpen(spec.open);
+        // A search hit for an inline gallery jumps to the page that holds it.
+        if (spec.page) {
+            searchInput.text = "";
+            page = spec.page;
             return;
         }
         var c = controlCenter;
@@ -374,6 +439,14 @@ FloatingWindow {
                         { kind: "slider", key: "brightness", icon: "", title: "Brightness" },
                         { kind: "slider", key: "volume", icon: "", title: "Volume" },
                         { kind: "slider", key: "mic", icon: "", title: "Microphone" }
+                    ]
+                },
+                {
+                    title: "System usage",
+                    layout: "usage",
+                    rows: [
+                        { kind: "nav", page: "overview", icon: "memory", title: "CPU usage" },
+                        { kind: "nav", page: "overview", icon: "memory_alt", title: "Memory usage" }
                     ]
                 }
             ],
@@ -451,11 +524,23 @@ FloatingWindow {
             ],
             "appearance": [
                 {
-                    title: "Style",
+                    title: "Theme",
+                    layout: "themes",
                     rows: [
-                        { kind: "nav", open: "theme", icon: "", title: "Theme", sub: "appearance" },
-                        { kind: "nav", open: "wallpaper", icon: "", title: "Wallpaper", subtitle: "Pick a wallpaper for this theme" },
-                        { kind: "nav", open: "barlayout", icon: "", title: "Bar style", subtitle: "Top, compact in the center, or on the left side" },
+                        { kind: "nav", page: "appearance", icon: "", title: "Theme", subtitle: "Color theme for the whole desktop" }
+                    ]
+                },
+                {
+                    title: "Bar",
+                    rows: [
+                        {
+                            kind: "segment", key: "barstyle", title: "Bar style",
+                            options: [
+                                { id: "top", label: "Top" },
+                                { id: "compact", label: "Compact" },
+                                { id: "left", label: "Left" }
+                            ]
+                        },
                         { kind: "switch", key: "island", icon: "rounded_corner", title: "Island mode", subtitle: "Float the notch and its panels as rounded islands" }
                     ]
                 },
@@ -466,6 +551,13 @@ FloatingWindow {
                         { kind: "switch", key: "clock", icon: "", title: "Clock widget" },
                         { kind: "switch", key: "weather", icon: "", title: "Weather widget" },
                         { kind: "switch", key: "cava", icon: "graphic_eq", title: "Audio wave widget", subtitle: "Visualizes whatever is playing" }
+                    ]
+                },
+                {
+                    title: "Wallpaper",
+                    layout: "wallpapers",
+                    rows: [
+                        { kind: "nav", page: "appearance", icon: "", title: "Wallpaper", subtitle: "Pick a wallpaper for this theme" }
                     ]
                 }
             ],
@@ -478,6 +570,14 @@ FloatingWindow {
                         { kind: "info", key: "os", icon: "", title: "Operating system" },
                         { kind: "info", key: "kernel", icon: "", title: "Kernel" },
                         { kind: "info", key: "uptime", icon: "", title: "Uptime" }
+                    ]
+                },
+                {
+                    title: "System usage",
+                    layout: "usage",
+                    rows: [
+                        { kind: "nav", page: "about", icon: "memory", title: "CPU usage" },
+                        { kind: "nav", page: "about", icon: "memory_alt", title: "Memory usage" }
                     ]
                 }
             ]
@@ -520,15 +620,16 @@ FloatingWindow {
             event.accepted = true;
         }
 
-        // Always opaque, even under translucent themes, so whatever is
-        // behind the window never bleeds through the text.
+        // The theme's own background, so translucent themes stay translucent
+        // here too; Hyprland blurs what's behind (see windowrules.lua), which
+        // keeps the text readable.
         Rectangle {
             id: cardBg
             anchors.fill: parent
             // Same panel corner as the shell's notch/island panels; no
             // outline — like the rest of the shell, it separates by tone.
             radius: Palette.Theme.radiusLarge
-            color: Palette.Theme.surfaceSolid
+            color: Palette.Theme.bg
         }
 
         RowLayout {

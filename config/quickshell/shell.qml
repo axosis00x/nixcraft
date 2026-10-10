@@ -44,14 +44,6 @@ ShellRoot {
         barLayout: barLayoutService
         // A centered window and the overlay both grab the keyboard, so only one at a time.
         onAboutToOpen: overlay.closeActive()
-        onRequestOpen: what => {
-            if (what === "theme")
-                overlay.themePicker.open();
-            else if (what === "wallpaper")
-                overlay.wallpaperPicker.open();
-            else if (what === "barlayout")
-                overlay.barLayoutPicker.open();
-        }
     }
     WorkspacesService {
         id: workspacesServiceInstance

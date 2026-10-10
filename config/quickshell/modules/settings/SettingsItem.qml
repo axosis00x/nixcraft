@@ -77,7 +77,7 @@ Item {
         // A thin gap in the window colour splits the group into segments
         // (as in the control center) rather than an outlined hairline.
         height: 2
-        color: Palette.Theme.surfaceSolid
+        color: Palette.Theme.bg
     }
 
     MouseArea {

@@ -10,7 +10,9 @@ import "../../theme" as Palette
 // screen edge (with concave fillets where it meets the top and bottom
 // edges), holding grouped pills — launcher and workspaces at the top, the
 // focused window's icon and title running down the middle, and tray,
-// status, clock and power at the bottom.
+// status, clock and power at the bottom. In island mode the strip lifts off
+// the edge instead: inset on every side, fully rounded, fillets gone — the
+// same switch the horizontal bar's notch makes (Notch.qml).
 Item {
     id: root
 
@@ -19,7 +21,15 @@ Item {
     property real thickness: 44
     property real filletSize: 8
 
-    readonly property real pillWidth: thickness - 12
+    property real islandness: bar.island ? 1 : 0
+    Behavior on islandness {
+        SpatialMotion {}
+    }
+    // The island stays inside the reserved strip: it gives up width on the
+    // screen-edge side rather than pushing into the windows.
+    readonly property real inset: bar.islandGap * islandness
+
+    readonly property real pillWidth: strip.width - 12
 
     // ── strip ───────────────────────────────────────────────────────
     Rectangle {
@@ -27,7 +37,11 @@ Item {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.left: parent.left
-        width: root.thickness
+        anchors.topMargin: root.inset
+        anchors.bottomMargin: root.inset
+        anchors.leftMargin: root.inset
+        width: root.thickness - root.inset
+        radius: Palette.Theme.radiusLarge * root.islandness
         color: Palette.Theme.bg
     }
 
@@ -37,6 +51,7 @@ Item {
         corner: "topLeft"
         size: root.filletSize
         color: strip.color
+        opacity: 1 - root.islandness
     }
 
     RoundCorner {
@@ -45,6 +60,7 @@ Item {
         corner: "bottomLeft"
         size: root.filletSize
         color: strip.color
+        opacity: 1 - root.islandness
     }
 
     // ── top: launcher + workspaces ──────────────────────────────────

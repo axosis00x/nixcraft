@@ -5,6 +5,7 @@ import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
 import "../../components/material"
+import "../../services"
 import "../../theme" as Palette
 
 // System settings as an ordinary floating window (a real toplevel, so it
@@ -29,6 +30,13 @@ FloatingWindow {
     property bool shown: false
 
     signal aboutToOpen
+
+    // Resolution, scale and mirroring (Display page).
+    readonly property alias displayService: displayService
+
+    DisplayService {
+        id: displayService
+    }
 
     readonly property real cardWidth: 860
     readonly property real cardHeight: 560
@@ -142,6 +150,8 @@ FloatingWindow {
             return widgetsService ? widgetsService.isEnabled(key) : false;
         case "island":
             return barLayout ? barLayout.island : false;
+        case "mirror":
+            return displayService.mirror;
         default:
             return false;
         }
@@ -193,6 +203,9 @@ FloatingWindow {
         case "island":
             if (barLayout)
                 barLayout.setIsland(on);
+            break;
+        case "mirror":
+            displayService.setMirror(on);
             break;
         }
     }
@@ -282,6 +295,10 @@ FloatingWindow {
             return themeService && themeService.activeTheme ? "Theme: " + themeService.activeTheme : "Theme, wallpaper, dock";
         case "about":
             return about.host || "This device";
+        case "mirror":
+            if (!displayService.external)
+                return "Applies when a second display is connected";
+            return displayService.mirror ? "Built-in display shows " + displayService.external.name : "Extend the desktop across both";
         default:
             return "";
         }
@@ -440,14 +457,6 @@ FloatingWindow {
                         { kind: "slider", key: "volume", icon: "", title: "Volume" },
                         { kind: "slider", key: "mic", icon: "", title: "Microphone" }
                     ]
-                },
-                {
-                    title: "System usage",
-                    layout: "usage",
-                    rows: [
-                        { kind: "nav", page: "overview", icon: "memory", title: "CPU usage" },
-                        { kind: "nav", page: "overview", icon: "memory_alt", title: "Memory usage" }
-                    ]
                 }
             ],
             "network": [
@@ -466,6 +475,20 @@ FloatingWindow {
                     rows: [
                         { kind: "slider", key: "brightness", icon: "", title: "Brightness level" },
                         { kind: "switch", key: "nightlight", icon: "", title: "Night light", subtitle: "Warmer colors at night" }
+                    ]
+                },
+                {
+                    title: "Displays",
+                    layout: "displays",
+                    rows: [
+                        { kind: "nav", page: "display", icon: "monitor", title: "Resolution", subtitle: "Screen resolution and refresh rate" },
+                        { kind: "nav", page: "display", icon: "zoom_in", title: "Display scale", subtitle: "Make everything bigger or smaller" }
+                    ]
+                },
+                {
+                    title: "Multiple displays",
+                    rows: [
+                        { kind: "switch", key: "mirror", icon: "screen_share", title: "Mirror displays", sub: "mirror" }
                     ]
                 }
             ],
@@ -520,6 +543,14 @@ FloatingWindow {
                         { kind: "info", key: "battery", icon: "", title: "Battery level" },
                         { kind: "switch", key: "keepawake", icon: "", title: "Keep screen awake", subtitle: "Prevent the screen from locking or sleeping" }
                     ]
+                },
+                {
+                    title: "System usage",
+                    layout: "usage",
+                    rows: [
+                        { kind: "nav", page: "power", icon: "memory", title: "CPU usage" },
+                        { kind: "nav", page: "power", icon: "memory_alt", title: "Memory usage" }
+                    ]
                 }
             ],
             "appearance": [
@@ -570,14 +601,6 @@ FloatingWindow {
                         { kind: "info", key: "os", icon: "", title: "Operating system" },
                         { kind: "info", key: "kernel", icon: "", title: "Kernel" },
                         { kind: "info", key: "uptime", icon: "", title: "Uptime" }
-                    ]
-                },
-                {
-                    title: "System usage",
-                    layout: "usage",
-                    rows: [
-                        { kind: "nav", page: "about", icon: "memory", title: "CPU usage" },
-                        { kind: "nav", page: "about", icon: "memory_alt", title: "Memory usage" }
                     ]
                 }
             ]

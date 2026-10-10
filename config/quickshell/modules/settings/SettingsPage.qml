@@ -4,7 +4,7 @@ import "../../theme" as Palette
 
 // A scrolling stack of titled sections. A section is either a card of rows
 // separated by hairlines, (layout: "tiles") a grid of quick-settings tiles, or
-// (layout: "themes" / "wallpapers" / "usage") a custom block. A custom
+// (layout: "themes" / "wallpapers" / "usage" / "displays") a custom block. A custom
 // block's `rows` are only there so search can find it.
 Flickable {
     id: root
@@ -30,7 +30,7 @@ Flickable {
 
                 required property var modelData
                 readonly property bool tiles: modelData.layout === "tiles"
-                readonly property bool gallery: ["themes", "wallpapers", "usage"].indexOf(modelData.layout) !== -1
+                readonly property bool gallery: ["themes", "wallpapers", "usage", "displays"].indexOf(modelData.layout) !== -1
 
                 width: column.width
                 spacing: Palette.Theme.spacingSmall
@@ -104,7 +104,7 @@ Flickable {
                     visible: active
                     width: section.width
                     height: item ? item.implicitHeight : 0
-                    sourceComponent: ({ themes: themeGrid, wallpapers: wallpaperGrid, usage: usageCards })[section.modelData.layout]
+                    sourceComponent: ({ themes: themeGrid, wallpapers: wallpaperGrid, usage: usageCards, displays: displayCards })[section.modelData.layout]
                 }
             }
         }
@@ -114,6 +114,13 @@ Flickable {
         id: themeGrid
         SettingsThemeGrid {
             service: root.panel.themeService
+        }
+    }
+
+    Component {
+        id: displayCards
+        SettingsDisplays {
+            service: root.panel.displayService
         }
     }
 

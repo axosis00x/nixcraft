@@ -61,6 +61,16 @@ hl.window_rule({
     center = true,
 })
 
+-- Audio mixer opened from the control center / settings (kitty --class wiremix).
+hl.window_rule({
+    name = "wiremix-float",
+    match = { class = "^(wiremix)$" },
+    float = true,
+    size = "900 560",
+    center = true,
+    animation = "popin 50%",
+})
+
 hl.window_rule({
     name = "move-kitty",
     match = { class = "kitty" },

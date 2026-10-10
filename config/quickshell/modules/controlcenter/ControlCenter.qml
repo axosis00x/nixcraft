@@ -424,8 +424,9 @@ Item {
         volumeMute.exec(["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"]);
     }
 
+    // Own window class so Hyprland floats and centers it (windowrules.lua).
     function openWiremix() {
-        wiremixLaunch.exec(["kitty", "-e", "wiremix"]);
+        wiremixLaunch.exec(["kitty", "--class", "wiremix", "-e", "wiremix"]);
     }
 
     function readBrightness() {

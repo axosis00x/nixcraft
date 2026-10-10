@@ -61,10 +61,11 @@ hl.window_rule({
     center = true,
 })
 
--- Audio mixer opened from the control center / settings (kitty --class wiremix).
+-- Audio mixer and enterprise Wi-Fi setup opened from the control center /
+-- settings (kitty --class wiremix / nmtui).
 hl.window_rule({
     name = "wiremix-float",
-    match = { class = "^(wiremix)$" },
+    match = { class = "^(wiremix|nmtui)$" },
     float = true,
     size = "900 560",
     center = true,

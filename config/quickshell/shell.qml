@@ -82,6 +82,20 @@ ShellRoot {
         function close(): void {
             root.closeControlCenter();
         }
+        // Straight to the Wi-Fi / Bluetooth lists.
+        function wifi(): void {
+            root.openControlCenterDetail("wifi");
+        }
+        function bluetooth(): void {
+            root.openControlCenterDetail("bluetooth");
+        }
+    }
+    function openControlCenterDetail(mode) {
+        var c = overlay.controlCenter;
+        if (!c)
+            return;
+        c.openControlCenter();
+        c.detailMode = mode;
     }
     function openControlCenter() {
         if (overlay.controlCenter)

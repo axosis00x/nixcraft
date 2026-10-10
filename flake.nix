@@ -29,6 +29,10 @@
       url = "github:haruki-nikaidou/momoisay-rs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    hyprmod = {
+      url = "github:BlueManCZ/hyprmod";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs =
     inputs@{

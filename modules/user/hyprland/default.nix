@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  inputs,
   ...
 }:
 let
@@ -12,28 +13,31 @@ in
     enable = lib.mkEnableOption "Hyprland window manager";
   };
   config = lib.mkIf cfg.enable {
-    home.packages = (with pkgs; [
-      brightnessctl
-      kitty
-      hyprsunset
-      cliphist
-      wl-clipboard
-      grimblast
-      playerctl
-      polkit_gnome
-      awww
-      wiremix
-      grim
-      slurp
-      hyprpicker
-      libnotify
-      hyprshade
-      zenity
-      matugen
-      rembg 
-    ]) ++ [
-      (pkgs.callPackage ./hyprglass.nix { })
-    ];
+    home.packages =
+      (with pkgs; [
+        brightnessctl
+        kitty
+        hyprsunset
+        cliphist
+        wl-clipboard
+        grimblast
+        playerctl
+        polkit_gnome
+        awww
+        wiremix
+        grim
+        slurp
+        hyprpicker
+        libnotify
+        hyprshade
+        zenity
+        matugen
+        rembg
+      ])
+      ++ [
+        (pkgs.callPackage ./hyprglass.nix { })
+        inputs.hyprmod.packages.${pkgs.stdenv.hostPlatform.system}.default
+      ];
     xdg.portal = {
       enable = true;
       extraPortals = with pkgs; [

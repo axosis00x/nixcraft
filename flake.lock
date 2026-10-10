@@ -115,6 +115,26 @@
         "type": "github"
       }
     },
+    "hyprmod": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791555169,
+        "narHash": "sha256-x8/LWtNX2i1rhw1Mi2VYaMN54Aa15NtQatHwPeSbBxU=",
+        "owner": "BlueManCZ",
+        "repo": "hyprmod",
+        "rev": "b475087af485bf53b33c4529ed616a220b512649",
+        "type": "github"
+      },
+      "original": {
+        "owner": "BlueManCZ",
+        "repo": "hyprmod",
+        "type": "github"
+      }
+    },
     "momoi-say": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -185,6 +205,7 @@
       "inputs": {
         "apple-fonts": "apple-fonts",
         "home-manager": "home-manager",
+        "hyprmod": "hyprmod",
         "momoi-say": "momoi-say",
         "nixpkgs": "nixpkgs_2",
         "silentSDDM": "silentSDDM",

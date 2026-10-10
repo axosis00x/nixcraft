@@ -79,37 +79,8 @@ Item {
             root.cavaEnabled = true
     }
 
-    Row {
-        id: barRow
-        anchors.centerIn: parent
-        spacing: 3
-
-        Repeater {
-            model: root.barCount
-
-            Item {
-                readonly property real barWidth: Math.max(2, (root.width - barRow.spacing * (root.barCount - 1)) / root.barCount)
-                readonly property real level: (root.levels && root.levels.length > index) ? root.levels[index] : 0.05
-                readonly property real barHeight: Math.max(3, level * root.height)
-
-                width: barWidth
-                height: root.height
-
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: parent.barWidth
-                    height: parent.barHeight
-                    radius: width / 2
-                    color: Palette.Theme.accent
-                    opacity: 0.45 + parent.level * 0.55
-
-                    Behavior on height {
-                        SpatialMotion {
-                            fast: true
-                        }
-                    }
-                }
-            }
-        }
+    WaveVisualizer {
+        anchors.fill: parent
+        levels: root.levels
     }
 }

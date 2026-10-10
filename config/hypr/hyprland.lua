@@ -16,3 +16,6 @@ require("modules.monitors")
 
 require("modules.windowrules")
 require("modules.workspaces")
+
+-- HyprMod managed settings
+require("hyprland-gui")

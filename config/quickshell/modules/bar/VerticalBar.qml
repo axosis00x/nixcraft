@@ -22,8 +22,13 @@ Item {
     property real filletSize: 8
 
     property real islandness: bar.island ? 1 : 0
+    // Quick and without overshoot: a springy inset makes the whole strip
+    // wobble against the screen edge.
     Behavior on islandness {
-        SpatialMotion {}
+        NumberAnimation {
+            duration: Palette.Theme.motionFast
+            easing.type: Easing.OutCubic
+        }
     }
     // The island stays inside the reserved strip: it gives up width on the
     // screen-edge side rather than pushing into the windows.

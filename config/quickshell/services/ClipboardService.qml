@@ -1,3 +1,4 @@
+import Quickshell
 import Quickshell.Io
 import QtQuick
 
@@ -15,6 +16,29 @@ Item {
         if (!/^[0-9]+$/.test(entryId))
             return;
         decode.exec(["sh", "-c", "cliphist decode \"$1\" | wl-copy", "cliphist-decode", entryId]);
+    }
+
+    // Removes one entry; cliphist delete takes the exact list line on stdin.
+    function remove(entryId) {
+        if (!/^[0-9]+$/.test(entryId))
+            return;
+        entries = entries.filter(e => e.id !== entryId);
+        removeProc.exec(["sh", "-c", "cliphist list | grep -m1 \"^$1\t\" | cliphist delete", "cliphist-delete", entryId]);
+    }
+
+    // Image entries are decoded once into the cache so the panel can show
+    // a thumbnail; returns the file path to load.
+    readonly property string previewDir: Quickshell.cachePath("clipboard-previews")
+
+    function previewPath(entryId) {
+        return previewDir + "/" + entryId;
+    }
+
+    function decodePreviews(list) {
+        var ids = list.filter(e => /^\[\[\s*binary data.*(png|jpe?g|webp|gif|bmp)/i.test(e.text)).map(e => e.id);
+        if (ids.length === 0)
+            return;
+        previewProc.exec(["sh", "-c", "d=\"$1\"; shift; mkdir -p \"$d\"; for id in \"$@\"; do [ -s \"$d/$id\" ] || cliphist decode \"$id\" > \"$d/$id\"; done", "cliphist-preview", previewDir].concat(ids));
     }
 
     function clear() {
@@ -40,6 +64,7 @@ Item {
                         });
                 }
                 root.entries = parsed;
+                root.decodePreviews(parsed);
             }
         }
     }
@@ -48,7 +73,16 @@ Item {
         id: decode
     }
     Process {
+        id: removeProc
+    }
+    // Bumps once previews are on disk so delegates retry their images.
+    property int previewsReady: 0
+    Process {
+        id: previewProc
+        onExited: root.previewsReady++
+    }
+    Process {
         id: wipe
-        command: ["sh", "-c", "cliphist wipe; wl-copy --clear"]
+        command: ["sh", "-c", "cliphist wipe; wl-copy --clear; rm -rf \"$1\"", "cliphist-wipe", root.previewDir]
     }
 }

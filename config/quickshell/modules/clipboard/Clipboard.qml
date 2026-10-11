@@ -1,11 +1,18 @@
+pragma ComponentBehavior: Bound
+
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import "../../components/material"
 import "../../config/Ui.js" as Ui
 import "../../theme" as Palette
 
+// Clipboard history, laid out like the launcher: a pill search field on the
+// bottom edge with entries stacked above it, newest nearest the field. A
+// ScriptModel animates filtering, images show a thumbnail, links and colors
+// get their own icon, and single entries can be deleted.
 Item {
     id: root
     anchors.fill: parent
@@ -17,10 +24,34 @@ Item {
     property real maxHeight: 4000
     property string query: ""
     property int selected: 0
-    readonly property var entries: service ? service.entries.filter(entry => entry.text.toLowerCase().indexOf(query.toLowerCase()) !== -1) : []
 
+    readonly property int itemH: 60
+    readonly property int maxVisible: 6
+
+    // Newest first; while searching, matches that start with the query (or
+    // a word of it) come before ones that merely contain it.
+    readonly property var entries: {
+        if (!service)
+            return [];
+        var q = query.trim().toLowerCase();
+        if (q === "")
+            return service.entries;
+        var hits = [];
+        service.entries.forEach((e, i) => {
+            var t = e.text.toLowerCase();
+            var at = t.indexOf(q);
+            if (at === -1)
+                return;
+            var boost = at === 0 ? 2 : (/[\s\-_.\/:]/.test(t[at - 1]) ? 1 : 0);
+            hits.push({ e: e, rank: boost * 1000 - i });
+        });
+        hits.sort((a, b) => b.rank - a.rank);
+        return hits.map(h => h.e);
+    }
+
+    readonly property int visibleRows: Math.max(1, Math.min(maxVisible, entries.length))
     implicitWidth: Math.min(maxWidth - 20, Ui.clipboardOverlayWidth)
-    implicitHeight: Math.min(maxHeight - 12, 390)
+    implicitHeight: searchRow.height + visibleRows * itemH + 6
 
     signal aboutToOpen
     signal aboutToClose
@@ -39,6 +70,7 @@ Item {
     }
 
     function open() {
+        search.text = "";
         query = "";
         selected = 0;
         aboutToOpen();
@@ -63,28 +95,82 @@ Item {
             close();
         }
     }
+    function remove(index) {
+        if (index >= 0 && index < entries.length) {
+            service.remove(entries[index].id);
+            selected = Math.max(0, Math.min(selected, entries.length - 2));
+        }
+    }
     function move(delta) {
         if (entries.length)
             selected = Math.max(0, Math.min(entries.length - 1, selected + delta));
     }
+
+    // ── entry kinds ───────────────────────────────────────────────
     function isBinary(entry) {
         return /^\[\[\s*binary data/i.test(entry.text);
     }
+    function isImage(entry) {
+        return /^\[\[\s*binary data.*(png|jpe?g|webp|gif|bmp)/i.test(entry.text);
+    }
+    function isLink(entry) {
+        return /^\s*(https?:\/\/|www\.)\S+\s*$/i.test(entry.text);
+    }
+    function colorOf(entry) {
+        var m = entry.text.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i);
+        return m ? m[0] : "";
+    }
+    function kindIcon(entry) {
+        if (isImage(entry))
+            return "image";
+        if (isBinary(entry))
+            return "draft";
+        if (isLink(entry))
+            return "link";
+        if (colorOf(entry) !== "")
+            return "palette";
+        return /\n/.test(entry.text) ? "notes" : "content_paste";
+    }
+    // "[[ binary data 12 KiB png 800x600 ]]" -> "PNG image · 800×600 · 12 KiB"
+    function describe(entry) {
+        var m = entry.text.match(/binary data\s+([\d.]+\s*\w+)\s+(\w+)(?:\s+(\d+x\d+))?/i);
+        if (!m)
+            return "Binary data";
+        return [m[2].toUpperCase() + " image", m[3] ? m[3].replace("x", "×") : "", m[1]].filter(x => x).join("  ·  ");
+    }
+
+    function escapeHtml(s) {
+        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    // One line of the entry with the search match picked out.
+    function highlight(text) {
+        var flat = text.replace(/\s+/g, " ").trim();
+        var q = query.trim();
+        var at = q === "" ? -1 : flat.toLowerCase().indexOf(q.toLowerCase());
+        if (at === -1)
+            return escapeHtml(flat);
+        // Keep the match in view when it sits deep in a long entry.
+        var start = at > 40 ? at - 20 : 0;
+        var accent = String(Palette.Theme.accent);
+        return (start > 0 ? "…" : "") + escapeHtml(flat.slice(start, at)) + "<font color=\"" + accent + "\"><b>" + escapeHtml(flat.slice(at, at + q.length)) + "</b></font>" + escapeHtml(flat.slice(at + q.length));
+    }
+
+    // The list runs bottom-to-top, so Up steps to older entries.
     function handleKey(event) {
         if (event.key === Qt.Key_Escape) {
-            close();
-            event.accepted = true;
-        } else if (event.key === Qt.Key_Left) {
-            move(-1);
-            event.accepted = true;
-        } else if (event.key === Qt.Key_Right) {
-            move(1);
+            if (search.text !== "")
+                search.text = "";
+            else
+                close();
             event.accepted = true;
         } else if (event.key === Qt.Key_Up) {
-            move(-3);
+            move(1);
             event.accepted = true;
         } else if (event.key === Qt.Key_Down) {
-            move(3);
+            move(-1);
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Delete) {
+            remove(selected);
             event.accepted = true;
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             copy(selected);
@@ -92,175 +178,325 @@ Item {
         }
     }
 
+    // Hover only selects on real pointer movement, not rows sliding under
+    // a resting cursor while filtering (see Launcher.qml).
+    property point lastPointer: Qt.point(-1, -1)
+    function hoverSelect(item, mouse, index) {
+        var p = item.mapToItem(null, mouse.x, mouse.y);
+        if (p.x === lastPointer.x && p.y === lastPointer.y)
+            return;
+        lastPointer = p;
+        selected = index;
+    }
+
     ColumnLayout {
         anchors.fill: parent
-            anchors.topMargin: 14
-            anchors.leftMargin: 14
-            anchors.rightMargin: 14
-            anchors.bottomMargin: 22
-            spacing: 10
-            RowLayout {
-                Layout.fillWidth: true
-                Text {
-                    text: "Clipboard"
-                    color: Palette.Theme.textTitle
-                    font.family: Palette.Theme.fontSans
-                    font.pixelSize: Palette.Theme.fontSizeTitle
-                    font.weight: Font.DemiBold
-                    Layout.fillWidth: true
-                }
-                Text {
-                    text: root.entries.length + " items"
-                    color: Palette.Theme.textMuted
-                    font.family: Palette.Theme.fontSans
-                    font.pixelSize: Palette.Theme.fontSizeXs
-                }
-                ActionChip {
-                    label: "Clear"
-                    onClicked: root.service.clear()
-                }
-            }
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 46
-                Layout.minimumHeight: 46
-                Layout.maximumHeight: 46
-                radius: Palette.Theme.radiusMedium
-                color: Palette.Theme.surfaceContainerHigh
-                border.width: search.activeFocus ? 1 : 0
-                border.color: Palette.Theme.accent
+        spacing: 0
+
+        // ── entries ───────────────────────────────────────────────
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.topMargin: 6
+            clip: true
+
+            ColumnLayout {
+                anchors.centerIn: parent
+                spacing: 6
+                visible: root.entries.length === 0
 
                 Text {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 13
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "\ue8b6"
-                    color: search.activeFocus ? Palette.Theme.accent : Palette.Theme.textMuted
+                    Layout.alignment: Qt.AlignHCenter
+                    text: root.query === "" ? "content_paste_off" : "search_off"
+                    color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontIcons
-                    font.pixelSize: Palette.Theme.iconSize
-                }
-                TextInput {
-                    id: search
-                    anchors.left: parent.left
-                    anchors.leftMargin: 42
-                    anchors.right: parent.right
-                    anchors.rightMargin: 12
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    color: Palette.Theme.textPrimary
-                    font.family: Palette.Theme.fontMono
-                    font.pixelSize: Palette.Theme.fontSizeBody
-                    verticalAlignment: TextInput.AlignVCenter
-                    selectByMouse: true
-                    text: root.query
-                    onTextChanged: {
-                        root.query = text;
-                        root.selected = 0;
-                    }
-                    Keys.onPressed: function (event) {
-                        root.handleKey(event);
-                    }
+                    font.pixelSize: Palette.Theme.iconSizeLarge
                 }
                 Text {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 42
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: !search.text && !search.activeFocus
-                    text: "Search clipboard history"
+                    Layout.alignment: Qt.AlignHCenter
+                    text: root.query === "" ? "Clipboard history is empty" : "No results for '" + root.query + "'"
                     color: Palette.Theme.textMuted
-                    font.family: Palette.Theme.fontMono
-                    font.pixelSize: Palette.Theme.fontSizeBody
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: Palette.Theme.fontSizeSmall
                 }
             }
-            GridView {
-                id: grid
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                clip: true
-                cellWidth: width
-                cellHeight: 70
-                model: root.entries
+
+            ListView {
+                id: list
+                anchors.fill: parent
+                verticalLayoutDirection: ListView.BottomToTop
+                model: ScriptModel {
+                    values: root.entries
+                }
                 currentIndex: root.selected
+                highlightFollowsCurrentItem: false
+                highlight: MovingHighlight {
+                    target: list.currentItem
+                    insetX: 6
+                    insetY: 2
+                    radius: Palette.Theme.radiusMedium
+                    color: Palette.Theme.accentTonal
+                }
+                interactive: root.entries.length > root.maxVisible
+                boundsBehavior: Flickable.StopAtBounds
+                cacheBuffer: 240
+
                 onCurrentIndexChanged: if (currentIndex >= 0)
-                    positionViewAtIndex(currentIndex, GridView.Contain)
+                    positionViewAtIndex(currentIndex, ListView.Contain)
+                onHeightChanged: keepInView()
+                onCountChanged: keepInView()
+                function keepInView() {
+                    if (count === 0)
+                        return;
+                    if (currentIndex <= 0)
+                        positionViewAtBeginning();
+                    else
+                        positionViewAtIndex(currentIndex, ListView.Contain);
+                }
+
+                add: Transition {
+                    EffectMotion {
+                        property: "opacity"
+                        from: 0
+                        to: 1
+                        fast: false
+                    }
+                    SpatialMotion {
+                        property: "scale"
+                        from: 0.85
+                        to: 1
+                    }
+                }
+                remove: Transition {
+                    EffectMotion {
+                        property: "opacity"
+                        to: 0
+                    }
+                    EffectMotion {
+                        property: "scale"
+                        to: 0.85
+                    }
+                }
+                displaced: Transition {
+                    SpatialMotion {
+                        property: "y"
+                    }
+                    EffectMotion {
+                        properties: "opacity,scale"
+                        to: 1
+                    }
+                }
+
+                ScrollBar.vertical: ScrollBar {
+                    policy: ScrollBar.AsNeeded
+                    width: 4
+                    interactive: false
+                    contentItem: Rectangle {
+                        implicitWidth: 4
+                        radius: 2
+                        color: Palette.Theme.accent
+                        opacity: parent.active ? 0.6 : 0.25
+                    }
+                    background: Item {}
+                }
+
                 delegate: Item {
+                    id: row
+
                     required property var modelData
                     required property int index
-                    width: grid.cellWidth
-                    height: grid.cellHeight
-                    Rectangle {
-                        anchors.fill: parent
-                        anchors.topMargin: 3
-                        anchors.bottomMargin: 3
-                        radius: Palette.Theme.radiusSmall
-                        color: index === root.selected ? Palette.Theme.surfaceContainerHigh : Palette.Theme.surfaceContainerLow
-                        // Static accent ring on the selected card.
-                        border.width: index === root.selected ? 2 : 0
-                        border.color: Palette.Theme.accent
 
-                        Behavior on color {
-                            ColorMotion {}
-                        }
+                    readonly property bool image: root.isImage(modelData)
+                    readonly property string swatch: root.colorOf(modelData)
+
+                    width: ListView.view.width
+                    height: root.itemH
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 10
+                        spacing: 12
+
+                        // Thumbnail for images, color swatch for color
+                        // codes, otherwise a kind glyph on a tonal disc.
                         Rectangle {
-                            anchors.left: parent.left
-                            anchors.leftMargin: 10
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 32
-                            height: 32
-                            radius: Palette.Theme.radiusSmall
-                            color: root.isBinary(modelData) ? Palette.Theme.surfaceContainerHighest : Palette.Theme.accentTonal
+                            Layout.preferredWidth: row.image ? 56 : 36
+                            Layout.preferredHeight: 36
+                            Layout.alignment: Qt.AlignVCenter
+                            radius: row.image ? Palette.Theme.radiusSmall : 18
+                            color: row.swatch !== "" ? row.swatch : (row.index === root.selected ? Palette.Theme.accent : Palette.Theme.surfaceContainerHighest)
+                            clip: true
+
+                            Behavior on color {
+                                ColorMotion {}
+                            }
+
+                            Image {
+                                id: thumb
+                                anchors.fill: parent
+                                visible: row.image && status === Image.Ready
+                                // previewsReady re-triggers the load once the
+                                // service has decoded the file.
+                                source: row.image ? "file://" + root.service.previewPath(row.modelData.id) + "?" + root.service.previewsReady : ""
+                                sourceSize.width: 112
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                cache: false
+                            }
+
                             Text {
                                 anchors.centerIn: parent
-                                text: root.isBinary(modelData) ? "\ue2c4" : "\ue14d"
-                                color: root.isBinary(modelData) ? Palette.Theme.textSecondary : Palette.Theme.accent
+                                visible: row.swatch === "" && !thumb.visible
+                                text: root.kindIcon(row.modelData)
+                                color: row.index === root.selected ? Palette.Theme.accentText : Palette.Theme.textSecondary
                                 font.family: Palette.Theme.fontIcons
                                 font.pixelSize: Palette.Theme.iconSizeSmall
                             }
                         }
-                        Text {
-                            anchors.left: parent.left
-                            anchors.leftMargin: 54
-                            anchors.right: parent.right
-                            anchors.rightMargin: 12
-                            anchors.top: parent.top
-                            anchors.topMargin: 11
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 9
-                            text: modelData.text.replace(/\n/g, " ")
-                            textFormat: Text.PlainText
-                            color: Palette.Theme.textPrimary
-                            font.family: Palette.Theme.fontMono
-                            font.pixelSize: Palette.Theme.fontSizeXs
-                            wrapMode: Text.Wrap
-                            maximumLineCount: 2
-                            elide: Text.ElideRight
-                            verticalAlignment: Text.AlignVCenter
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                            spacing: 2
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: root.isBinary(row.modelData) ? root.describe(row.modelData) : root.highlight(row.modelData.text)
+                                textFormat: root.isBinary(row.modelData) ? Text.PlainText : Text.StyledText
+                                color: Palette.Theme.textPrimary
+                                font.family: Palette.Theme.fontSans
+                                font.pixelSize: Palette.Theme.fontSizeBody
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: root.isLink(row.modelData) ? "Link" : (row.swatch !== "" ? "Color" : (root.isBinary(row.modelData) ? "Image" : row.modelData.text.length + " characters" + (/\n/.test(row.modelData.text) ? "  ·  " + row.modelData.text.split("\n").length + " lines" : "")))
+                                color: Palette.Theme.textMuted
+                                font.family: Palette.Theme.fontSans
+                                font.pixelSize: Palette.Theme.fontSizeXs
+                                elide: Text.ElideRight
+                            }
                         }
-                        MouseArea {
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            onEntered: root.selected = index
-                            onClicked: root.copy(index)
+
+                        IconButton {
+                            icon: "delete"
+                            implicitWidth: 30
+                            implicitHeight: 30
+                            Layout.alignment: Qt.AlignVCenter
+                            opacity: row.index === root.selected ? 1 : 0
+                            visible: opacity > 0.01
+                            onClicked: root.remove(row.index)
+
+                            Behavior on opacity {
+                                EffectMotion {}
+                            }
                         }
+                    }
+
+                    MouseArea {
+                        id: rowMouse
+                        anchors.fill: parent
+                        anchors.rightMargin: 44
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onPositionChanged: mouse => root.hoverSelect(rowMouse, mouse, row.index)
+                        onClicked: root.copy(row.index)
                     }
                 }
             }
-            Text {
-                Layout.fillWidth: true
-                visible: entries.length === 0
-                text: "Clipboard history is empty"
-                color: Palette.Theme.textMuted
-                font.family: Palette.Theme.fontMono
-                font.pixelSize: Palette.Theme.fontSizeXs
-                horizontalAlignment: Text.AlignHCenter
+        }
+
+        // ── search bar ────────────────────────────────────────────
+        Item {
+            id: searchRow
+            Layout.fillWidth: true
+            Layout.preferredHeight: 64
+
+            Rectangle {
+                id: searchField
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                anchors.topMargin: 6
+                anchors.bottomMargin: 12
+                radius: height / 2
+                color: Palette.Theme.surfaceContainerHigh
+            }
+
+            RowLayout {
+                anchors.fill: searchField
+                anchors.leftMargin: 16
+                anchors.rightMargin: 8
+                spacing: 12
+
+                Text {
+                    text: "content_paste_search"
+                    color: Palette.Theme.textMuted
+                    font.family: Palette.Theme.fontIcons
+                    font.pixelSize: Palette.Theme.iconSize
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                TextInput {
+                    id: search
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    color: Palette.Theme.textPrimary
+                    selectionColor: Palette.Theme.accent
+                    selectedTextColor: Palette.Theme.accentText
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: Palette.Theme.fontSizeBody
+                    verticalAlignment: TextInput.AlignVCenter
+                    selectByMouse: true
+                    clip: true
+                    cursorVisible: text !== ""
+                    onTextChanged: {
+                        root.query = text;
+                        root.selected = 0;
+                    }
+                    Keys.onPressed: event => root.handleKey(event)
+
+                    Text {
+                        anchors.fill: parent
+                        verticalAlignment: Text.AlignVCenter
+                        visible: !parent.text
+                        text: "Search clipboard history"
+                        color: Palette.Theme.textMuted
+                        font: parent.font
+                    }
+                }
+
+                Text {
+                    text: root.entries.length
+                    visible: root.entries.length > 0
+                    color: Palette.Theme.textMuted
+                    font.family: Palette.Theme.fontMono
+                    font.pixelSize: Palette.Theme.fontSizeXs
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                IconButton {
+                    icon: search.text !== "" ? "close" : "delete_sweep"
+                    Layout.alignment: Qt.AlignVCenter
+                    onClicked: {
+                        if (search.text !== "")
+                            search.text = "";
+                        else
+                            root.service.clear();
+                        search.forceActiveFocus();
+                    }
+                }
             }
         }
+    }
+
     Timer {
         id: closeTimer
         interval: 180
         onTriggered: root.visible = false
     }
-    Keys.onPressed: function (event) {
-        root.handleKey(event);
-    }
+    Keys.onPressed: event => root.handleKey(event)
 }

@@ -7,9 +7,15 @@ import QtQuick.Layouts
 import "../../theme" as Palette
 import "../../components/material"
 
-// Note: DesktopEntries / DesktopEntry are part of the base "Quickshell"
-// module, already imported above — no extra import line is needed.
+// Note: DesktopEntries / DesktopEntry and ScriptModel are part of the base
+// "Quickshell" module, already imported above.
 
+// App launcher in the bottom stage, laid out like Caelestia's: the search
+// field sits at the bottom edge and results stack upward from it, best match
+// nearest the field. Results are fuzzy-ranked (boosted by how often an app
+// is launched) and fed through a ScriptModel, so filtering animates rows in,
+// out and into place instead of resetting the list, while the panel itself
+// resizes to fit them.
 Item {
     id: root
 
@@ -25,13 +31,14 @@ Item {
     property var settingsWindow: null
 
     readonly property int itemH: 56
+    readonly property int maxVisible: 5
 
     // ── slash commands ───────────────────────────────────────────
     // Typing "/" surfaces this palette; typing "/<cmd>" locks the list into
     // that command's own items (still filterable by whatever follows).
     readonly property var commands: [
-        { cmd: "shaders", label: "Shaders", icon: "", desc: "Change the screen shader" },
-        { cmd: "sounds", label: "Sound Packs", icon: "", desc: "Change the wayclick sound pack" },
+        { cmd: "shaders", label: "Shaders", icon: "blur_on", desc: "Change the screen shader" },
+        { cmd: "sounds", label: "Sound Packs", icon: "keyboard", desc: "Change the wayclick sound pack" },
         { cmd: "widgets", label: "Widgets", icon: "widgets", desc: "Toggle desktop widgets" },
         { cmd: "settings", label: "Settings", icon: "settings", desc: "Open a settings page" }
     ]
@@ -48,25 +55,19 @@ Item {
         return matchedCommand ? matchedCommand.cmd : "commands";
     }
 
-    readonly property var commandItems: commands.filter(c => commandWord === "" || c.cmd.indexOf(commandWord) !== -1 || c.label.toLowerCase().indexOf(commandWord) !== -1)
+    // What the current list is being filtered by (drives match highlighting).
+    readonly property string filterText: mode === "apps" ? query.trim() : (mode === "commands" ? commandWord : commandArg.trim())
+
+    readonly property var commandItems: rank(commands, c => c.label, commandWord, c => c.cmd)
 
     readonly property var allShaders: shaderService ? shaderService.shaders : []
-    readonly property var shaderItems: {
-        var f = commandArg.trim().toLowerCase();
-        return f === "" ? allShaders : allShaders.filter(s => shaderService.displayName(s).toLowerCase().indexOf(f) !== -1);
-    }
+    readonly property var shaderItems: rank(allShaders, s => shaderService.displayName(s), commandArg.trim())
 
     readonly property var allPacks: wayclickService ? wayclickService.packs : []
-    readonly property var packItems: {
-        var f = commandArg.trim().toLowerCase();
-        return f === "" ? allPacks : allPacks.filter(p => wayclickService.displayName(p).toLowerCase().indexOf(f) !== -1);
-    }
+    readonly property var packItems: rank(allPacks, p => wayclickService.displayName(p), commandArg.trim())
 
     readonly property var allWidgets: widgetsService ? widgetsService.widgets : []
-    readonly property var widgetItems: {
-        var f = commandArg.trim().toLowerCase();
-        return f === "" ? allWidgets : allWidgets.filter(w => w.label.toLowerCase().indexOf(f) !== -1);
-    }
+    readonly property var widgetItems: rank(allWidgets, w => w.label, commandArg.trim())
 
     // One entry per settings page; picking one opens the settings window there.
     readonly property var allSettings: settingsWindow ? settingsWindow.categories.map(c => ({
@@ -75,10 +76,7 @@ Item {
                 icon: c.icon,
                 desc: settingsWindow.pageSummary(c.id)
             })) : []
-    readonly property var settingsItems: {
-        var f = commandArg.trim().toLowerCase();
-        return f === "" ? allSettings : allSettings.filter(c => c.label.toLowerCase().indexOf(f) !== -1);
-    }
+    readonly property var settingsItems: rank(allSettings, c => c.label, commandArg.trim())
 
     readonly property var currentList: {
         switch (mode) {
@@ -112,7 +110,7 @@ Item {
         case "commands":
             return "Type a command…";
         default:
-            return "Search, calculate or run";
+            return "Search apps, or / for commands";
         }
     }
 
@@ -133,12 +131,11 @@ Item {
         }
     }
 
-    implicitWidth: Math.max(360, Math.min(maxWidth - 32, 430))
-    // Fixed height (always room for maxVisible rows) rather than sizing to the
-    // current result count — a count that changes on every keystroke would
-    // otherwise retrigger the shared stage's grow/shrink animation constantly
-    // while typing.
-    implicitHeight: searchRow.height + maxVisible * itemH + 8
+    // Grows and shrinks with the results (the stage springs to follow), so
+    // the field stays put at the bottom and the list rises out of it.
+    readonly property int visibleRows: Math.max(1, Math.min(maxVisible, currentList.length))
+    implicitWidth: Math.max(380, Math.min(maxWidth - 32, 480))
+    implicitHeight: searchRow.height + visibleRows * itemH + listPanel.Layout.topMargin
 
     // ── IPC ───────────────────────────────────────────────────────
     signal aboutToOpen
@@ -173,34 +170,159 @@ Item {
         }
     }
 
+    // ── matching ──────────────────────────────────────────────────
+    function isBoundary(t, i) {
+        return i === 0 || /[\s\-_.\/]/.test(t[i - 1]);
+    }
+
+    // Scores `text` against `query`, or null if it doesn't match. Exact,
+    // prefix and word-start substrings rank highest; otherwise the query's
+    // letters must appear in order, scored up for consecutive runs and word
+    // starts and down for gaps, and loose scatters are rejected.
+    function fuzzy(query, text) {
+        var q = (query || "").toLowerCase();
+        var t = (text || "").toLowerCase();
+        if (q === "")
+            return { score: 0, indices: [] };
+        if (t === "")
+            return null;
+        var at = t.indexOf(q);
+        if (at !== -1) {
+            var run = [];
+            for (var k = 0; k < q.length; k++)
+                run.push(at + k);
+            var score = t === q ? 1000 : (at === 0 ? 800 : (isBoundary(t, at) ? 600 : 400 - Math.min(at, 100)));
+            return { score: score, indices: run };
+        }
+        var indices = [];
+        var total = 0;
+        var from = 0;
+        for (var qi = 0; qi < q.length; qi++) {
+            var found = t.indexOf(q[qi], from);
+            if (found === -1)
+                return null;
+            total += 10;
+            if (indices.length > 0 && found === indices[indices.length - 1] + 1)
+                total += 15;
+            if (isBoundary(t, found))
+                total += 20;
+            total -= Math.min(found - from, 10);
+            indices.push(found);
+            from = found + 1;
+        }
+        if (total < q.length * 8)
+            return null;
+        return { score: Math.min(total, 300), indices: indices };
+    }
+
+    // Filters and orders `list` by how well `label(item)` (or, if given,
+    // `alt(item)`) matches `q`; an empty query keeps the original order.
+    function rank(list, label, q, alt) {
+        if (!q)
+            return list;
+        var scored = [];
+        list.forEach(item => {
+            var m = fuzzy(q, label(item));
+            var best = m ? m.score : -1;
+            if (alt) {
+                var a = fuzzy(q, alt(item));
+                if (a && a.score > best)
+                    best = a.score;
+            }
+            if (best >= 0)
+                scored.push({ item: item, score: best });
+        });
+        scored.sort((a, b) => b.score - a.score);
+        return scored.map(r => r.item);
+    }
+
+    function escapeHtml(s) {
+        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // `text` as StyledText with the letters matching the filter picked out.
+    function highlight(text) {
+        text = text || "";
+        var m = filterText !== "" ? fuzzy(filterText, text) : null;
+        if (!m || m.indices.length === 0)
+            return escapeHtml(text);
+        var accent = String(Palette.Theme.accent);
+        var out = "";
+        for (var i = 0; i < text.length; i++) {
+            var ch = escapeHtml(text[i]);
+            out += m.indices.indexOf(i) !== -1 ? "<font color=\"" + accent + "\"><b>" + ch + "</b></font>" : ch;
+        }
+        return out;
+    }
+
     // ── app data ──────────────────────────────────────────────────
     property string query: ""
     property int selected: 0
     property var allApps: []
     property var displayApps: []
 
-    readonly property int maxVisible: 5
+    // Launch counts per desktop entry id: frequent apps float to the top of
+    // the unfiltered list and win ties while filtering.
+    FileView {
+        id: usageFile
+        path: Quickshell.cachePath("launcher-usage.json")
+        watchChanges: false
+        onLoadFailed: error => {
+            if (error === FileViewError.FileNotFound)
+                writeAdapter();
+        }
+
+        JsonAdapter {
+            id: usage
+            property var counts: ({})
+        }
+    }
+
+    function launchCount(entry) {
+        return (usage.counts && usage.counts[entry.id]) || 0;
+    }
+
+    function recordLaunch(entry) {
+        var next = Object.assign({}, usage.counts);
+        next[entry.id] = (next[entry.id] || 0) + 1;
+        usage.counts = next;
+        usageFile.writeAdapter();
+    }
 
     function rebuildApps() {
-        var entries = [...DesktopEntries.applications.values].filter(d => d && d.name && !d.noDisplay).sort((a, b) => a.name.localeCompare(b.name));
-
-        allApps = entries;
+        allApps = [...DesktopEntries.applications.values].filter(d => d && d.name && !d.noDisplay).sort((a, b) => a.name.localeCompare(b.name));
         filterApps();
     }
 
     function filterApps() {
-        var q = query.trim().toLowerCase();
-        if (q === "") {
-            displayApps = allApps;
-        } else {
-            displayApps = allApps.filter(d => {
-                var name = (d.name || "").toLowerCase();
-                var comment = (d.comment || "").toLowerCase();
-                var keywords = (d.keywords || []).join(" ").toLowerCase();
-                return name.indexOf(q) !== -1 || comment.indexOf(q) !== -1 || keywords.indexOf(q) !== -1;
-            });
+        var q = query.trim();
+        if (isCommandInput) {
+            selected = 0;
+            return;
         }
-
+        if (q === "") {
+            displayApps = allApps.slice().sort((a, b) => launchCount(b) - launchCount(a) || a.name.localeCompare(b.name));
+        } else {
+            var lower = q.toLowerCase();
+            var scored = [];
+            allApps.forEach(d => {
+                var best = -1;
+                var m = fuzzy(q, d.name);
+                if (m)
+                    best = m.score;
+                m = fuzzy(q, d.genericName);
+                if (m && m.score * 0.8 > best)
+                    best = m.score * 0.8;
+                // Keywords and descriptions only count as plain substrings;
+                // fuzzy letters across long text match almost anything.
+                if (best < 150 && ((d.keywords || []).join(" ").toLowerCase().indexOf(lower) !== -1 || (d.comment || "").toLowerCase().indexOf(lower) !== -1))
+                    best = 150;
+                if (best >= 0)
+                    scored.push({ entry: d, score: best + Math.min(launchCount(d), 20) * 4 });
+            });
+            scored.sort((a, b) => b.score - a.score || a.entry.name.localeCompare(b.entry.name));
+            displayApps = scored.map(r => r.entry);
+        }
         selected = 0;
     }
 
@@ -254,6 +376,8 @@ Item {
                 shaderService.cancelPreview();
             }
         }
+        if (mode === "apps")
+            filterApps();
     }
 
     onSelectedChanged: {
@@ -294,6 +418,7 @@ Item {
 
     // ── launch helper ─────────────────────────────────────────────
     function launchApp(entry) {
+        recordLaunch(entry);
         var commandText = entry.command ? entry.command.join(" ").toLowerCase() : "";
         var entryName = (entry.name || "").toLowerCase();
         if (entryName === "uuctl" || commandText.indexOf("uuctl") !== -1) {
@@ -365,17 +490,39 @@ Item {
         moveSelectionTo(selected + delta);
     }
 
+    // Hover only selects when the pointer itself moves: rows sliding under
+    // a resting cursor while filtering must not steal the selection from
+    // the best match (Enter would launch the wrong app).
+    property point lastPointer: Qt.point(-1, -1)
+
+    function hoverSelect(item, mouse, index) {
+        var p = item.mapToItem(null, mouse.x, mouse.y);
+        if (p.x === lastPointer.x && p.y === lastPointer.y)
+            return;
+        lastPointer = p;
+        if (selected !== index)
+            selected = index;
+    }
+
     // Single source of truth for launcher keyboard shortcuts — shared by
     // both the search field and the list so behavior can't drift between them.
+    // The list runs bottom-to-top, so Up steps to the next result.
     function handleKey(event) {
         switch (event.key) {
         case Qt.Key_Up:
             event.accepted = true;
-            moveSelection(-1);
+            moveSelection(1);
             return true;
         case Qt.Key_Down:
             event.accepted = true;
-            moveSelection(1);
+            moveSelection(-1);
+            return true;
+        case Qt.Key_Tab:
+            event.accepted = true;
+            if (mode === "commands" && currentList.length > 0)
+                commitCommand(currentList[selected]);
+            else
+                moveSelection(1);
             return true;
         case Qt.Key_Home:
             event.accepted = true;
@@ -392,7 +539,7 @@ Item {
             return true;
         case Qt.Key_Escape:
             event.accepted = true;
-            if (mode !== "apps")
+            if (searchInput.text !== "")
                 searchInput.text = "";
             else
                 closeLauncher();
@@ -402,93 +549,116 @@ Item {
         }
     }
 
+    // A row's leading icon: the app's own icon, or a glyph on a tonal disc.
+    component RowIcon: Item {
+        property string iconSource: ""
+        property string glyph: ""
+        property bool active: false
+
+        implicitWidth: 36
+        implicitHeight: 36
+        Layout.alignment: Qt.AlignVCenter
+
+        IconImage {
+            id: image
+            anchors.centerIn: parent
+            implicitSize: 32
+            visible: parent.iconSource !== "" && status === Image.Ready
+            source: parent.iconSource
+            smooth: true
+            mipmap: true
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            visible: !image.visible
+            radius: parent.active ? Palette.Theme.radiusMedium : width / 2
+            color: parent.active ? Palette.Theme.accent : Palette.Theme.surfaceContainerHighest
+
+            Behavior on radius {
+                SpatialMotion {}
+            }
+            Behavior on color {
+                ColorMotion {}
+            }
+
+            Text {
+                anchors.centerIn: parent
+                text: parent.parent.glyph !== "" ? parent.parent.glyph : "apps"
+                font.family: Palette.Theme.fontIcons
+                font.pixelSize: Palette.Theme.iconSize
+                color: parent.parent.active ? Palette.Theme.accentText : Palette.Theme.textSecondary
+            }
+        }
+    }
+
+    component RowText: ColumnLayout {
+        property string primary: ""
+        property string secondary: ""
+
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignVCenter
+        spacing: 2
+
+        Text {
+            Layout.fillWidth: true
+            text: root.highlight(parent.primary)
+            textFormat: Text.StyledText
+            color: Palette.Theme.textPrimary
+            font.family: Palette.Theme.fontSans
+            font.pixelSize: Palette.Theme.fontSizeBody
+            font.weight: Font.Medium
+            elide: Text.ElideRight
+        }
+
+        Text {
+            Layout.fillWidth: true
+            text: parent.secondary
+            visible: text !== ""
+            color: Palette.Theme.textMuted
+            font.family: Palette.Theme.fontSans
+            font.pixelSize: Palette.Theme.fontSizeXs
+            elide: Text.ElideRight
+        }
+    }
+
     Component {
         id: appDelegate
 
         Item {
+            id: appRow
+
             required property var modelData
             required property int index
 
-            readonly property int absoluteIndex: index
-
             width: ListView.view.width
-            height: 56
+            height: root.itemH
 
             RowLayout {
-                anchors {
-                    fill: parent
-                    leftMargin: 12
-                    rightMargin: 12
-                }
-                spacing: 12
+                anchors.fill: parent
+                anchors.leftMargin: 16
+                anchors.rightMargin: 16
+                spacing: 14
 
-                Rectangle {
-                    implicitWidth: 32
-                    implicitHeight: 32
-                    radius: Palette.Theme.radiusSmall
-                    color: Palette.Theme.surfaceContainerHighest
-                    Layout.alignment: Qt.AlignVCenter
-
-                    IconImage {
-                        id: appIcon
-                        anchors.centerIn: parent
-                        width: 20
-                        height: 20
-                        source: modelData.icon ? Quickshell.iconPath(modelData.icon, true) : ""
-                        smooth: true
-                        mipmap: true
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        visible: appIcon.status !== Image.Ready
-                        text: ""
-                        font.family: Palette.Theme.fontIcons
-                        font.pixelSize: Palette.Theme.iconSize
-                        color: Palette.Theme.textSecondary
-                    }
+                RowIcon {
+                    iconSource: appRow.modelData && appRow.modelData.icon ? Quickshell.iconPath(appRow.modelData.icon, true) : ""
                 }
 
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 2
-                    Layout.alignment: Qt.AlignVCenter
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: (modelData && modelData.name) ? modelData.name : ""
-                        color: Palette.Theme.textPrimary
-                        font.family: Palette.Theme.fontSans
-                        font.pixelSize: Palette.Theme.fontSizeBody
-                        font.weight: Font.Medium
-                        elide: Text.ElideRight
-                    }
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: (modelData && modelData.comment) ? modelData.comment : ""
-                        visible: text !== ""
-                        color: Palette.Theme.textMuted
-                        font.family: Palette.Theme.fontSans
-                        font.pixelSize: Palette.Theme.fontSizeXs
-                        elide: Text.ElideRight
-                    }
+                RowText {
+                    primary: appRow.modelData ? appRow.modelData.name : ""
+                    secondary: appRow.modelData ? (appRow.modelData.comment || appRow.modelData.genericName || "") : ""
                 }
             }
 
             MouseArea {
-                id: rowHover
+                id: appMouse
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onPositionChanged: {
-                    if (root.selected !== absoluteIndex) {
-                        root.selected = absoluteIndex;
-                    }
-                }
+                onPositionChanged: mouse => root.hoverSelect(appMouse, mouse, appRow.index)
                 onClicked: {
-                    root.selected = absoluteIndex;
-                    root.launchApp(modelData);
+                    root.selected = appRow.index;
+                    root.launchApp(appRow.modelData);
                 }
             }
         }
@@ -496,11 +666,13 @@ Item {
 
     // Shared row for the command palette, shader list and sound-pack list —
     // same layout as appDelegate but with a glyph icon instead of a desktop
-    // icon image, and an active-item checkmark instead of nothing.
+    // icon image, and an active-item mark.
     Component {
         id: commandDelegate
 
         Item {
+            id: commandRow
+
             required property var modelData
             required property int index
 
@@ -511,87 +683,63 @@ Item {
             readonly property bool isSettings: root.mode === "settings"
             readonly property bool widgetEnabled: isWidget && root.widgetsService && modelData && modelData.id ? root.widgetsService.isEnabled(modelData.id) : false
 
-            readonly property string rowIcon: isCommand || isSettings ? (modelData && modelData.icon ? modelData.icon : "") : (isShader ? "" : (isSound ? "" : "widgets"))
+            readonly property string rowIcon: isCommand || isSettings ? (modelData && modelData.icon ? modelData.icon : "") : (isShader ? "blur_on" : (isSound ? "keyboard" : "widgets"))
             readonly property string rowPrimary: isCommand ? (modelData && modelData.label ? modelData.label : "") : (isShader ? (root.shaderService && modelData ? root.shaderService.displayName(modelData) : "") : (isSound ? (root.wayclickService && modelData ? root.wayclickService.displayName(modelData) : "") : (modelData && modelData.label ? modelData.label : "")))
-            readonly property string rowSecondary: isCommand || isSettings ? (modelData && modelData.desc ? modelData.desc : "") : (isShader ? (rowActive ? "Active" : (index === root.selected ? "Previewing" : "")) : "")
+            readonly property string rowSecondary: isCommand ? "/" + modelData.cmd + "  ·  " + modelData.desc : (isSettings ? (modelData && modelData.desc ? modelData.desc : "") : (isShader ? (rowActive ? "Active" : (index === root.selected ? "Previewing" : "")) : (isSound && rowActive ? "Active" : "")))
             readonly property bool rowActive: isShader ? (root.shaderService && modelData ? modelData === root.shaderService.activeShader : false) : (isSound ? (root.wayclickService && modelData ? modelData === root.wayclickService.activePack : false) : widgetEnabled)
 
             width: ListView.view.width
-            height: 56
+            height: root.itemH
 
             RowLayout {
-                anchors {
-                    fill: parent
-                    leftMargin: 12
-                    rightMargin: 12
-                }
-                spacing: 12
+                anchors.fill: parent
+                anchors.leftMargin: 16
+                anchors.rightMargin: 16
+                spacing: 14
 
-                Rectangle {
-                    implicitWidth: 32
-                    implicitHeight: 32
-                    radius: Palette.Theme.radiusSmall
-                    color: Palette.Theme.surfaceContainerHighest
-                    Layout.alignment: Qt.AlignVCenter
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: rowIcon
-                        font.family: Palette.Theme.fontIcons
-                        font.pixelSize: Palette.Theme.iconSize
-                        color: Palette.Theme.textSecondary
-                    }
+                RowIcon {
+                    glyph: commandRow.rowIcon
+                    active: commandRow.rowActive
                 }
 
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 2
+                RowText {
+                    primary: commandRow.rowPrimary
+                    secondary: commandRow.rowSecondary
+                }
+
+                ToggleSwitch {
+                    visible: commandRow.isWidget
                     Layout.alignment: Qt.AlignVCenter
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: rowPrimary
-                        color: Palette.Theme.textPrimary
-                        font.family: Palette.Theme.fontSans
-                        font.pixelSize: Palette.Theme.fontSizeBody
-                        font.weight: Font.Medium
-                        elide: Text.ElideRight
-                    }
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: rowSecondary
-                        visible: text !== ""
-                        color: Palette.Theme.textMuted
-                        font.family: Palette.Theme.fontSans
-                        font.pixelSize: Palette.Theme.fontSizeXs
-                        elide: Text.ElideRight
-                    }
+                    checked: commandRow.widgetEnabled
+                    onToggled: root.widgetsService.toggle(commandRow.modelData.id)
                 }
 
                 Text {
-                    visible: rowActive || isWidget
-                    text: isWidget ? (widgetEnabled ? "toggle_on" : "toggle_off") : ""
+                    visible: commandRow.isCommand
+                    text: "keyboard_tab"
                     font.family: Palette.Theme.fontIcons
-                    font.pixelSize: isWidget ? 22 : 14
-                    color: isWidget && !widgetEnabled ? Palette.Theme.textMuted : Palette.Theme.accent
+                    font.pixelSize: Palette.Theme.iconSizeSmall
+                    color: Palette.Theme.textMuted
+                    opacity: commandRow.index === root.selected ? 1 : 0
                     Layout.alignment: Qt.AlignVCenter
+
+                    Behavior on opacity {
+                        EffectMotion {}
+                    }
                 }
             }
 
             MouseArea {
-                id: commandRowHover
+                id: commandMouse
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onPositionChanged: {
-                    if (root.selected !== index) {
-                        root.selected = index;
-                    }
-                }
+                // Leave the widget toggle its own clicks.
+                anchors.rightMargin: commandRow.isWidget ? 70 : 0
+                onPositionChanged: mouse => root.hoverSelect(commandMouse, mouse, commandRow.index)
                 onClicked: {
-                    root.selected = index;
-                    root.activateIndex(index);
+                    root.selected = commandRow.index;
+                    root.activateIndex(commandRow.index);
                 }
             }
         }
@@ -612,6 +760,7 @@ Item {
         aboutToOpen();
         searchInput.text = "";
         query = "";
+        filterApps();
         selected = 0;
         visible = true;
         searchInput.forceActiveFocus();
@@ -642,159 +791,250 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-            // ── search bar ────────────────────────────────────────
-            Item {
-                id: searchRow
-                Layout.fillWidth: true
-                height: 62
+        // ── results ───────────────────────────────────────────────
+        Item {
+            id: listPanel
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.topMargin: 6
+            clip: true
 
-                Rectangle {
-                    id: searchField
-                    anchors {
-                        fill: parent
-                        leftMargin: 10
-                        rightMargin: 10
-                        topMargin: 10
-                        bottomMargin: 8
-                    }
-                    radius: Palette.Theme.radiusMedium
-                    color: Palette.Theme.surfaceContainerHigh
-                    border.width: 0
+            ColumnLayout {
+                anchors.centerIn: parent
+                spacing: 6
+                visible: root.currentList.length === 0
+                opacity: visible ? 1 : 0
+
+                Behavior on opacity {
+                    EffectMotion {}
                 }
 
-                RowLayout {
-                    anchors {
-                        fill: parent
-                        leftMargin: 22
-                        rightMargin: 18
-                        topMargin: 10
-                        bottomMargin: 8
+                Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: "search_off"
+                    color: Palette.Theme.textMuted
+                    font.family: Palette.Theme.fontIcons
+                    font.pixelSize: Palette.Theme.iconSizeLarge
+                }
+
+                Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: root.emptyStateText
+                    color: Palette.Theme.textMuted
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: Palette.Theme.fontSizeSmall
+                }
+            }
+
+            ListView {
+                id: appList
+                anchors.fill: parent
+                // Best match sits right above the search field.
+                verticalLayoutDirection: ListView.BottomToTop
+                // A diffing model: filtering inserts, removes and moves rows
+                // (animated below) rather than resetting the whole list.
+                model: ScriptModel {
+                    values: root.currentList
+                }
+                currentIndex: root.selected
+                Keys.priority: Keys.BeforeItem
+                // The selection is one tonal highlight gliding between rows
+                // (hover moves the selection too), not each row recoloring.
+                highlightFollowsCurrentItem: false
+                highlight: MovingHighlight {
+                    target: appList.currentItem
+                    insetX: 6
+                    insetY: 2
+                    radius: Palette.Theme.radiusMedium
+                    color: Palette.Theme.accentTonal
+                }
+                onCurrentIndexChanged: if (currentIndex >= 0)
+                    positionViewAtIndex(currentIndex, ListView.Contain)
+                // The panel springs to a new height as results change; keep
+                // the selection (normally the best match, at the bottom)
+                // pinned in view while it does.
+                onHeightChanged: keepInView()
+                onCountChanged: keepInView()
+                function keepInView() {
+                    if (count === 0)
+                        return;
+                    if (currentIndex <= 0)
+                        positionViewAtBeginning();
+                    else
+                        positionViewAtIndex(currentIndex, ListView.Contain);
+                }
+                interactive: root.currentList.length > root.maxVisible
+                boundsBehavior: Flickable.StopAtBounds
+                spacing: 0
+                focus: true
+                keyNavigationEnabled: false
+                cacheBuffer: 240
+
+                add: Transition {
+                    EffectMotion {
+                        property: "opacity"
+                        from: 0
+                        to: 1
+                        fast: false
                     }
-                    spacing: 12
-
-                    // leading search icon
-                    Text {
-                        text: ""
-                        font.family: Palette.Theme.fontIcons
-                        font.pixelSize: Palette.Theme.iconSize
-                        color: Palette.Theme.textMuted
-                        Layout.alignment: Qt.AlignVCenter
+                    SpatialMotion {
+                        property: "scale"
+                        from: 0.85
+                        to: 1
                     }
+                }
 
-                    // text input
-                    TextInput {
-                        id: searchInput
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignVCenter
-                        Keys.priority: Keys.BeforeItem
-                        font.family: Palette.Theme.fontMono
-                        font.pixelSize: Palette.Theme.fontSizeBody
-                        color: Palette.Theme.textPrimary
-                        selectionColor: Palette.Theme.accent + "44"
-                        clip: true
-                        verticalAlignment: TextInput.AlignVCenter
-                        // Focusing the field on open (below) would otherwise
-                        // leave a blinking caret sitting over the empty
-                        // placeholder — only show it once there's real text.
-                        cursorVisible: text !== ""
-
-                        Text {
-                            anchors.fill: parent
-                            verticalAlignment: Text.AlignVCenter
-                            text: root.placeholderText
-                            font: parent.font
-                            color: Palette.Theme.textMuted
-                            visible: parent.text === ""
-                        }
-
-                        onTextChanged: root.query = text
-
-                        Keys.onPressed: event => root.handleKey(event)
+                remove: Transition {
+                    EffectMotion {
+                        property: "opacity"
+                        to: 0
                     }
+                    EffectMotion {
+                        property: "scale"
+                        to: 0.85
+                    }
+                }
 
-                    // clear button — fades in/out instead of popping
-                    IconButton {
-                        icon: ""
-                        opacity: searchInput.text !== "" ? 1 : 0
-                        visible: opacity > 0
-                        Layout.alignment: Qt.AlignVCenter
-                        onClicked: {
-                            searchInput.text = "";
-                            searchInput.forceActiveFocus();
-                        }
+                // Rows sliding into their new rank; also finishes any add
+                // that was interrupted mid-way by the next keystroke.
+                displaced: Transition {
+                    SpatialMotion {
+                        property: "y"
+                    }
+                    EffectMotion {
+                        properties: "opacity,scale"
+                        to: 1
+                    }
+                }
 
+                move: Transition {
+                    SpatialMotion {
+                        property: "y"
+                    }
+                    EffectMotion {
+                        properties: "opacity,scale"
+                        to: 1
+                    }
+                }
+
+                ScrollBar.vertical: ScrollBar {
+                    policy: ScrollBar.AsNeeded
+                    width: 4
+                    interactive: false
+
+                    contentItem: Rectangle {
+                        implicitWidth: 4
+                        radius: 2
+                        color: Palette.Theme.accent
+                        opacity: parent.active ? 0.6 : 0.25
                         Behavior on opacity {
                             EffectMotion {}
                         }
                     }
+                    background: Item {}
                 }
+
+                Keys.onPressed: event => root.handleKey(event)
+
+                delegate: root.mode === "apps" ? appDelegate : commandDelegate
+            }
+        }
+
+        // ── search bar ────────────────────────────────────────────
+        Item {
+            id: searchRow
+            Layout.fillWidth: true
+            Layout.preferredHeight: 64
+
+            Rectangle {
+                id: searchField
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                anchors.topMargin: 6
+                anchors.bottomMargin: 12
+                radius: height / 2
+                color: Palette.Theme.surfaceContainerHigh
             }
 
-            Item {
-                id: listPanel
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+            RowLayout {
+                anchors.fill: searchField
+                anchors.leftMargin: 16
+                anchors.rightMargin: 8
+                spacing: 12
 
-                Item {
-                    anchors.fill: parent
-                    visible: root.currentList.length === 0
+                // Mode glyph: search for apps, the command's own icon in a
+                // slash command.
+                Text {
+                    text: root.mode === "apps" ? "search" : (root.matchedCommand ? root.matchedCommand.icon : "keyboard_command_key")
+                    font.family: Palette.Theme.fontIcons
+                    font.pixelSize: Palette.Theme.iconSize
+                    color: root.mode === "apps" ? Palette.Theme.textMuted : Palette.Theme.accent
+                    Layout.alignment: Qt.AlignVCenter
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: root.emptyStateText
-                        color: Palette.Theme.textMuted
-                        font.family: Palette.Theme.fontMono
-                        font.pixelSize: Palette.Theme.fontSizeSmall
+                    Behavior on color {
+                        ColorMotion {}
                     }
                 }
 
-                ListView {
-                    id: appList
-                    anchors.fill: parent
-                    clip: true
-                    model: root.currentList
-                    currentIndex: root.selected
+                TextInput {
+                    id: searchInput
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
                     Keys.priority: Keys.BeforeItem
-                    // The selection is one highlight gliding between rows
-                    // (hover moves the selection too), not each row
-                    // recoloring itself.
-                    highlightFollowsCurrentItem: false
-                    highlight: MovingHighlight {
-                        target: appList.currentItem
-                        insetX: 6
-                        insetY: 2
-                    }
-                    onCurrentIndexChanged: if (currentIndex >= 0)
-                        positionViewAtIndex(currentIndex, ListView.Contain)
-                    interactive: root.currentList.length > root.maxVisible
-                    boundsBehavior: Flickable.StopAtBounds
-                    spacing: 0
-                    focus: true
-                    keyNavigationEnabled: true
-                    reuseItems: true
-                    cacheBuffer: 240
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: Palette.Theme.fontSizeBody
+                    color: Palette.Theme.textPrimary
+                    selectionColor: Palette.Theme.accent
+                    selectedTextColor: Palette.Theme.accentText
+                    clip: true
+                    verticalAlignment: TextInput.AlignVCenter
+                    // Focusing the field on open (below) would otherwise
+                    // leave a blinking caret sitting over the empty
+                    // placeholder — only show it once there's real text.
+                    cursorVisible: text !== ""
 
-                    ScrollBar.vertical: ScrollBar {
-                        policy: ScrollBar.AsNeeded
-                        width: 4
-                        interactive: false
-
-                        contentItem: Rectangle {
-                            implicitWidth: 4
-                            radius: 2
-                            color: Palette.Theme.accent
-                            opacity: parent.active ? 0.6 : 0.25
-                            Behavior on opacity {
-                                EffectMotion {}
-                            }
-                        }
-                        background: Item {}
+                    Text {
+                        anchors.fill: parent
+                        verticalAlignment: Text.AlignVCenter
+                        text: root.placeholderText
+                        font: parent.font
+                        color: Palette.Theme.textMuted
+                        visible: parent.text === ""
+                        elide: Text.ElideRight
                     }
+
+                    onTextChanged: root.query = text
 
                     Keys.onPressed: event => root.handleKey(event)
+                }
 
-                    delegate: root.mode === "apps" ? appDelegate : commandDelegate
+                // Result count while filtering.
+                Text {
+                    visible: root.filterText !== "" && root.currentList.length > 0
+                    text: root.currentList.length
+                    font.family: Palette.Theme.fontMono
+                    font.pixelSize: Palette.Theme.fontSizeXs
+                    color: Palette.Theme.textMuted
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                // clear button — fades in/out instead of popping
+                IconButton {
+                    icon: "close"
+                    opacity: searchInput.text !== "" ? 1 : 0
+                    visible: opacity > 0
+                    Layout.alignment: Qt.AlignVCenter
+                    onClicked: {
+                        searchInput.text = "";
+                        searchInput.forceActiveFocus();
+                    }
+
+                    Behavior on opacity {
+                        EffectMotion {}
+                    }
                 }
             }
         }
+    }
 }

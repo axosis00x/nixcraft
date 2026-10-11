@@ -28,7 +28,6 @@ in
       maven
 
       eww
-      quickshell
 
       rustup
       clang-tools

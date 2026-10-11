@@ -1,5 +1,5 @@
 {
-  description = "axosis00x' nix configs";
+  description = "nixcraft: NixOS + Hyprland + Quickshell";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     apple-fonts = {
@@ -40,20 +40,24 @@
       home-manager,
       ...
     }:
+    let
+      # User, hostname and machine toggles; see settings.nix.
+      settings = import ./settings.nix;
+    in
     {
-      nixosConfigurations.oneiros = nixpkgs.lib.nixosSystem {
+      nixosConfigurations.${settings.hostname} = nixpkgs.lib.nixosSystem {
         specialArgs = {
-          inherit inputs;
+          inherit inputs settings;
         };
         modules = [
           { nixpkgs.hostPlatform = "x86_64-linux"; }
-          ./hosts/oneiros
+          (./hosts + "/${settings.hostname}")
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.backupFileExtension = "backup";
-            home-manager.extraSpecialArgs = { inherit inputs; };
+            home-manager.extraSpecialArgs = { inherit inputs settings; };
           }
         ];
       };

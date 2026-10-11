@@ -2,6 +2,7 @@
   config,
   lib,
   inputs,
+  settings,
   ...
 }:
 let
@@ -18,7 +19,7 @@ in
     };
     user = lib.mkOption {
       type = lib.types.str;
-      default = "axosis00x";
+      default = settings.username;
       description = "User to set the SDDM avatar for.";
     };
     avatar = lib.mkOption {

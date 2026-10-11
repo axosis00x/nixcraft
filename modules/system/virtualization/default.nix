@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  settings,
   ...
 }:
 let
@@ -21,6 +22,6 @@ in
     virtualisation.waydroid.enable = true;
     virtualisation.waydroid.package = pkgs.waydroid-nftables;
     programs.virt-manager.enable = true;
-    users.users.axosis00x.extraGroups = [ "libvirtd" ];
+    users.users.${settings.username}.extraGroups = [ "libvirtd" ];
   };
 }

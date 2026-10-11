@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  settings,
   ...
 }:
 {
@@ -22,11 +23,11 @@
   config = {
     boot.kernelPackages = pkgs.linuxPackages_latest;
 
-    systemSettings.users = [ "axosis00x" ];
+    systemSettings.users = [ settings.username ];
     systemSettings.services.enable = true;
-    systemSettings.gpu.enable = true;
-    systemSettings.storage.enable = true;
-    systemSettings.virtualization.enable = true;
+    systemSettings.gpu.enable = settings.nvidiaOptimus;
+    systemSettings.storage.enable = settings.dataDrive;
+    systemSettings.virtualization.enable = settings.features.virtualization;
     systemSettings.sddm.enable = true;
 
     services.journald.settings.Journal.Storage = "persistent";
@@ -41,9 +42,9 @@
     boot.loader.efi.canTouchEfiVariables = true;
     boot.loader.efi.efiSysMountPoint = "/boot";
 
-    networking.hostName = "oneiros";
+    networking.hostName = settings.hostname;
     networking.networkmanager.enable = true;
-    time.timeZone = "Asia/Kathmandu";
+    time.timeZone = settings.timezone;
     # Qt only looks for tzdata in /usr/share/zoneinfo (or /usr/lib), which
     # NixOS doesn't have; without this Qt apps such as Quickshell warn
     # "Unable to determine system time zone".
@@ -54,10 +55,11 @@
       variant = "";
     };
 
-    users.users.axosis00x = {
+    users.users.${settings.username} = {
+      # No fixed uid: an account that already exists keeps its own (NixOS
+      # remembers assigned uids), so installing over a set-up user is safe.
       isNormalUser = true;
-      uid = 1000;
-      description = "axosis incon";
+      description = settings.fullName;
       extraGroups = [
         "networkmanager"
         "wheel"

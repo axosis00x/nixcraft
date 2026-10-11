@@ -27,6 +27,8 @@ in
         wiremix
         grim
         slurp
+        # The desktop shell (bar, launcher, panels: config/quickshell).
+        quickshell
         hyprpicker
         libnotify
         hyprshade

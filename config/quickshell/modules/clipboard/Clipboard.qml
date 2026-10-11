@@ -50,7 +50,7 @@ Item {
     }
 
     readonly property int visibleRows: Math.max(1, Math.min(maxVisible, entries.length))
-    implicitWidth: Math.min(maxWidth - 20, Ui.clipboardOverlayWidth)
+    implicitWidth: Math.min(maxWidth - 32, Ui.listPanelWidth)
     implicitHeight: searchRow.height + visibleRows * itemH + 6
 
     signal aboutToOpen
@@ -261,20 +261,11 @@ Item {
                         to: 1
                         fast: false
                     }
-                    SpatialMotion {
-                        property: "scale"
-                        from: 0.85
-                        to: 1
-                    }
                 }
                 remove: Transition {
                     EffectMotion {
                         property: "opacity"
                         to: 0
-                    }
-                    EffectMotion {
-                        property: "scale"
-                        to: 0.85
                     }
                 }
                 displaced: Transition {
@@ -282,7 +273,7 @@ Item {
                         property: "y"
                     }
                     EffectMotion {
-                        properties: "opacity,scale"
+                        property: "opacity"
                         to: 1
                     }
                 }
@@ -418,17 +409,17 @@ Item {
             Rectangle {
                 id: searchField
                 anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
+                anchors.leftMargin: 6
+                anchors.rightMargin: 6
                 anchors.topMargin: 6
                 anchors.bottomMargin: 12
-                radius: height / 2
+                radius: Palette.Theme.radiusMedium
                 color: Palette.Theme.surfaceContainerHigh
             }
 
             RowLayout {
                 anchors.fill: searchField
-                anchors.leftMargin: 16
+                anchors.leftMargin: 10
                 anchors.rightMargin: 8
                 spacing: 12
 

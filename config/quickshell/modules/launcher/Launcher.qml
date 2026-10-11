@@ -4,6 +4,7 @@ import Quickshell.Widgets
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../../config/Ui.js" as Ui
 import "../../theme" as Palette
 import "../../components/material"
 
@@ -134,7 +135,7 @@ Item {
     // Grows and shrinks with the results (the stage springs to follow), so
     // the field stays put at the bottom and the list rises out of it.
     readonly property int visibleRows: Math.max(1, Math.min(maxVisible, currentList.length))
-    implicitWidth: Math.max(380, Math.min(maxWidth - 32, 480))
+    implicitWidth: Math.min(maxWidth - 32, Ui.listPanelWidth)
     implicitHeight: searchRow.height + visibleRows * itemH + listPanel.Layout.topMargin
 
     // ── IPC ───────────────────────────────────────────────────────
@@ -877,21 +878,12 @@ Item {
                         to: 1
                         fast: false
                     }
-                    SpatialMotion {
-                        property: "scale"
-                        from: 0.85
-                        to: 1
-                    }
                 }
 
                 remove: Transition {
                     EffectMotion {
                         property: "opacity"
                         to: 0
-                    }
-                    EffectMotion {
-                        property: "scale"
-                        to: 0.85
                     }
                 }
 
@@ -902,7 +894,7 @@ Item {
                         property: "y"
                     }
                     EffectMotion {
-                        properties: "opacity,scale"
+                        property: "opacity"
                         to: 1
                     }
                 }
@@ -912,7 +904,7 @@ Item {
                         property: "y"
                     }
                     EffectMotion {
-                        properties: "opacity,scale"
+                        property: "opacity"
                         to: 1
                     }
                 }
@@ -949,17 +941,17 @@ Item {
             Rectangle {
                 id: searchField
                 anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
+                anchors.leftMargin: 6
+                anchors.rightMargin: 6
                 anchors.topMargin: 6
                 anchors.bottomMargin: 12
-                radius: height / 2
+                radius: Palette.Theme.radiusMedium
                 color: Palette.Theme.surfaceContainerHigh
             }
 
             RowLayout {
                 anchors.fill: searchField
-                anchors.leftMargin: 16
+                anchors.leftMargin: 10
                 anchors.rightMargin: 8
                 spacing: 12
 

@@ -106,7 +106,7 @@ Item {
 
     Process {
         id: activeShaderRead
-        command: ["sh", "-c", "sed -n 's/.*\"\\(.*\\)\".*/\\1/p' \"$HOME/.config/hypr/shader.lua\" 2>/dev/null | head -n 1 | xargs -r basename | sed 's/\\.glsl$//'"]
+        command: ["sh", "-c", "grep -o '[^/\"]*\\.glsl' \"$HOME/.config/hypr/shader.lua\" 2>/dev/null | head -n 1 | sed 's/\\.glsl$//'"]
         stdout: StdioCollector {
             onStreamFinished: {
                 var name = text.trim();

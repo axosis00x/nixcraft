@@ -132,7 +132,7 @@ Item {
 
     Process {
         id: activeThemeRead
-        command: ["sh", "-c", "sed -n 's/.*dofile(\"\\(.*\\)\").*/\\1/p' \"$HOME/.config/hypr/theme.lua\" | head -n 1 | xargs -r dirname | xargs -r basename"]
+        command: ["sh", "-c", "grep -o 'themes/[^/]*/hyprland.lua' \"$HOME/.config/hypr/theme.lua\" | head -n 1 | cut -d/ -f2"]
         stdout: StdioCollector {
             onStreamFinished: {
                 root.activeTheme = text.trim();

@@ -1,1 +1,1 @@
-return dofile("/home/axosis00x/.config/themes/moonfly/hyprland.lua")
+return dofile(os.getenv("HOME") .. "/.config/themes/ryo/hyprland.lua")

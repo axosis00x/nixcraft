@@ -1,1 +1,1 @@
-return "/home/axosis00x/.config/hypr/shaders/rounded_corners.glsl"
+return os.getenv("HOME") .. "/.config/hypr/shaders/rounded_corners.glsl"

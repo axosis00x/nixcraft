@@ -49,7 +49,8 @@ fi
 
 # Apply Kitty first. The remaining integrations are optional, so a failure in
 # one of them must never prevent the terminal theme from changing.
-printf 'include %s\n' "$theme_dir/kitty.conf" >"$HOME/.config/kitty/theme.conf"
+# Relative to ~/.config/kitty, so the tracked file works for any user.
+printf 'include ../themes/%s/kitty.conf\n' "$theme_name" >"$HOME/.config/kitty/theme.conf"
 pkill -USR1 -x kitty 2>/dev/null || true
 
 install_if_present() {
@@ -64,7 +65,8 @@ install_if_present() {
 
 install_if_present "$theme_dir/tmux.conf" "$HOME/.config/tmux/theme.conf"
 install_if_present "$theme_dir/yazi-flavor.toml" "$HOME/.config/yazi/flavors/nixcraft.yazi/flavor.toml"
-printf 'return dofile("%s")\n' "$theme_dir/hyprland.lua" >"$HOME/.config/hypr/theme.lua"
+# $HOME is resolved by Hyprland, so the tracked file works for any user.
+printf 'return dofile(os.getenv("HOME") .. "/.config/themes/%s/hyprland.lua")\n' "$theme_name" >"$HOME/.config/hypr/theme.lua"
 
 # nvim watches this file (config/nvim/lua/config/autocmds.lua) and live-
 # reloads its colorscheme on change, so writing it is enough — no signal

@@ -109,7 +109,11 @@ Item {
     }
 
     function render(override, outputName, source) {
-        var lines = ["-- Written by the Quickshell settings panel (Display page); read by", "-- modules/monitors.lua.", "return {", "    mirror = " + (source ? "\"" + source + "\"" : "false") + ",", "    outputs = {"];
+        var lines = ["-- Written by the Quickshell settings panel (Display page); read by", "-- modules/monitors.lua and modules/workspaces.lua.", "return {"];
+        // The built-in panel is what mirrors, and what workspaces stay on.
+        if (builtIn)
+            lines.push("    builtIn = \"" + builtIn.name + "\",", "    workspaceMonitor = \"" + builtIn.name + "\",");
+        lines.push("    mirror = " + (source ? "\"" + source + "\"" : "false") + ",", "    outputs = {");
         monitors.forEach(m => {
             var mode = currentMode(m);
             var scale = m.scale;
@@ -119,7 +123,7 @@ Item {
                 if (override.scale)
                     scale = override.scale;
             }
-            lines.push("        [\"" + m.name + "\"] = { mode = \"" + mode + "\", scale = " + Number(scale).toFixed(4) + " },");
+            lines.push("        [\"" + m.name + "\"] = { mode = \"" + mode + "\", position = \"" + m.x + "x" + m.y + "\", scale = " + Number(scale).toFixed(4) + " },");
         });
         lines.push("    },", "}", "");
         return lines.join("\n");

@@ -219,7 +219,7 @@ Item {
 
     Process {
         id: activeThemeProcess
-        command: ["sh", "-c", "theme_file=$(sed -n 's/.*dofile(\"\\(.*\\)\").*/\\1/p' \"$HOME/.config/hypr/theme.lua\" | head -n 1); [ -n \"$theme_file\" ] && basename \"$(dirname \"$theme_file\")\""]
+        command: ["sh", "-c", "grep -o 'themes/[^/]*/hyprland.lua' \"$HOME/.config/hypr/theme.lua\" | head -n 1 | cut -d/ -f2"]
 
         stdout: StdioCollector {
             onStreamFinished: {

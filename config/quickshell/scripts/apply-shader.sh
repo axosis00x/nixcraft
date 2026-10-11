@@ -13,12 +13,13 @@ esac
 
 if [ "$shader_name" = "none" ]; then
     shader_path=""
+    printf 'return ""\n' > "$HOME/.config/hypr/shader.lua"
 else
     shader_path="$shaders_dir/$shader_name.glsl"
     [ -f "$shader_path" ] || exit 2
+    # $HOME is resolved by Hyprland, so the tracked file works for any user.
+    printf 'return os.getenv("HOME") .. "/.config/hypr/shaders/%s.glsl"\n' "$shader_name" > "$HOME/.config/hypr/shader.lua"
 fi
-
-printf 'return "%s"\n' "$shader_path" > "$HOME/.config/hypr/shader.lua"
 
 # This config uses Hyprland's Lua parser (hl.config), which rejects the
 # legacy `hyprctl keyword` path ("keyword can't work with non-legacy

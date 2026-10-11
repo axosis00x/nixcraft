@@ -25,9 +25,13 @@ Curiosity brought me here. This is nixcraft, a NixOS configuration for my deskto
 
 ## Installation
 
-Your username, hostname and timezone, and the two hardware options that only
-fit the original machine, all live in one file: [`settings.nix`](settings.nix).
-The installer fills it in for you, so it works with any username and hostname.
+Each machine is a folder in `hosts/`, named after its hostname, holding just
+two files: `settings.nix` (username, timezone, boot loader, hardware toggles,
+optional features) and `hardware-configuration.nix`. Everything else is shared
+from `modules/`. The installer creates that folder for you, so it works with
+any username and hostname, and several machines can share this repo without
+touching each other. See [`hosts/oneiros/settings.nix`](hosts/oneiros/settings.nix)
+for an example.
 
 ### Quick install
 
@@ -75,9 +79,9 @@ to keep one):
 | Prompt         | Default                                                 |
 | -------------- | ------------------------------------------------------- |
 | Username       | the user running it                                     |
-| Full name      | your account's full name                                |
+| Full name      | that user's full name (or the username)                 |
 | Hostname       | the current hostname                                    |
-| Timezone       | the system timezone                                     |
+| Timezone       | the system timezone; type part of a city to search      |
 | NVIDIA Optimus | **yes** only if both Intel and NVIDIA GPUs are detected |
 | DataSSD drive  | only offered on the original machine                    |
 | Features       | a checklist; type numbers to toggle, Enter to accept    |
@@ -95,10 +99,12 @@ shell, fonts, theming, screenshots and the login screen) is always installed.
 
 Then it:
 
-1. creates `hosts/<hostname>/` from the `oneiros` example (keeping your
-   install's `stateVersion`) and generates its `hardware-configuration.nix`;
-2. writes `settings.nix`;
-3. points the active-theme files at your home directory;
+1. detects the boot mode: UEFI gets systemd-boot; legacy BIOS gets GRUB,
+   after asking which disk to put it on;
+2. creates `hosts/<hostname>/` with this machine's
+   `hardware-configuration.nix`;
+3. writes `hosts/<hostname>/settings.nix`, keeping your install's
+   `stateVersion`;
 4. stages everything with `git add -A` (flakes ignore untracked files);
 5. shows a summary and, once you confirm, runs
    `nixos-rebuild switch` for you.
@@ -112,8 +118,8 @@ Options:
 - `--no-switch` writes the configuration but skips the build.
 
 Re-running the installer offers your previous choices as the defaults. You can
-also flip a feature later by editing `features` in `settings.nix` and
-rebuilding.
+also flip a feature later by editing `features` in
+`hosts/<hostname>/settings.nix` and rebuilding.
 
 **Already set up a user and hostname while installing NixOS?** That's the
 usual case. Run the installer while logged in as that user and press Enter at
@@ -134,27 +140,29 @@ Pick Hyprland at the login screen. A few things to do once:
 - **Wallpapers** are read from `~/Pictures/wallpapers/<theme>/`, outside the
   repo. Add a folder per theme you use.
 - **Tmux plugins** are ignored by Git. Install them in tmux with `prefix`, then `I`.
-- **Monitors:** `config/hypr/modules/monitors.lua` describes the original
-  laptop panel. Other outputs fall back to their best mode automatically, and
-  you can change resolution and scale in _Settings → Display_.
+- **Monitors** start at their best mode, placed automatically. Change
+  resolution, scale and mirroring in _Settings → Display_; that's saved per
+  machine in `config/hypr/displays.lua`, which isn't tracked by Git.
 
 ### Doing it by hand
 
 If you'd rather not run the script:
 
 ```bash
-cp -r hosts/oneiros hosts/<hostname>        # skip if your hostname is oneiros
+mkdir hosts/<hostname>
 sudo nixos-generate-config --show-hardware-config \
   > hosts/<hostname>/hardware-configuration.nix
-$EDITOR settings.nix                        # username, hostname, timezone, toggles
+cp hosts/oneiros/settings.nix hosts/<hostname>/
+$EDITOR hosts/<hostname>/settings.nix      # username, timezone, boot, toggles
 git add -A
 sudo nixos-rebuild switch --flake .#<hostname> \
   --option experimental-features "nix-command flakes"
 ```
 
-Also set `system.stateVersion` in `hosts/<hostname>/configuration.nix` and
-`home.stateVersion` in `hosts/<hostname>/home.nix` to the release you first
-installed (see `/etc/nixos/configuration.nix`), and never bump them later.
+In `settings.nix`, set `stateVersion` to the release you first installed (see
+`/etc/nixos/configuration.nix`) and never bump it later. Set `boot.loader` to
+`"grub"` with `boot.grubDevice` (e.g. `/dev/sda`) if the machine boots with
+legacy BIOS rather than UEFI.
 
 ### Rebuilding and updating
 
@@ -179,9 +187,10 @@ sudo nixos-rebuild switch --flake .#<hostname>
 | Problem                                           | Fix                                                                                                   |
 | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `path ... does not exist` or a file is not found  | A new file isn't tracked. Run `git add -A`; flakes ignore untracked files.                            |
-| `flake ... does not provide attribute ...#<host>` | The `hostname` in `settings.nix` doesn't match the name after `#`, or `hosts/<hostname>/` is missing. |
+| `flake ... does not provide attribute ...#<host>` | No `hosts/<host>/settings.nix`: the folder name is the hostname after `#`.                            |
 | `experimental feature 'flakes' is disabled`       | First build only: add `--option experimental-features "nix-command flakes"`.                          |
-| Boot hangs waiting for a disk                     | `dataDrive = true` on a machine without that drive. Set it to `false` in `settings.nix`.              |
-| Black screen or no Hyprland                       | Check `nvidiaOptimus` in `settings.nix`, and the GPU options in `modules/system/gpu`.                 |
+| Boot hangs waiting for a disk                     | `dataDrive = true` on a machine without that drive. Set it to `false` in its `settings.nix`.          |
+| Black screen or no Hyprland                       | Check `nvidiaOptimus` in its `settings.nix`, and the GPU options in `modules/system/gpu`.             |
+| Doesn't boot after switching                      | Wrong `boot.loader` for the firmware. Pick the previous generation at boot, then fix `settings.nix`.  |
 | `~/.config/...` links are broken                  | The repo isn't at `/home/<username>/nixcraft`. Move it there and rebuild.                             |
 | Undo a bad switch                                 | `sudo nixos-rebuild switch --rollback`, or pick an older generation at boot.                          |

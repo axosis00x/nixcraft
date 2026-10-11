@@ -83,10 +83,52 @@ confirm() {
     [[ $reply =~ ^[Yy] ]]
 }
 
-# Reads a value from the current settings.nix, so re-running the installer
+# Reads a value from this machine's existing settings (hosts/<hostname>/
+# settings.nix, once the hostname is known), so re-running the installer
 # keeps earlier choices as the defaults.
+settings_file=/dev/null
 current() {
-    grep -oE "^\s*$1 = [^;]+;" settings.nix 2>/dev/null | head -1 | sed -E 's/.*= *"?([^";]*)"?;/\1/'
+    { grep -oE "^\s*$1 = [^;]+;" "$settings_file" 2>/dev/null || true; } | head -1 | sed -E 's/.*= *"?([^";]*)"?;/\1/'
+}
+
+# Timezone prompt with search: Enter keeps the default, an exact name is
+# taken as-is, anything else ("kath", "tokyo", "europe/") lists matching
+# zones to pick from by number.
+pick_timezone() {
+    local default=${default_tz:-$(current timezone)}
+    default=${default:-UTC}
+    local zones reply matches i choice
+    zones=$(timedatectl list-timezones 2>/dev/null || (cd /etc/zoneinfo 2>/dev/null && find . -type f | sed 's#^\./##' | sort))
+    if $assume_yes; then
+        timezone=$default
+        printf '   Timezone: %s%s%s\n' "$dim" "$timezone" "$reset"
+        return
+    fi
+    while true; do
+        read -r -p "   Timezone (type to search): ${dim}[$default]${reset} " reply
+        reply=${reply:-$default}
+        if grep -qxF "$reply" <<<"$zones"; then
+            timezone=$reply
+            return
+        fi
+        mapfile -t matches < <(grep -iF "$reply" <<<"$zones" | head -20)
+        if ((${#matches[@]} == 0)); then
+            warn "No timezone matches '$reply'. Try a city or region, e.g. london, tokyo, america/."
+        elif ((${#matches[@]} == 1)); then
+            timezone=${matches[0]}
+            printf '   %s→ %s%s\n' "$dim" "$timezone" "$reset"
+            return
+        else
+            for i in "${!matches[@]}"; do
+                printf '     %2d. %s\n' "$((i + 1))" "${matches[$i]}"
+            done
+            read -r -p "   Pick a number (Enter to search again): " choice
+            if [[ $choice =~ ^[0-9]+$ ]] && ((choice >= 1 && choice <= ${#matches[@]})); then
+                timezone=${matches[$((choice - 1))]}
+                return
+            fi
+        fi
+    done
 }
 
 # ── preflight ───────────────────────────────────────────────────────────────
@@ -106,17 +148,21 @@ printf '%sAdapts the flake to this machine, then builds it.%s\n\n' "$dim" "$rese
 # ── 1. who and where ────────────────────────────────────────────────────────
 printf '%s1. User and machine%s\n' "$bold" "$reset"
 printf '%s   Already set these up while installing NixOS? Just press Enter to keep them.%s\n' "$dim" "$reset"
-default_name=$(getent passwd "$USER" | cut -d: -f5 | cut -d, -f1)
 default_tz=$(timedatectl show -p Timezone --value 2>/dev/null || true)
 
 ask username "   Username:" "$USER"
+# The full-name default follows the username just entered: that account's
+# own name if it exists, otherwise the username itself.
+default_name=$(getent passwd "$username" | cut -d: -f5 | cut -d, -f1 || true)
 ask full_name "   Full name:" "${default_name:-$username}"
 ask hostname "   Hostname:" "$(hostname)"
-ask timezone "   Timezone:" "${default_tz:-$(current timezone)}"
 
 [[ $username =~ ^[a-z_][a-z0-9_-]*$ ]] || die "Invalid username: $username"
 [[ $hostname =~ ^[A-Za-z0-9][A-Za-z0-9-]*$ ]] || die "Invalid hostname: $hostname"
-[[ -e /etc/zoneinfo/$timezone || -e /usr/share/zoneinfo/$timezone ]] || warn "Timezone '$timezone' not found in zoneinfo; check it."
+host_dir="hosts/$hostname"
+settings_file="$host_dir/settings.nix"
+[[ -f $settings_file ]] && info "Found $settings_file; its values are the defaults."
+pick_timezone
 
 if getent passwd "$username" >/dev/null; then
     info "User '$username' exists; it keeps its password, home and files."
@@ -142,6 +188,23 @@ data_drive=false
 data_uuid=$(grep -o 'by-uuid/[0-9a-f-]*' modules/system/storage/default.nix | cut -d/ -f2)
 if [[ -n $data_uuid && -e /dev/disk/by-uuid/$data_uuid ]]; then
     confirm "   Mount the DataSSD drive at ~/DataSSD?" y && data_drive=true
+fi
+
+# UEFI → systemd-boot on the EFI partition; legacy BIOS → GRUB on the disk
+# holding /. Getting this wrong leaves the machine unbootable, so confirm.
+efi_mount=/boot
+grub_device=""
+if [[ -d /sys/firmware/efi ]]; then
+    boot_loader=systemd-boot
+    efi_mount=$(findmnt -rno TARGET -t vfat 2>/dev/null | grep -m1 '^/boot' || true)
+    efi_mount=${efi_mount:-/boot}
+    printf '%s   UEFI firmware: systemd-boot, EFI partition at %s.%s\n' "$dim" "$efi_mount" "$reset"
+else
+    boot_loader=grub
+    root_disk=$(lsblk -no pkname "$(findmnt -no SOURCE /)" 2>/dev/null | head -1)
+    printf '%s   Legacy BIOS firmware: GRUB.%s\n' "$dim" "$reset"
+    ask grub_device "   Disk to install GRUB on:" "/dev/${root_disk:-sda}"
+    [[ -b $grub_device ]] || warn "$grub_device isn't a block device; check it."
 fi
 
 # ── 3. optional features ────────────────────────────────────────────────────
@@ -203,22 +266,20 @@ fi
 
 # ── 4. write the configuration ──────────────────────────────────────────────
 printf '\n%s4. Configuration%s\n' "$bold" "$reset"
-host_dir="hosts/$hostname"
-if [[ ! -d $host_dir ]]; then
-    info "Creating $host_dir from hosts/oneiros"
-    run cp -r hosts/oneiros "$host_dir"
-    # A new install keeps its own state version (never bump it later).
-    state=$(grep -ho 'stateVersion *= *"[0-9.]*"' /etc/nixos/configuration.nix 2>/dev/null | grep -o '[0-9.]\+' | head -1 || true)
-    if [[ -n $state ]]; then
-        info "Keeping this install's stateVersion ($state)"
-        run sed -i -E "s/(system\.stateVersion = )\"[0-9.]+\"/\1\"$state\"/" "$host_dir/configuration.nix"
-        run sed -i -E "s/(home\.stateVersion = )\"[0-9.]+\"/\1\"$state\"/" "$host_dir/home.nix"
-    fi
+# A new install keeps its own state version (never bump it later): the
+# existing host's, else the one /etc/nixos was installed with.
+state=$(current stateVersion)
+[[ -n $state ]] || state=$(grep -ho 'stateVersion *= *"[0-9.]*"' /etc/nixos/configuration.nix 2>/dev/null | grep -o '[0-9.]\+' | head -1 || true)
+[[ -n $state ]] || state=$(nixos-version 2>/dev/null | cut -d. -f1-2)
+
+if [[ -d $host_dir ]]; then
+    info "Updating $host_dir"
 else
-    info "Using existing $host_dir"
+    info "Creating $host_dir"
+    run mkdir -p "$host_dir"
 fi
 
-if [[ $hostname != oneiros ]] || confirm "Regenerate hosts/oneiros/hardware-configuration.nix for this machine?" n; then
+if [[ ! -f $host_dir/hardware-configuration.nix ]] || confirm "Regenerate $host_dir/hardware-configuration.nix?" n; then
     info "Generating $host_dir/hardware-configuration.nix"
     if $demo; then
         run sudo nixos-generate-config --show-hardware-config '>' "$host_dir/hardware-configuration.nix"
@@ -228,20 +289,31 @@ if [[ $hostname != oneiros ]] || confirm "Regenerate hosts/oneiros/hardware-conf
     fi
 fi
 
-info "Writing settings.nix"
-write_file settings.nix <<EOF
-# Who and what this system is for. flake.nix reads this and hands it to
-# every module as \`settings\`; ./install.sh writes it for a new machine.
+info "Writing $settings_file"
+write_file "$settings_file" <<EOF
+# This machine's settings. Every folder in hosts/ is one machine, named after
+# its hostname; flake.nix builds each as nixosConfigurations.<folder> and
+# hands this file to every module as \`settings\`. ./install.sh writes it.
 {
   # Login name and its home directory (/home/<username>). The repo must be
   # cloned to /home/<username>/nixcraft (config/ is linked from there).
   username = "$username";
   fullName = "$full_name";
 
-  # Also names the host folder (hosts/<hostname>) and the flake output
-  # (nixos-rebuild switch --flake ~/nixcraft#<hostname>).
-  hostname = "$hostname";
+  # The hostname is this folder's name (hosts/<hostname>), also used as
+  # the flake output: nixos-rebuild switch --flake ~/nixcraft#<hostname>
   timezone = "$timezone";
+
+  # Release this machine was first installed with; never bump it.
+  stateVersion = "$state";
+
+  # "systemd-boot" for UEFI (efiMount = the EFI partition's mount point),
+  # "grub" for legacy BIOS (grubDevice = the boot disk, e.g. /dev/sda).
+  boot = {
+    loader = "$boot_loader";
+    efiMount = "$efi_mount";
+    grubDevice = "$grub_device";
+  };
 
   # Hardware specific to the original machine; turn off elsewhere.
   # NVIDIA Optimus (Intel + NVIDIA laptop graphics): modules/system/gpu
@@ -261,15 +333,6 @@ write_file settings.nix <<EOF
 }
 EOF
 
-# apply-theme.sh / apply-shader.sh write absolute paths; point them at the
-# new home so Hyprland and kitty find the theme on first login.
-for f in config/hypr/theme.lua config/hypr/shader.lua config/kitty/theme.conf; do
-    if [[ -f $f ]] && grep -qE "/home/[^/]+/" "$f" && ! grep -q "/home/$username/" "$f"; then
-        info "Pointing $f at /home/$username"
-        run sed -i -E "s#/home/[^/]+/#/home/$username/#g" "$f"
-    fi
-done
-
 # Flakes only see files git knows about.
 info "Staging files for the flake"
 run git add -A
@@ -282,6 +345,7 @@ fi
 on_off() { [[ $1 == true ]] && printf '%son%s' "$green" "$reset" || printf '%soff%s' "$dim" "$reset"; }
 printf '\n%sSummary%s\n' "$bold" "$reset"
 printf '   user            %s (%s)\n   host            %s\n   timezone        %s\n' "$username" "$full_name" "$hostname" "$timezone"
+printf '   boot loader     %s\n' "$boot_loader${grub_device:+ on $grub_device}"
 printf '   nvidia optimus  %s\n   data drive      %s\n' "$(on_off $nvidia)" "$(on_off $data_drive)"
 for key in "${feature_keys[@]}"; do
     printf '   %-15s %s\n' "$key" "$(on_off "${feature[$key]}")"
@@ -315,6 +379,6 @@ cat <<EOF
    1. Reboot (or log out) and pick Hyprland at the login screen.
    2. Wallpapers live outside the repo: put images in ~/Pictures/wallpapers/<theme>/.
    3. In tmux, install plugins with: prefix, then I.
-   4. Change features later by editing settings.nix (or re-running ./install.sh),
+   4. Change features later by editing $settings_file (or re-running ./install.sh),
       then: sudo nixos-rebuild switch --flake ~/nixcraft#$hostname
 EOF

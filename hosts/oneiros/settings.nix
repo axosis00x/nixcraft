@@ -1,15 +1,26 @@
-# Who and what this system is for. flake.nix reads this and hands it to
-# every module as `settings`; ./install.sh writes it for a new machine.
+# This machine's settings. Every folder in hosts/ is one machine, named after
+# its hostname; flake.nix builds each as nixosConfigurations.<folder> and
+# hands this file to every module as `settings`. ./install.sh writes it.
 {
   # Login name and its home directory (/home/<username>). The repo must be
   # cloned to /home/<username>/nixcraft (config/ is linked from there).
   username = "axosis00x";
   fullName = "axosis incon";
 
-  # Also names the host folder (hosts/<hostname>) and the flake output
-  # (nixos-rebuild switch --flake ~/nixcraft#<hostname>).
-  hostname = "oneiros";
+  # The hostname is this folder's name (hosts/<hostname>), also used as
+  # the flake output: nixos-rebuild switch --flake ~/nixcraft#<hostname>
   timezone = "Asia/Kathmandu";
+
+  # Release this machine was first installed with; never bump it.
+  stateVersion = "26.05";
+
+  # "systemd-boot" for UEFI (efiMount = the EFI partition's mount point),
+  # "grub" for legacy BIOS (grubDevice = the boot disk, e.g. /dev/sda).
+  boot = {
+    loader = "systemd-boot";
+    efiMount = "/boot";
+    grubDevice = "";
+  };
 
   # Hardware specific to the original machine; turn off elsewhere.
   # NVIDIA Optimus (Intel + NVIDIA laptop graphics): modules/system/gpu

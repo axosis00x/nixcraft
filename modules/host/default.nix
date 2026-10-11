@@ -1,9 +1,11 @@
+# Shared by every machine in hosts/: the system configuration plus a Home
+# Manager user for each entry in systemSettings.users. A host folder only
+# adds its settings.nix and hardware-configuration.nix (see flake.nix).
 { config, ... }:
 
 {
   imports = [
     ./configuration.nix
-    ./hardware-configuration.nix
   ];
 
   config = {
@@ -13,7 +15,7 @@
         value = {
           imports = [
             ./home.nix
-            ../../modules/user
+            ../user
           ];
           home.username = user;
           home.homeDirectory = "/home/${user}";

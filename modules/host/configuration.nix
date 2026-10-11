@@ -13,12 +13,11 @@
     };
   };
   imports = [
-    ./hardware-configuration.nix
-    ../../modules/system/services
-    ../../modules/system/gpu
-    ../../modules/system/storage
-    ../../modules/system/virtualization
-    ../../modules/system/sddm
+    ../system/services
+    ../system/gpu
+    ../system/storage
+    ../system/virtualization
+    ../system/sddm
   ];
   config = {
     boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -38,9 +37,16 @@
     security.pam.services.ly.enableGnomeKeyring = true;
     security.polkit.enable = true;
 
-    boot.loader.systemd-boot.enable = true;
-    boot.loader.efi.canTouchEfiVariables = true;
-    boot.loader.efi.efiSysMountPoint = "/boot";
+    # UEFI machines boot with systemd-boot, legacy BIOS ones with GRUB on
+    # the disk in settings.boot.grubDevice (install.sh detects both).
+    boot.loader = if settings.boot.loader == "grub" then {
+      grub.enable = true;
+      grub.device = settings.boot.grubDevice;
+    } else {
+      systemd-boot.enable = true;
+      efi.canTouchEfiVariables = true;
+      efi.efiSysMountPoint = settings.boot.efiMount;
+    };
 
     networking.hostName = settings.hostname;
     networking.networkmanager.enable = true;
@@ -91,7 +97,7 @@
 
     programs.zsh.enable = true;
     programs.dconf.enable = true;
-    system.stateVersion = "26.05";
+    system.stateVersion = settings.stateVersion;
     programs.nix-ld.enable = true;
   };
 }

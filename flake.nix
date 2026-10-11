@@ -41,25 +41,43 @@
       ...
     }:
     let
-      # User, hostname and machine toggles; see settings.nix.
-      settings = import ./settings.nix;
+      lib = nixpkgs.lib;
+
+      # Every folder in hosts/ with a settings.nix is a machine, named after
+      # its hostname. Adding a machine is adding a folder (./install.sh does
+      # it); they never overwrite each other.
+      hostNames = lib.attrNames (
+        lib.filterAttrs (
+          name: type: type == "directory" && builtins.pathExists (./hosts + "/${name}/settings.nix")
+        ) (builtins.readDir ./hosts)
+      );
+
+      mkHost =
+        hostname:
+        let
+          settings = import (./hosts + "/${hostname}/settings.nix") // {
+            inherit hostname;
+          };
+        in
+        lib.nixosSystem {
+          specialArgs = {
+            inherit inputs settings;
+          };
+          modules = [
+            { nixpkgs.hostPlatform = "x86_64-linux"; }
+            ./modules/host
+            (./hosts + "/${hostname}/hardware-configuration.nix")
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.backupFileExtension = "backup";
+              home-manager.extraSpecialArgs = { inherit inputs settings; };
+            }
+          ];
+        };
     in
     {
-      nixosConfigurations.${settings.hostname} = nixpkgs.lib.nixosSystem {
-        specialArgs = {
-          inherit inputs settings;
-        };
-        modules = [
-          { nixpkgs.hostPlatform = "x86_64-linux"; }
-          (./hosts + "/${settings.hostname}")
-          home-manager.nixosModules.home-manager
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.backupFileExtension = "backup";
-            home-manager.extraSpecialArgs = { inherit inputs settings; };
-          }
-        ];
-      };
+      nixosConfigurations = lib.genAttrs hostNames mkHost;
     };
 }

@@ -17,5 +17,5 @@
   userSettings.games.enable = settings.features.games;
   userSettings.looks.enable = true;
   userSettings.extra.enable = settings.features.extras;
-  home.stateVersion = "26.05";
+  home.stateVersion = settings.stateVersion;
 }

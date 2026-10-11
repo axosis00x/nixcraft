@@ -29,6 +29,23 @@ Your username, hostname and timezone, and the two hardware options that only
 fit the original machine, all live in one file: [`settings.nix`](settings.nix).
 The installer fills it in for you, so it works with any username and hostname.
 
+### Quick install
+
+On a fresh NixOS system, logged in as your user (not root):
+
+```bash
+curl -fsSL https://subashlamatamang.com.np/install | bash
+```
+
+This clones the repo to `~/nixcraft` and runs the installer described below.
+To see what it would do without changing anything, run the demo first:
+
+```bash
+curl -fsSL https://subashlamatamang.com.np/install | bash -s -- --demo
+```
+
+Prefer to do it step by step? Read on.
+
 ### 1. Install NixOS and get online
 
 Install NixOS normally (any edition), create your user, boot into the new
@@ -63,6 +80,18 @@ to keep one):
 | Timezone       | the system timezone                                     |
 | NVIDIA Optimus | **yes** only if both Intel and NVIDIA GPUs are detected |
 | DataSSD drive  | only offered on the original machine                    |
+| Features       | a checklist; type numbers to toggle, Enter to accept    |
+
+The optional features are listed below. The desktop itself (Hyprland, the
+shell, fonts, theming, screenshots and the login screen) is always installed.
+
+| Feature        | What it adds                                              |
+| -------------- | --------------------------------------------------------- |
+| Virtualization | virt-manager/libvirt VMs and Waydroid (Android apps)      |
+| Games          | Steam                                                     |
+| Coding         | Neovim, Zed, language toolchains, Claude Code             |
+| Apps           | browsers, Discord, LibreOffice, OBS, LocalSend, Obsidian… |
+| Extras         | btop, cava, fastfetch, cmatrix and other terminal toys    |
 
 Then it:
 
@@ -74,8 +103,17 @@ Then it:
 5. shows a summary and, once you confirm, runs
    `nixos-rebuild switch` for you.
 
-Options: `--yes` accepts every default without asking, and `--no-switch`
-prepares everything but skips the build.
+Options:
+
+- `--demo` walks through every prompt and prints exactly what it _would_ do,
+  including the `settings.nix` it would write, without touching a file or
+  building anything. Try this first.
+- `--yes` accepts every default without asking.
+- `--no-switch` writes the configuration but skips the build.
+
+Re-running the installer offers your previous choices as the defaults. You can
+also flip a feature later by editing `features` in `settings.nix` and
+rebuilding.
 
 **Already set up a user and hostname while installing NixOS?** That's the
 usual case. Run the installer while logged in as that user and press Enter at

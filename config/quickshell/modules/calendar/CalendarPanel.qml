@@ -17,10 +17,10 @@ Item {
     property real maxWidth: 4000
     property real maxHeight: 4000
 
-    // Same footprint as Clipboard, so the shared stage doesn't resize
-    // between the two.
-    implicitWidth: Math.min(maxWidth - 20, Ui.clipboardOverlayWidth)
-    implicitHeight: Math.min(maxHeight - 12, 390)
+    // Same width as the launcher/clipboard/theme picker; height fits the
+    // month (5 or 6 weeks) rather than a fixed box.
+    implicitWidth: Math.min(maxWidth - 32, Ui.listPanelWidth)
+    implicitHeight: Math.min(maxHeight - 12, content.implicitHeight + 28)
 
     signal aboutToOpen
     signal aboutToClose
@@ -82,7 +82,8 @@ Item {
     property int selectedYear: viewYear
 
     readonly property var monthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-    readonly property var weekdayShort: ["S", "M", "T", "W", "T", "F", "S"]
+    readonly property var weekdayShort: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+    readonly property var weekdayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
     function daysInMonth(year, month) {
         return new Date(year, month + 1, 0).getDate();
@@ -130,185 +131,238 @@ Item {
         root.selectDay(root.today.getDate());
     }
 
-    // 42 slots = 6 full weeks, enough to cover any month/first-weekday
-    // combination; slots before day 1 or after the month's last day are
-    // blank.
+    // Only as many weeks as the month spans (4–6). Slots outside the month
+    // show the neighbouring months' days, dimmed; their `day` is 0.
     readonly property var dayModel: {
         var lead = firstWeekday(viewYear, viewMonth);
         var total = daysInMonth(viewYear, viewMonth);
+        var prevTotal = daysInMonth(viewMonth === 0 ? viewYear - 1 : viewYear, (viewMonth + 11) % 12);
+        var slots = Math.ceil((lead + total) / 7) * 7;
         var out = [];
-        for (var i = 0; i < 42; i++) {
+        for (var i = 0; i < slots; i++) {
             var day = i - lead + 1;
-            out.push(day >= 1 && day <= total ? day : 0);
+            if (day < 1)
+                out.push({ day: 0, label: prevTotal + day, weekday: i % 7 });
+            else if (day > total)
+                out.push({ day: 0, label: day - total, weekday: i % 7 });
+            else
+                out.push({ day: day, label: day, weekday: i % 7 });
         }
         return out;
     }
 
-    ColumnLayout {
-        anchors.fill: parent
-        anchors.topMargin: 14
-        anchors.leftMargin: 14
-        anchors.rightMargin: 14
-        anchors.bottomMargin: 22
-        spacing: 10
+    // "Today" / "Tomorrow" / "In 3 days" / "5 days ago" for the selection.
+    readonly property string selectedRelative: {
+        var t = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        var s = new Date(selectedYear, selectedMonth, selectedDay);
+        var d = Math.round((s - t) / 86400000);
+        if (d === 0)
+            return "Today";
+        if (d === 1)
+            return "Tomorrow";
+        if (d === -1)
+            return "Yesterday";
+        return d > 0 ? "In " + d + " days" : -d + " days ago";
+    }
 
+    ColumnLayout {
+        id: content
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: 14
+        spacing: 12
+
+        // ── header: month, navigation ────────────────────────────────
         RowLayout {
             Layout.fillWidth: true
+            Layout.leftMargin: 6
+            spacing: 6
 
-            Text {
-                text: "Calendar"
-                color: Palette.Theme.textTitle
-                font.family: Palette.Theme.fontSans
-                font.pixelSize: Palette.Theme.fontSizeTitle
-                font.weight: Font.DemiBold
+            ColumnLayout {
+                spacing: 0
+
+                Text {
+                    text: root.monthNames[root.viewMonth]
+                    color: Palette.Theme.textTitle
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: Palette.Theme.fontSizeHeadline
+                    font.weight: Font.DemiBold
+                }
+
+                Text {
+                    text: root.viewYear
+                    color: Palette.Theme.textMuted
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: Palette.Theme.fontSizeSmall
+                }
+            }
+
+            Item {
                 Layout.fillWidth: true
             }
 
             ActionChip {
                 label: "Today"
                 visible: !(root.viewMonth === root.today.getMonth() && root.viewYear === root.today.getFullYear())
+                Layout.alignment: Qt.AlignVCenter
                 onClicked: root.goToday()
+            }
+
+            IconButton {
+                icon: "chevron_left"
+                implicitWidth: 34
+                implicitHeight: 34
+                Layout.alignment: Qt.AlignVCenter
+                onClicked: root.prevMonth()
+            }
+
+            IconButton {
+                icon: "chevron_right"
+                implicitWidth: 34
+                implicitHeight: 34
+                Layout.alignment: Qt.AlignVCenter
+                onClicked: root.nextMonth()
             }
         }
 
-        // ── month navigation ────────────────────────────────────────
+        // ── weekdays + days ──────────────────────────────────────────
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: grid.implicitHeight + 16
+            radius: Palette.Theme.radiusMedium
+            color: Palette.Theme.surfaceContainer
+
+            // Wheel steps through months.
+            WheelHandler {
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: event => {
+                    if (event.angleDelta.y > 0)
+                        root.prevMonth();
+                    else if (event.angleDelta.y < 0)
+                        root.nextMonth();
+                }
+            }
+
+            GridLayout {
+                id: grid
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: 8
+                columns: 7
+                rowSpacing: 2
+                columnSpacing: 0
+
+                Repeater {
+                    model: root.weekdayShort
+                    delegate: Text {
+                        required property string modelData
+                        required property int index
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.preferredHeight: 26
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        text: modelData
+                        color: index === 0 || index === 6 ? Palette.Theme.textMuted : Palette.Theme.textSecondary
+                        font.family: Palette.Theme.fontSans
+                        font.pixelSize: Palette.Theme.fontSizeXs
+                        font.weight: Font.DemiBold
+                    }
+                }
+
+                Repeater {
+                    model: root.dayModel
+
+                    delegate: Item {
+                        id: cell
+
+                        required property var modelData
+
+                        readonly property int day: modelData.day
+                        readonly property bool outside: day === 0
+                        readonly property bool weekend: modelData.weekday === 0 || modelData.weekday === 6
+                        readonly property bool today: !outside && root.isToday(day)
+                        readonly property bool selected: !outside && root.isSelected(day)
+
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.preferredHeight: 36
+
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: 32
+                            height: 32
+                            // Selected/today round fully; hover is a softer square.
+                            radius: cell.today || cell.selected ? 16 : Palette.Theme.radiusSmall
+                            color: cell.today ? Palette.Theme.accent : (cell.selected ? Palette.Theme.accentTonal : "transparent")
+
+                            Behavior on radius {
+                                SpatialMotion {}
+                            }
+                            Behavior on color {
+                                ColorMotion {}
+                            }
+
+                            StateLayer {
+                                radius: parent.radius
+                                hovered: cellMouse.containsMouse && !cell.outside
+                                pressed: cellMouse.pressed
+                            }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: cell.modelData.label
+                            color: cell.today ? Palette.Theme.accentText : (cell.selected ? Palette.Theme.accent : (cell.outside ? Palette.Theme.textDisabled : (cell.weekend ? Palette.Theme.textSecondary : Palette.Theme.textPrimary)))
+                            font.family: Palette.Theme.fontSans
+                            font.pixelSize: Palette.Theme.fontSizeBody
+                            font.weight: cell.today || cell.selected ? Font.DemiBold : Font.Normal
+                        }
+
+                        MouseArea {
+                            id: cellMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            enabled: !cell.outside
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.selectDay(cell.day)
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── selected date ───────────────────────────────────────────
         RowLayout {
             Layout.fillWidth: true
+            Layout.leftMargin: 6
+            Layout.rightMargin: 6
             spacing: 8
 
-            Item {
-                Layout.preferredWidth: 30
-                Layout.preferredHeight: 30
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "‹"
-                    color: Palette.Theme.textSecondary
-                    font.pixelSize: Palette.Theme.fontSizeHeadline
-                    font.weight: Font.Bold
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.prevMonth()
-                }
+            Text {
+                text: "event"
+                color: Palette.Theme.accent
+                font.family: Palette.Theme.fontIcons
+                font.pixelSize: Palette.Theme.iconSizeSmall
             }
 
             Text {
                 Layout.fillWidth: true
-                horizontalAlignment: Text.AlignHCenter
-                text: root.monthNames[root.viewMonth] + " " + root.viewYear
+                text: root.weekdayNames[new Date(root.selectedYear, root.selectedMonth, root.selectedDay).getDay()] + ", " + root.selectedDay + " " + root.monthNames[root.selectedMonth] + " " + root.selectedYear
                 color: Palette.Theme.textPrimary
-                font.family: Palette.Theme.fontMono
-                font.pixelSize: 18
-                font.weight: Font.Bold
+                font.family: Palette.Theme.fontSans
+                font.pixelSize: Palette.Theme.fontSizeSmall
+                elide: Text.ElideRight
             }
 
-            Item {
-                Layout.preferredWidth: 30
-                Layout.preferredHeight: 30
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "›"
-                    color: Palette.Theme.textSecondary
-                    font.pixelSize: Palette.Theme.fontSizeHeadline
-                    font.weight: Font.Bold
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.nextMonth()
-                }
+            Text {
+                text: root.selectedRelative
+                color: Palette.Theme.textMuted
+                font.family: Palette.Theme.fontSans
+                font.pixelSize: Palette.Theme.fontSizeXs
             }
-        }
-
-        // ── weekday initials ────────────────────────────────────────
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 0
-
-            Repeater {
-                model: root.weekdayShort
-                delegate: Text {
-                    required property string modelData
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    text: modelData
-                    color: Palette.Theme.textMuted
-                    font.family: Palette.Theme.fontMono
-                    font.pixelSize: Palette.Theme.fontSizeSmall
-                    font.weight: Font.DemiBold
-                }
-            }
-        }
-
-        // ── day grid ─────────────────────────────────────────────────
-        GridLayout {
-            Layout.fillWidth: true
-            columns: 7
-            rowSpacing: 3
-            columnSpacing: 0
-
-            Repeater {
-                model: root.dayModel
-
-                delegate: Item {
-                    required property int modelData
-                    required property int index
-
-                    readonly property int day: modelData
-                    readonly property bool empty: day === 0
-                    readonly property bool today: !empty && root.isToday(day)
-                    readonly property bool selected: !empty && root.isSelected(day)
-
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 32
-
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: 28
-                        height: 28
-                        radius: 14
-                        visible: parent.today || parent.selected
-                        color: parent.today ? Palette.Theme.accent : "transparent"
-                        border.width: parent.selected && !parent.today ? 1.5 : 0
-                        border.color: Palette.Theme.accent
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        visible: !parent.empty
-                        text: parent.day
-                        color: parent.today ? Palette.Theme.accentText : Palette.Theme.textPrimary
-                        font.family: Palette.Theme.fontMono
-                        font.pixelSize: Palette.Theme.fontSizeBody
-                        font.weight: parent.today || parent.selected ? Font.Bold : Font.Normal
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        enabled: !parent.empty
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.selectDay(parent.day)
-                    }
-                }
-            }
-        }
-
-        Item {
-            Layout.fillHeight: true
-            Layout.minimumHeight: 0
-        }
-
-        // ── selected date readout ───────────────────────────────────
-        Text {
-            Layout.fillWidth: true
-            text: root.monthNames[root.selectedMonth] + " " + root.selectedDay + ", " + root.selectedYear
-            color: Palette.Theme.textMuted
-            font.family: Palette.Theme.fontMono
-            font.pixelSize: Palette.Theme.fontSizeSmall
-            horizontalAlignment: Text.AlignHCenter
         }
     }
 

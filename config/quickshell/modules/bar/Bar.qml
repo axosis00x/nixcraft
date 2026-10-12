@@ -24,6 +24,10 @@ PanelWindow {
     // Corner radius shared by the horizontal bar's capsules and its center
     // notch/island, so they all read as one family.
     readonly property real capsuleRadius: Palette.Theme.radiusSmall
+    // Space the vertical bar reserves at the screen edge. Island mode adds
+    // the gap on top of the strip's width instead of taking it out of the
+    // strip, so the pills keep their room.
+    readonly property real verticalReserve: Ui.barThickness + (island ? islandGap : 0)
 
     // Compact style: the separate capsules hide and the center notch becomes
     // a phone-style status notch (workspaces, time, network, battery).
@@ -48,14 +52,14 @@ PanelWindow {
     // The vertical window is a little wider than the strip so the concave
     // fillets can hang off it; only the strip reserves space and takes
     // input.
-    implicitWidth: Ui.barThickness + verticalBar.filletSize
-    exclusiveZone: bar.vertical ? Ui.barThickness : implicitHeight
+    implicitWidth: verticalReserve + verticalBar.filletSize
+    exclusiveZone: bar.vertical ? verticalReserve : implicitHeight
     mask: bar.vertical ? verticalMask : null
 
     property Region verticalMask: Region {
         x: 0
         y: 0
-        width: Ui.barThickness
+        width: bar.verticalReserve
         height: bar.height
     }
     color: "transparent"

@@ -31,11 +31,15 @@ Item {
             easing.type: Easing.OutCubic
         }
     }
-    // The island stays inside the reserved strip: it gives up width on the
-    // screen-edge side rather than pushing into the windows.
+    // The island keeps the strip's full width; Bar.qml widens the reserved
+    // space by the gap so the inset never squeezes the pills.
     readonly property real inset: bar.islandGap * islandness
 
-    readonly property real pillWidth: strip.width - 12
+    // Pills sit pillInset in from the strip's sides, and their corners are
+    // concentric with the island's: the bar's capsule radius less that inset.
+    readonly property real pillInset: 6
+    readonly property real pillWidth: strip.width - pillInset * 2
+    readonly property real pillRadius: bar.capsuleRadius - pillInset
 
     // ── strip ───────────────────────────────────────────────────────
     Rectangle {
@@ -46,7 +50,7 @@ Item {
         anchors.topMargin: root.inset
         anchors.bottomMargin: root.inset
         anchors.leftMargin: root.inset
-        width: root.thickness - root.inset
+        width: root.thickness
         radius: root.bar.capsuleRadius * root.islandness
         color: Palette.Theme.bg
     }
@@ -207,7 +211,7 @@ Item {
                 parentWindow: root.bar
                 vertical: true
                 cellSize: root.pillWidth - 8
-                cellRadius: Palette.Theme.radiusSmall - 4
+                cellRadius: Math.max(0, root.pillRadius - 4)
             }
         }
 
@@ -345,10 +349,11 @@ Item {
     }
 
     // A grouped section: the same capsule the horizontal bar uses
-    // (BarSection — theme radius and surface tint), one step lighter so it
-    // reads against the solid strip.
+    // (BarSection — surface tint), one step lighter so it reads against the
+    // solid strip, with corners nested inside the strip's.
     component Pill: BarSection {
         implicitWidth: root.pillWidth
+        radius: root.pillRadius
         color: Palette.Theme.surfaceContainerHigh
     }
 
@@ -370,7 +375,7 @@ Item {
         }
 
         StateLayer {
-            radius: Palette.Theme.radiusSmall
+            radius: root.pillRadius
             hovered: buttonMouse.containsMouse
             pressed: buttonMouse.pressed
         }

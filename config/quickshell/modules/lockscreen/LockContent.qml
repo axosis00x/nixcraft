@@ -1,5 +1,4 @@
 import Quickshell
-import Quickshell.Widgets
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
@@ -290,33 +289,12 @@ Item {
         spacing: 10
         opacity: field.opacity
 
-        ClippingRectangle {
+        Avatar {
             anchors.horizontalCenter: parent.horizontalCenter
             width: 72
             height: 72
-            radius: width / 2
             color: Qt.rgba(1, 1, 1, 0.12)
-
-            // Initial if the picture is missing.
-            Text {
-                anchors.centerIn: parent
-                visible: avatar.status !== Image.Ready
-                text: (Quickshell.env("USER") || "?").charAt(0).toUpperCase()
-                color: Palette.Theme.textPrimary
-                font.family: Palette.Theme.fontSans
-                font.pixelSize: 28
-                font.weight: Font.DemiBold
-            }
-
-            Image {
-                id: avatar
-                anchors.fill: parent
-                source: "file://" + Quickshell.env("HOME") + "/Pictures/misc/pfp.png"
-                sourceSize: Qt.size(144, 144)
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                smooth: true
-            }
+            initialSize: 28
         }
 
         Text {

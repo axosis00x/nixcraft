@@ -393,6 +393,10 @@ FloatingWindow {
             page = spec.page;
             return;
         }
+        if (spec.act === "pfp" || spec.act === "pfpreset") {
+            Quickshell.execDetached([Quickshell.env("HOME") + "/.config/quickshell/scripts/pfp.sh", spec.act === "pfp" ? "pick" : "reset"]);
+            return;
+        }
         var c = controlCenter;
         if (spec.act === "clearnotifs" && c)
             c.clearAllNotifications();
@@ -594,6 +598,13 @@ FloatingWindow {
             ],
             "about": [
                 {
+                    title: "Profile",
+                    rows: [
+                        { kind: "nav", act: "pfp", icon: "account_circle", title: "Profile picture", subtitle: "Shown here, on the lock screen and at login" },
+                        { kind: "nav", act: "pfpreset", icon: "restart_alt", title: "Use the default picture" }
+                    ]
+                },
+                {
                     title: "Device",
                     rows: [
                         { kind: "info", key: "host", icon: "", title: "Device name" },
@@ -675,19 +686,43 @@ FloatingWindow {
                     Layout.leftMargin: 6
                     spacing: 10
 
-                    Rectangle {
+                    // Click to choose a new picture (scripts/pfp.sh).
+                    Avatar {
                         Layout.preferredWidth: 34
                         Layout.preferredHeight: 34
-                        radius: 17
-                        color: Palette.Theme.surfaceContainerHigh
-                        clip: true
 
-                        Image {
+                        scale: avatarMouse.pressed ? 0.9 : 1
+                        Behavior on scale {
+                            SpatialMotion {
+                                fast: true
+                                bouncy: true
+                            }
+                        }
+
+                        Rectangle {
                             anchors.fill: parent
-                            source: "file://" + Quickshell.env("HOME") + "/Pictures/misc/pfp.png"
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            smooth: true
+                            color: Qt.rgba(0, 0, 0, 0.45)
+                            opacity: avatarMouse.containsMouse ? 1 : 0
+
+                            Behavior on opacity {
+                                EffectMotion {}
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "edit"
+                                color: "white"
+                                font.family: Palette.Theme.fontIcons
+                                font.pixelSize: Palette.Theme.iconSizeSmall
+                            }
+                        }
+
+                        MouseArea {
+                            id: avatarMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.activate({ act: "pfp" })
                         }
                     }
 

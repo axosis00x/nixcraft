@@ -48,6 +48,13 @@
       efi.efiSysMountPoint = settings.boot.efiMount;
     };
 
+    # Running inside a VM: share the clipboard and resize with the host's
+    # viewer (SPICE agent; Hyprland starts its session half, see
+    # hypr/modules/autostarts.lua) and let the host shut it down cleanly.
+    services.spice-vdagentd.enable = settings.vm or false;
+    services.qemuGuest.enable = settings.vm or false;
+    environment.systemPackages = lib.optional (settings.vm or false) pkgs.spice-vdagent;
+
     networking.hostName = settings.hostname;
     networking.networkmanager.enable = true;
     time.timeZone = settings.timezone;

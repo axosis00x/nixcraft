@@ -82,6 +82,8 @@ to keep one):
 | Full name      | that user's full name (or the username)                 |
 | Hostname       | the current hostname                                    |
 | Timezone       | the system timezone; type part of a city to search      |
+| Git name       | your existing git name, else the username               |
+| Git email      | your existing git email; blank sets it later            |
 | NVIDIA Optimus | **yes** only if both Intel and NVIDIA GPUs are detected |
 | DataSSD drive  | only offered on the original machine                    |
 | Features       | a checklist; type numbers to toggle, Enter to accept    |
@@ -106,7 +108,10 @@ Then it:
 3. writes `hosts/<hostname>/settings.nix`, keeping your install's
    `stateVersion`;
 4. stages everything with `git add -A` (flakes ignore untracked files);
-5. shows a summary and, once you confirm, runs
+5. optionally sets up GitHub over SSH: reuses or creates `~/.ssh/id_ed25519`,
+   shows the public key to add at <https://github.com/settings/ssh/new>, and
+   checks the connection;
+6. shows a summary and, once you confirm, runs
    `nixos-rebuild switch` for you.
 
 Options:
@@ -135,8 +140,9 @@ and nixcraft only takes over managing it.
 
 Pick Hyprland at the login screen. A few things to do once:
 
-- **Git identity:** `modules/user/git/default.nix` holds the original author's
-  name and email. Change them to yours.
+- **Machine-only extras** (extra SSH keys, a second GitHub account, aliases)
+  go in an optional `hosts/<hostname>/home.nix`, a Home Manager module that
+  only that machine imports. See `hosts/oneiros/home.nix`.
 - **Wallpapers** are read from `~/Pictures/wallpapers/<theme>/`, outside the
   repo. Add a folder per theme you use.
 - **Tmux plugins** are ignored by Git. Install them in tmux with `prefix`, then `I`.

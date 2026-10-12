@@ -160,7 +160,7 @@ command -v git >/dev/null || die "git is missing. Try: nix-shell -p git pciutils
 
 repo=$(cd "$(dirname "$0")" && pwd)
 cd "$repo"
-[[ -f flake.nix && -d hosts/oneiros ]] || die "Run this from the nixcraft repository."
+[[ -f flake.nix && -d hosts && -d modules/host ]] || die "Run this from the nixcraft repository."
 
 banner
 
@@ -182,6 +182,20 @@ host_dir="hosts/$hostname"
 settings_file="$host_dir/settings.nix"
 [[ -f $settings_file ]] && info "Found $settings_file; its values are the defaults."
 pick_timezone
+
+# Git commit identity: this machine's previous answer, else whatever git
+# already has, else the username. Leave the email blank to set it later.
+default_git_name=$(current name)
+default_git_email=$(current email)
+[[ -n $default_git_name ]] || default_git_name=$(git config --global user.name 2>/dev/null || true)
+[[ -n $default_git_email ]] || default_git_email=$(git config --global user.email 2>/dev/null || true)
+ask git_name "   Git name:" "${default_git_name:-$username}"
+while true; do
+    ask git_email "   Git email (GitHub: Settings → Emails; blank = later):" "$default_git_email"
+    [[ -z $git_email || $git_email =~ ^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$ ]] && break
+    $assume_yes && die "Invalid git email: $git_email"
+    warn "That doesn't look like an email address."
+done
 
 if getent passwd "$username" >/dev/null; then
     info "User '$username' exists; it keeps its password, home and files."
@@ -224,6 +238,14 @@ else
     printf '%s   Legacy BIOS firmware: GRUB.%s\n' "$dim" "$reset"
     ask grub_device "   Disk to install GRUB on:" "/dev/${root_disk:-sda}"
     [[ -b $grub_device ]] || warn "$grub_device isn't a block device; check it."
+fi
+
+# Inside a VM, turn on the guest agents (clipboard sharing with the host).
+vm=false
+virt=$(systemd-detect-virt --vm 2>/dev/null || true)
+if [[ -n $virt && $virt != none ]]; then
+    vm=true
+    printf '%s   Running in a virtual machine (%s): guest clipboard agent on.%s\n' "$dim" "$virt" "$reset"
 fi
 
 # ── 3. optional features ────────────────────────────────────────────────────
@@ -372,6 +394,12 @@ write_file "$settings_file" <<EOF
   username = "$username";
   fullName = "$full_name";
 
+  # Git commit identity (an empty string leaves it unset).
+  git = {
+    name = "$git_name";
+    email = "$git_email";
+  };
+
   # The hostname is this folder's name (hosts/<hostname>), also used as
   # the flake output: nixos-rebuild switch --flake ~/nixcraft#<hostname>
   timezone = "$timezone";
@@ -392,6 +420,8 @@ write_file "$settings_file" <<EOF
   nvidiaOptimus = $nvidia;
   # Extra ext4 drive mounted by UUID at ~/DataSSD: modules/system/storage
   dataDrive = $data_drive;
+  # Running inside a virtual machine (enables the guest clipboard agent).
+  vm = $vm;
 
   # Optional parts; the desktop itself (Hyprland, shell, fonts, theming,
   # screenshots, login screen) is always installed.
@@ -409,16 +439,64 @@ EOF
 info "Staging files for the flake"
 run git add -A
 
-if grep -q 'axosis00x' modules/user/git/default.nix 2>/dev/null && [[ $username != axosis00x ]]; then
-    warn "modules/user/git/default.nix has the original author's git name/email; change it to yours."
+[[ -n $git_email ]] || warn "No git email set; add it to $settings_file later (git.email)."
+
+# ── 5. GitHub over SSH ──────────────────────────────────────────────────────
+# Optional: a key for pushing to GitHub. ssh picks up ~/.ssh/id_ed25519 on
+# its own and the agent (modules/user/git) remembers it, so no ssh config is
+# needed. Skipped with --yes: someone has to paste the key into GitHub.
+printf '\n%s5. GitHub over SSH%s\n' "$bold" "$reset"
+ssh_status=skipped
+key="$HOME/.ssh/id_ed25519"
+if $assume_yes; then
+    printf '%s   Skipped with --yes; run ./install.sh again to set it up.%s\n' "$dim" "$reset"
+elif confirm "   Set up an SSH key for pushing to GitHub?" y; then
+    if [[ -f $key.pub ]]; then
+        info "Using your existing key, $key"
+    else
+        info "Creating $key (a passphrase is optional; Enter for none)"
+        run mkdir -p -m 700 "$HOME/.ssh"
+        run ssh-keygen -t ed25519 -C "${git_email:-$username@$hostname}" -f "$key"
+    fi
+
+    if $demo; then
+        run wl-copy '<' "$key.pub"
+        printf '%s[demo]%s would ask you to add it at https://github.com/settings/ssh/new, then test it with: ssh -T git@github.com\n' "$cyan" "$reset"
+    else
+        printf '\n   Your public key:\n\n   %s%s%s\n\n' "$green" "$(cat "$key.pub")" "$reset"
+        if command -v wl-copy >/dev/null && [[ -n ${WAYLAND_DISPLAY:-} ]] && wl-copy <"$key.pub" 2>/dev/null; then
+            info "Copied it to the clipboard."
+        fi
+        printf '   Add it on GitHub: %shttps://github.com/settings/ssh/new%s\n' "$cyan" "$reset"
+        printf '   %s(title: anything, e.g. %s; key type: Authentication Key)%s\n' "$dim" "$hostname" "$reset"
+        read -r -p "   Press Enter once it's added (or type s to skip the check) " reply
+        if [[ $reply != s ]]; then
+            # GitHub answers "Hi <user>! You've successfully authenticated…"
+            # and exits 1 (no shell access), so judge by the message.
+            reply=$(ssh -T -o StrictHostKeyChecking=accept-new -o BatchMode=yes git@github.com 2>&1 || true)
+            if [[ $reply == *"successfully authenticated"* ]]; then
+                info "GitHub says: ${reply%%!*}!"
+                ssh_status=connected
+            else
+                warn "GitHub didn't accept the key yet: ${reply:-no answer}"
+                warn "Check it's added, then test with: ssh -T git@github.com"
+                ssh_status="key ready, not verified"
+            fi
+        else
+            ssh_status="key ready"
+        fi
+    fi
 fi
 
-# ── 5. build ────────────────────────────────────────────────────────────────
+# ── 6. build ────────────────────────────────────────────────────────────────
 on_off() { [[ $1 == true ]] && printf '%son%s' "$green" "$reset" || printf '%soff%s' "$dim" "$reset"; }
 printf '\n%sSummary%s\n' "$bold" "$reset"
 printf '   user            %s (%s)\n   host            %s\n   timezone        %s\n' "$username" "$full_name" "$hostname" "$timezone"
+printf '   git             %s <%s>\n' "$git_name" "${git_email:-not set}"
+printf '   github ssh      %s\n' "$ssh_status"
 printf '   boot loader     %s\n' "$boot_loader${grub_device:+ on $grub_device}"
 printf '   nvidia optimus  %s\n   data drive      %s\n' "$(on_off $nvidia)" "$(on_off $data_drive)"
+printf '   virtual machine %s\n' "$(on_off $vm)"
 for key in "${feature_keys[@]}"; do
     printf '   %-15s %s\n' "$key" "$(on_off "${feature[$key]}")"
 done

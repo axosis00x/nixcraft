@@ -1,7 +1,12 @@
 # Shared by every machine in hosts/: the system configuration plus a Home
 # Manager user for each entry in systemSettings.users. A host folder only
 # adds its settings.nix and hardware-configuration.nix (see flake.nix).
-{ config, ... }:
+{ config, settings, ... }:
+
+let
+  # Optional per-machine Home Manager extras (hosts/<hostname>/home.nix).
+  hostHome = ../../hosts + "/${settings.hostname}/home.nix";
+in
 
 {
   imports = [
@@ -16,7 +21,8 @@
           imports = [
             ./home.nix
             ../user
-          ];
+          ]
+          ++ (if builtins.pathExists hostHome then [ hostHome ] else [ ]);
           home.username = user;
           home.homeDirectory = "/home/${user}";
         };

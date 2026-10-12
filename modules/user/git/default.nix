@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  settings,
+  ...
+}:
 
 let
   cfg = config.userSettings.git;
@@ -17,19 +22,6 @@ in
         "*" = {
           AddKeysToAgent = "yes";
         };
-        "github.com" = {
-          Hostname = "github.com";
-          User = "git";
-          IdentityFile = "~/.ssh/github";
-          IdentitiesOnly = true;
-        };
-        # Second account (dikchya355): use git@github-dikchya:owner/repo.git.
-        "github-dikchya" = {
-          Hostname = "github.com";
-          User = "git";
-          IdentityFile = "~/.ssh/github-dikchya";
-          IdentitiesOnly = true;
-        };
       };
     };
 
@@ -38,8 +30,12 @@ in
       enable = true;
 
       settings = {
-        user.name = "axosis00x";
-        user.email = "130370071+axosis00x@users.noreply.github.com";
+        # Commit identity for this machine (hosts/<hostname>/settings.nix,
+        # asked by install.sh). Left unset when empty, so git prompts.
+        user = lib.filterAttrs (_: v: v != "") {
+          name = settings.git.name or "";
+          email = settings.git.email or "";
+        };
         init.defaultBranch = "main";
 
         pull.rebase = true;
@@ -47,7 +43,8 @@ in
 
         fetch.prune = true;
 
-        core.editor = "zeditor";
+        # Zed comes with the coding feature; nano is always there.
+        core.editor = if settings.features.coding then "zeditor" else "nano";
 
         color.ui = "auto";
 
@@ -57,33 +54,9 @@ in
           co = "checkout";
           br = "branch";
           cm = "commit";
-
-          # Switch the current repo between accounts: sets the commit
-          # identity and points origin at that account's SSH host.
-          as-dikchya = "!git config user.name dikchya355 && git config user.email 189239361+dikchya355@users.noreply.github.com && git remote set-url origin \"$(git remote get-url origin | sed -E 's#git@github(-dikchya)?(\\.com)?:#git@github-dikchya:#')\" && git whoami";
-          as-axosis = "!git config --unset user.name; git config --unset user.email; git remote set-url origin \"$(git remote get-url origin | sed -E 's#git@github(-dikchya)?(\\.com)?:#git@github.com:#')\" && git whoami";
           whoami = "!echo \"$(git config user.name) <$(git config user.email)> -> $(git remote get-url origin 2>/dev/null)\"";
         };
       };
-
-      # Repos under ~/Projects/thirdparty/dikchya commit as dikchya355 and
-      # push with dikchya's SSH key (github.com URLs are rewritten to the
-      # github-dikchya host), however they were cloned.
-      includes = [
-        {
-          condition = "gitdir:~/Projects/thirdparty/dikchya/";
-          contents = {
-            user = {
-              name = "dikchya355";
-              email = "189239361+dikchya355@users.noreply.github.com";
-            };
-            url."git@github-dikchya:".insteadOf = [
-              "git@github.com:"
-              "https://github.com/"
-            ];
-          };
-        }
-      ];
     };
   };
 }

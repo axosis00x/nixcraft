@@ -7,6 +7,12 @@
   username = "axosis00x";
   fullName = "axosis incon";
 
+  # Git commit identity (an empty string leaves it unset).
+  git = {
+    name = "axosis00x";
+    email = "130370071+axosis00x@users.noreply.github.com";
+  };
+
   # The hostname is this folder's name (hosts/<hostname>), also used as
   # the flake output: nixos-rebuild switch --flake ~/nixcraft#<hostname>
   timezone = "Asia/Kathmandu";
@@ -27,6 +33,8 @@
   nvidiaOptimus = true;
   # Extra ext4 drive mounted by UUID at ~/DataSSD: modules/system/storage
   dataDrive = true;
+  # Running inside a virtual machine (enables the guest clipboard agent).
+  vm = false;
 
   # Optional parts; the desktop itself (Hyprland, shell, fonts, theming,
   # screenshots, login screen) is always installed.

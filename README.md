@@ -86,7 +86,7 @@ to keep one):
 | Git email      | your existing git email; blank sets it later            |
 | NVIDIA Optimus | **yes** only if both Intel and NVIDIA GPUs are detected |
 | DataSSD drive  | only offered on the original machine                    |
-| Features       | a checklist; type numbers to toggle, Enter to accept    |
+| Features       | a checklist; arrow keys move, Space toggles, Enter OK   |
 
 The optional features are listed below. The desktop itself (Hyprland, the
 shell, fonts, theming, screenshots and the login screen) is always installed.
@@ -102,7 +102,9 @@ shell, fonts, theming, screenshots and the login screen) is always installed.
 Then it:
 
 1. detects the boot mode: UEFI gets systemd-boot; legacy BIOS gets GRUB,
-   after asking which disk to put it on;
+   after asking which disk to put it on. It also detects a virtual machine
+   and sets `vm = true`, which adds the SPICE and QEMU guest agents
+   (clipboard sharing with the host, auto-resize, clean shutdown);
 2. creates `hosts/<hostname>/` with this machine's
    `hardware-configuration.nix`;
 3. writes `hosts/<hostname>/settings.nix`, keeping your install's

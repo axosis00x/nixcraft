@@ -16,7 +16,7 @@ hl.config({
 	general = {
 		gaps_in = 1,
 		gaps_out = 4,
-		border_size = 1,
+		border_size = 0,
 		["col.active_border"] = theme.outline,
 		["col.inactive_border"] = theme.outline_variant,
 		resize_on_border = true,

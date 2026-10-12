@@ -49,6 +49,7 @@ hl.gesture({
     direction = "horizontal",
     action = "workspace",
     workspace_swipe_forever = true,
+    workspace_swipe_distance = 300,
 })
 
 hl.device({

@@ -11,5 +11,5 @@ const listPanelWidth = 440
 // Width of the vertical bar's solid strip (when active — see
 // services/BarLayoutService.qml, which owns the live-toggleable, persisted
 // top/left choice).
-const barThickness = 44
+const barThickness = 40
 

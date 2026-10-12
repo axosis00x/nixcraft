@@ -7,6 +7,8 @@
 #   ./install.sh --yes         accept every default without asking
 #   ./install.sh --no-switch   write the config but don't build
 #   ./install.sh --demo        walk through everything, change nothing
+# ask() assigns its variable by name (printf -v), which shellcheck cannot see.
+# shellcheck disable=SC2154
 set -euo pipefail
 
 assume_yes=false
@@ -18,7 +20,7 @@ for arg in "$@"; do
         --no-switch) do_switch=false ;;
         --demo | --dry-run) demo=true ;;
         -h | --help)
-            sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'
+            sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'
             exit 0
             ;;
         *)
@@ -378,6 +380,8 @@ if [[ ! -f $host_dir/hardware-configuration.nix ]] || confirm "Regenerate $host_
     if $demo; then
         run sudo nixos-generate-config --show-hardware-config '>' "$host_dir/hardware-configuration.nix"
     else
+        # The redirect runs as the user on purpose: the file belongs in their repo.
+        # shellcheck disable=SC2024
         sudo nixos-generate-config --show-hardware-config >"$host_dir/hardware-configuration.nix.new"
         mv "$host_dir/hardware-configuration.nix.new" "$host_dir/hardware-configuration.nix"
     fi

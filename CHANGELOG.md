@@ -5,6 +5,26 @@ All notable changes to nixcraft are recorded here. Versions follow
 `scripts/release.sh` from the [Conventional Commits](https://www.conventionalcommits.org)
 since the previous release.
 
+## [0.1.0-pre-alpha.2] - 2026-10-12
+
+### Features
+
+- **overlay:** crossfade panels when switching between them (f0a33c3)
+
+### Fixes
+
+- **release:** push the tag on its own and allow publishing a tag by hand (8609c38)
+- **bootstrap:** hide nix download log before the installer (74dfdec)
+- **release:** cover the full cycle in stable notes and validate --phase (043061e)
+
+### Refactors
+
+- move bootstrap and release scripts into scripts/ (36b7799)
+
+### Chores
+
+- **wayclick:** remove unused Arch setup script (1564d6f)
+
 ## [0.1.0-pre-alpha.1] - 2026-10-12
 
 First tagged release.

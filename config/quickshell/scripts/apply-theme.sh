@@ -1,6 +1,23 @@
 #!/usr/bin/env bash
 # Apply one of ~/.config/themes/* without relying on a launcher frontend.
+#
+#   apply-theme.sh THEME [WALLPAPER]
+#   apply-theme.sh --init [THEME]   only if no theme is applied yet (a fresh
+#                                   install): point each app at THEME (ryo by
+#                                   default), no wallpaper, reloads or notices.
+#                                   Home Manager runs this on every switch.
+#
+# Which theme is active lives in files git ignores (hypr/theme.lua,
+# kitty/theme.conf, tmux/theme.conf, nvim/theme_name.txt, the yazi flavor),
+# so switching themes never shows up as a change to commit.
 set -uo pipefail
+
+init=false
+if [ "${1:-}" = "--init" ]; then
+    [ -f "$HOME/.config/hypr/theme.lua" ] && exit 0
+    init=true
+    set -- "${2:-ryo}"
+fi
 
 theme_name=${1:?usage: apply-theme.sh THEME [WALLPAPER]}
 wallpaper_override=${2:-}
@@ -16,7 +33,9 @@ case "$theme_name" in
 esac
 
 wallpaper_base="$HOME/Pictures/wallpapers"
-if [ -n "$wallpaper_override" ] && [ -f "$wallpaper_override" ]; then
+if $init; then
+    wallpaper=""
+elif [ -n "$wallpaper_override" ] && [ -f "$wallpaper_override" ]; then
     wallpaper="$wallpaper_override"
 else
     wallpaper=$(find "$wallpaper_base/$theme_name" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) 2>/dev/null | shuf -n 1 || true)
@@ -53,7 +72,7 @@ fi
 # one of them must never prevent the terminal theme from changing.
 # Relative to ~/.config/kitty, so the tracked file works for any user.
 printf 'include ../themes/%s/kitty.conf\n' "$theme_name" >"$HOME/.config/kitty/theme.conf"
-pkill -USR1 -x kitty 2>/dev/null || true
+$init || pkill -USR1 -x kitty 2>/dev/null || true
 
 install_if_present() {
     local source=$1 destination=$2
@@ -62,8 +81,10 @@ install_if_present() {
     cp "$source" "$destination"
 }
 
-"$HOME/.config/quickshell/scripts/apply-gtk.sh" "$theme_dir" || true
-"$HOME/.config/quickshell/scripts/apply-qt.sh" "$theme_dir" || true
+if ! $init; then
+    "$HOME/.config/quickshell/scripts/apply-gtk.sh" "$theme_dir" || true
+    "$HOME/.config/quickshell/scripts/apply-qt.sh" "$theme_dir" || true
+fi
 
 install_if_present "$theme_dir/tmux.conf" "$HOME/.config/tmux/theme.conf"
 install_if_present "$theme_dir/yazi-flavor.toml" "$HOME/.config/yazi/flavors/nixcraft.yazi/flavor.toml"
@@ -77,6 +98,9 @@ if [ -f "$theme_dir/neovim.lua" ]; then
     nvim_theme=$(sed -n 's/^return "\(.*\)"/\1/p' "$theme_dir/neovim.lua" | head -n1)
     [ -n "$nvim_theme" ] && printf '%s' "$nvim_theme" >"$HOME/.config/nvim/theme_name.txt"
 fi
+
+# Everything below changes running apps; a first-time setup stops here.
+$init && exit 0
 
 case "$theme_name" in
 gruvbox) zed_theme="Gruvbox Dark" ;;

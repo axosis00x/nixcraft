@@ -1,4 +1,10 @@
-{ config, settings, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  settings,
+  ...
+}:
 
 {
   imports = [
@@ -30,4 +36,21 @@
     yazi.source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/yazi";
     zed.source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/zed";
   };
+
+  # Machine-local state that git doesn't track (see .gitignore): on a fresh
+  # install, point every app at the default theme and give HyprMod an empty
+  # file to write into. Does nothing once they exist.
+  home.activation.nixcraftState =
+    let
+      repo = settings.repoPath;
+    in
+    lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+      if [ -f ${repo}/config/quickshell/scripts/apply-theme.sh ]; then
+        run ${pkgs.bash}/bin/bash ${repo}/config/quickshell/scripts/apply-theme.sh --init ||
+          echo "nixcraft: couldn't set up the default theme" >&2
+        [ -e ${repo}/config/hypr/hyprland-gui.lua ] || run touch ${repo}/config/hypr/hyprland-gui.lua
+      else
+        echo "nixcraft: no repo at ${repo}; set repoPath in this host's settings.nix" >&2
+      fi
+    '';
 }

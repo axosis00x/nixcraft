@@ -1,6 +1,6 @@
 name: Release
 
-# ./release.sh pushes a vX.Y.Z or vX.Y.Z-PHASE.N tag; this publishes it as a GitHub release
+# scripts/release.sh pushes a vX.Y.Z or vX.Y.Z-PHASE.N tag; this publishes it as a GitHub release
 # whose notes are that version's CHANGELOG.md entry.
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          ./release.sh notes > notes.md
+          scripts/release.sh notes > notes.md
           # vX.Y.Z-PHASE.N (pre-alpha, alpha, beta, rc) is marked as a pre-release.
           prerelease=()
           [[ $GITHUB_REF_NAME == *-* ]] && prerelease=(--prerelease)

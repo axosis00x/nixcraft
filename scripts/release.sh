@@ -6,16 +6,17 @@
 # Versions are X.Y.Z while stable, or X.Y.Z-PHASE.N during a pre-release
 # phase, in order: pre-alpha, alpha, beta, rc, then stable.
 #
-#   ./release.sh                   next release in the current phase (0.1.0-alpha.1 → 0.1.0-alpha.2;
-#                                  when stable, bump from the commits: feat → minor, fix → patch, ! → major)
-#   ./release.sh minor             force major | minor | patch, or give X.Y.Z / X.Y.Z-PHASE.N
-#   ./release.sh --phase beta      move to a phase (0.1.0-alpha.3 → 0.1.0-beta.1; "stable" → 0.1.0)
-#   ./release.sh --dry-run         print the entry and version, change nothing
-#   ./release.sh --push            also push the commit and tag to origin
-#   ./release.sh notes [VERSION]   print a version's CHANGELOG.md entry (default: VERSION file)
+#   scripts/release.sh                 next release in the current phase (0.1.0-alpha.1 → 0.1.0-alpha.2;
+#                                      when stable, bump from the commits: feat → minor, fix → patch, ! → major)
+#   scripts/release.sh minor           force major | minor | patch, or give X.Y.Z / X.Y.Z-PHASE.N
+#   scripts/release.sh --phase beta    move to a phase (0.1.0-alpha.3 → 0.1.0-beta.1; "stable" → 0.1.0)
+#   scripts/release.sh --dry-run       print the entry and version, change nothing
+#   scripts/release.sh --push          also push the commit and tag to origin
+#   scripts/release.sh notes [VERSION] print a version's CHANGELOG.md entry (default: VERSION file)
 set -euo pipefail
 
-cd "$(dirname "$0")"
+# Work from the repo root, one level above scripts/.
+cd "$(dirname "$0")/.."
 
 phases=(pre-alpha alpha beta rc stable)
 

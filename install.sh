@@ -30,18 +30,47 @@ for arg in "$@"; do
     esac
 done
 
-bold=$'\033[1m' dim=$'\033[2m' green=$'\033[32m' yellow=$'\033[33m' red=$'\033[31m' cyan=$'\033[36m' reset=$'\033[0m'
-info() { printf '%s==>%s %s\n' "$green" "$reset" "$1"; }
-warn() { printf '%s!!%s  %s\n' "$yellow" "$reset" "$1"; }
+# Colors and in-place redraws only on a terminal (NO_COLOR turns colors off).
+tty=false
+[[ -t 1 ]] && tty=true
+if $tty && [[ -z ${NO_COLOR:-} ]]; then
+    bold=$'\033[1m' dim=$'\033[2m' green=$'\033[32m' yellow=$'\033[33m' red=$'\033[31m'
+    cyan=$'\033[36m' accent=$'\033[38;5;75m' reset=$'\033[0m'
+else
+    bold='' dim='' green='' yellow='' red='' cyan='' accent='' reset=''
+fi
+
+# Everything sits on one 4-space indent under 2-space section headings:
+#   ✓ done   • working   ! warning   ✗ error   (dim) a note
+info() { printf '    %s•%s %s\n' "$accent" "$reset" "$1"; }
+ok() { printf '    %s✓%s %s\n' "$green" "$reset" "$1"; }
+warn() { printf '    %s!%s %s\n' "$yellow" "$reset" "$1"; }
+note() { printf '    %s%s%s\n' "$dim" "$1" "$reset"; }
 die() {
-    printf '%sxx%s  %s\n' "$red" "$reset" "$1" >&2
+    printf '\n    %s✗ %s%s\n' "$red" "$1" "$reset" >&2
     exit 1
 }
+
+# section "Title": a numbered heading ("2/5  Hardware") over a thin rule;
+# heading "Title" is the same without the number.
+steps=5
+step=0
+rule=$(printf '─%.0s' {1..56})
+heading() { printf '\n  %s%s%s\n  %s%s%s\n' "$bold" "$1" "$reset" "$dim" "$rule" "$reset"; }
+section() {
+    step=$((step + 1))
+    printf '\n  %s%s%d/%d%s  %s%s%s\n  %s%s%s\n' "$bold" "$accent" "$step" "$steps" "$reset" "$bold" "$1" "$reset" "$dim" "$rule" "$reset"
+}
+
+# An answered prompt, left on screen as an aligned "Label  value" row.
+answered() { printf '    %-14s %s%s%s\n' "$1" "$accent" "${2:-—}" "$reset"; }
+# Clears the prompt line just answered, so answered() can redraw it.
+clear_prompt() { if $tty; then printf '\033[1A\033[2K'; fi; }
 
 # In demo mode every change is printed instead of made.
 run() {
     if $demo; then
-        printf '%s[demo]%s would run: %s\n' "$cyan" "$reset" "$*"
+        printf '    %sdemo%s %swould run%s %s\n' "$cyan" "$reset" "$dim" "$reset" "$*"
     else
         "$@"
     fi
@@ -52,37 +81,44 @@ write_file() {
     local path=$1 content
     content=$(cat)
     if $demo; then
-        printf '%s[demo]%s would write %s:\n' "$cyan" "$reset" "$path"
-        printf '%s\n' "$content" | sed "s/^/${dim}    │${reset} /"
+        printf '    %sdemo%s %swould write%s %s\n' "$cyan" "$reset" "$dim" "$reset" "$path"
+        printf '%s\n' "$content" | sed "s/^/      ${dim}│${reset} /"
     else
         printf '%s\n' "$content" >"$path"
     fi
 }
 
-# ask VAR "Question" default
+# ask VAR "Label" default: one aligned prompt row; Enter keeps the default.
 ask() {
-    local __var=$1 question=$2 default=$3 reply
+    local __var=$1 label=$2 default=$3 reply
     if $assume_yes; then
         reply=$default
-        printf '%s %s%s%s\n' "$question" "$dim" "$reply" "$reset"
     else
-        read -r -p "$question ${dim}[$default]${reset} " reply
+        read -r -p "$(printf '    %-14s %s%s%s %s›%s ' "$label" "$dim" "${default:-—}" "$reset" "$accent" "$reset")" reply
         reply=${reply:-$default}
+        clear_prompt
     fi
+    answered "$label" "$reply"
     printf -v "$__var" '%s' "$reply"
 }
 
-# confirm "Question" default(y/n)
+# confirm "Question?" default(y/n): answers show as a green yes or a dim no.
 confirm() {
-    local reply default=$2
+    local question=$1 default=$2 reply hint=y/N
+    [[ $default == y ]] && hint=Y/n
     if $assume_yes; then
-        printf '%s %s%s%s\n' "$1" "$dim" "$default" "$reset"
-        [[ $default == y ]]
-        return
+        reply=$default
+    else
+        read -r -p "$(printf '    %s %s%s%s %s›%s ' "$question" "$dim" "$hint" "$reset" "$accent" "$reset")" reply
+        reply=${reply:-$default}
+        clear_prompt
     fi
-    read -r -p "$1 ${dim}[$([[ $default == y ]] && echo Y/n || echo y/N)]${reset} " reply
-    reply=${reply:-$default}
-    [[ $reply =~ ^[Yy] ]]
+    if [[ $reply =~ ^[Yy] ]]; then
+        printf '    %s %syes%s\n' "$question" "$green" "$reset"
+    else
+        printf '    %s %sno%s\n' "$question" "$dim" "$reset"
+        return 1
+    fi
 }
 
 # Reads a value from this machine's existing settings (hosts/<hostname>/
@@ -103,14 +139,16 @@ pick_timezone() {
     zones=$(timedatectl list-timezones 2>/dev/null || (cd /etc/zoneinfo 2>/dev/null && find . -type f | sed 's#^\./##' | sort))
     if $assume_yes; then
         timezone=$default
-        printf '   Timezone: %s%s%s\n' "$dim" "$timezone" "$reset"
+        answered Timezone "$timezone"
         return
     fi
     while true; do
-        read -r -p "   Timezone (type to search): ${dim}[$default]${reset} " reply
+        read -r -p "$(printf '    %-14s %s%s%s %s›%s ' Timezone "$dim" "$default" "$reset" "$accent" "$reset")" reply
         reply=${reply:-$default}
         if grep -qxF "$reply" <<<"$zones"; then
             timezone=$reply
+            clear_prompt
+            answered Timezone "$timezone"
             return
         fi
         mapfile -t matches < <(grep -iF "$reply" <<<"$zones" | head -20)
@@ -118,15 +156,17 @@ pick_timezone() {
             warn "No timezone matches '$reply'. Try a city or region, e.g. london, tokyo, america/."
         elif ((${#matches[@]} == 1)); then
             timezone=${matches[0]}
-            printf '   %s→ %s%s\n' "$dim" "$timezone" "$reset"
+            clear_prompt
+            answered Timezone "$timezone"
             return
         else
             for i in "${!matches[@]}"; do
-                printf '     %2d. %s\n' "$((i + 1))" "${matches[$i]}"
+                printf '      %s%2d%s  %s\n' "$accent" "$((i + 1))" "$reset" "${matches[$i]}"
             done
-            read -r -p "   Pick a number (Enter to search again): " choice
+            read -r -p "$(printf '    %sPick a number (Enter to search again)%s %s›%s ' "$dim" "$reset" "$accent" "$reset")" choice
             if [[ $choice =~ ^[0-9]+$ ]] && ((choice >= 1 && choice <= ${#matches[@]})); then
                 timezone=${matches[$((choice - 1))]}
+                answered Timezone "$timezone"
                 return
             fi
         fi
@@ -146,11 +186,16 @@ banner() {
 BANNER
     echo
     for i in "${!rows[@]}"; do
-        printf '   \033[1;38;5;%sm%s%s\n' "${shades[$i]}" "${rows[$i]}" "$reset"
+        if [[ -n $reset ]]; then
+            printf '  \033[1;38;5;%sm%s%s\n' "${shades[$i]}" "${rows[$i]}" "$reset"
+        else
+            printf '  %s\n' "${rows[$i]}"
+        fi
     done
-    printf '   %sby%s %saxosis00x%s\n\n' "$dim" "$reset" $'\033[38;5;75m' "$reset"
-    $demo && printf '   %sdemo: nothing will be changed%s\n\n' "$cyan" "$reset"
-    printf '   %sAdapts nixcraft to this machine, then builds it.%s\n\n' "$dim" "$reset"
+    printf '  %sby%s %saxosis00x%s\n\n' "$dim" "$reset" "$accent" "$reset"
+    printf '  %sAdapts nixcraft to this machine, then builds it.%s\n' "$dim" "$reset"
+    $demo && printf '  %s● demo%s %snothing will be changed%s\n' "$cyan" "$reset" "$dim" "$reset"
+    return 0
 }
 
 # ── preflight ───────────────────────────────────────────────────────────────
@@ -167,22 +212,22 @@ cd "$repo"
 banner
 
 # ── 1. who and where ────────────────────────────────────────────────────────
-printf '%s1. User and machine%s\n' "$bold" "$reset"
-printf '%s   Already set these up while installing NixOS? Just press Enter to keep them.%s\n' "$dim" "$reset"
+section "User and machine"
+note "Already set these up while installing NixOS? Press Enter to keep them."
 default_tz=$(timedatectl show -p Timezone --value 2>/dev/null || true)
 
-ask username "   Username:" "$USER"
+ask username "Username" "$USER"
 # The full-name default follows the username just entered: that account's
 # own name if it exists, otherwise the username itself.
 default_name=$(getent passwd "$username" | cut -d: -f5 | cut -d, -f1 || true)
-ask full_name "   Full name:" "${default_name:-$username}"
-ask hostname "   Hostname:" "$(hostname)"
+ask full_name "Full name" "${default_name:-$username}"
+ask hostname "Hostname" "$(hostname)"
 
 [[ $username =~ ^[a-z_][a-z0-9_-]*$ ]] || die "Invalid username: $username"
 [[ $hostname =~ ^[A-Za-z0-9][A-Za-z0-9-]*$ ]] || die "Invalid hostname: $hostname"
 host_dir="hosts/$hostname"
 settings_file="$host_dir/settings.nix"
-[[ -f $settings_file ]] && info "Found $settings_file; its values are the defaults."
+[[ -f $settings_file ]] && ok "Found $settings_file; its values are the defaults."
 pick_timezone
 
 # Git commit identity: this machine's previous answer, else whatever git
@@ -191,38 +236,39 @@ default_git_name=$(current name)
 default_git_email=$(current email)
 [[ -n $default_git_name ]] || default_git_name=$(git config --global user.name 2>/dev/null || true)
 [[ -n $default_git_email ]] || default_git_email=$(git config --global user.email 2>/dev/null || true)
-ask git_name "   Git name:" "${default_git_name:-$username}"
+ask git_name "Git name" "${default_git_name:-$username}"
+$assume_yes || note "Your GitHub address is under GitHub → Settings → Emails; blank sets it later."
 while true; do
-    ask git_email "   Git email (GitHub: Settings → Emails; blank = later):" "$default_git_email"
+    ask git_email "Git email" "$default_git_email"
     [[ -z $git_email || $git_email =~ ^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$ ]] && break
     $assume_yes && die "Invalid git email: $git_email"
     warn "That doesn't look like an email address."
 done
 
 if getent passwd "$username" >/dev/null; then
-    info "User '$username' exists; it keeps its password, home and files."
+    ok "User '$username' exists; it keeps its password, home and files."
 else
     warn "User '$username' doesn't exist yet; NixOS creates it on switch (then: sudo passwd $username)."
 fi
 
 # ── 2. hardware ─────────────────────────────────────────────────────────────
-printf '\n%s2. Hardware%s\n' "$bold" "$reset"
+section "Hardware"
 # Hybrid Intel + NVIDIA graphics → offer the Optimus module.
 if command -v lspci >/dev/null && lspci | grep -qi 'vga.*nvidia\|3d.*nvidia' && lspci | grep -qi 'vga.*intel'; then
     default_nvidia=y
-    printf '%s   Detected Intel + NVIDIA graphics.%s\n' "$dim" "$reset"
+    note "Detected Intel + NVIDIA graphics."
 else
     default_nvidia=n
 fi
 nvidia=false
-confirm "   Enable NVIDIA Optimus (Intel + NVIDIA hybrid) graphics?" "$default_nvidia" && nvidia=true
+confirm "NVIDIA Optimus (Intel + NVIDIA hybrid) graphics?" "$default_nvidia" && nvidia=true
 
 # The data drive is mounted by a UUID that only exists on the original
 # machine; only offer it when that disk is actually present.
 data_drive=false
 data_uuid=$(grep -o 'by-uuid/[0-9a-f-]*' modules/system/storage/default.nix | cut -d/ -f2)
 if [[ -n $data_uuid && -e /dev/disk/by-uuid/$data_uuid ]]; then
-    confirm "   Mount the DataSSD drive at ~/DataSSD?" y && data_drive=true
+    confirm "Mount the DataSSD drive at ~/DataSSD?" y && data_drive=true
 fi
 
 # UEFI → systemd-boot on the EFI partition; legacy BIOS → GRUB on the disk
@@ -233,12 +279,12 @@ if [[ -d /sys/firmware/efi ]]; then
     boot_loader=systemd-boot
     efi_mount=$(findmnt -rno TARGET -t vfat 2>/dev/null | grep -m1 '^/boot' || true)
     efi_mount=${efi_mount:-/boot}
-    printf '%s   UEFI firmware: systemd-boot, EFI partition at %s.%s\n' "$dim" "$efi_mount" "$reset"
+    note "UEFI firmware: systemd-boot, EFI partition at $efi_mount."
 else
     boot_loader=grub
     root_disk=$(lsblk -no pkname "$(findmnt -no SOURCE /)" 2>/dev/null | head -1)
-    printf '%s   Legacy BIOS firmware: GRUB.%s\n' "$dim" "$reset"
-    ask grub_device "   Disk to install GRUB on:" "/dev/${root_disk:-sda}"
+    note "Legacy BIOS firmware: GRUB."
+    ask grub_device "GRUB disk" "/dev/${root_disk:-sda}"
     [[ -b $grub_device ]] || warn "$grub_device isn't a block device; check it."
 fi
 
@@ -247,12 +293,13 @@ vm=false
 virt=$(systemd-detect-virt --vm 2>/dev/null || true)
 if [[ -n $virt && $virt != none ]]; then
     vm=true
-    printf '%s   Running in a virtual machine (%s): guest clipboard agent on.%s\n' "$dim" "$virt" "$reset"
+    note "Running in a virtual machine ($virt): guest clipboard agent on."
 fi
 
 # ── 3. optional features ────────────────────────────────────────────────────
-printf '\n%s3. Optional features%s\n' "$bold" "$reset"
-printf '%s   The desktop itself (Hyprland, shell, fonts, theming, screenshots, login screen) is always installed.%s\n' "$dim" "$reset"
+section "Optional features"
+note "The desktop itself (Hyprland, shell, fonts, theming, screenshots, login screen)"
+note "is always installed."
 
 feature_keys=(virtualization games coding apps extras)
 feature_name=(Virtualization Games Coding Apps Extras)
@@ -276,13 +323,15 @@ draw_features() {
         key=${feature_keys[$i]}
         [[ ${feature[$key]} == true ]] && box="${green}◉${reset}" || box="${dim}○${reset}"
         if ((i == cursor)); then
-            pointer="${cyan}❯${reset}"
+            pointer="${accent}❯${reset}"
             name="${bold}${feature_name[$i]}${reset}"
         else
             pointer=" "
             name=${feature_name[$i]}
         fi
-        printf '\033[2K   %s %s %-16b %s%s%s\n' "$pointer" "$box" "$name" "$dim" "${feature_desc[$i]}" "$reset"
+        # \033[2K clears the line for in-place redraws (terminals only).
+        $tty && printf '\033[2K'
+        printf '    %s %s %-16b %s%s%s\n' "$pointer" "$box" "$name" "$dim" "${feature_desc[$i]}" "$reset"
     done
 }
 
@@ -294,7 +343,7 @@ select_features() {
     trap 'printf "\033[?25h"' EXIT
     while true; do
         draw_features "$cursor"
-        printf '\033[2K   %s↑↓ move · space toggle · a all · n none · enter confirm%s\n' "$dim" "$reset"
+        printf '\033[2K      %s↑↓ move · space toggle · a all · n none · enter confirm%s\n' "$dim" "$reset"
         IFS= read -rsn1 k
         if [[ $k == $'\033' ]]; then
             read -rsn2 -t 0.05 rest || true
@@ -325,7 +374,7 @@ select_features_by_number() {
     local picks p key
     draw_features -1
     while true; do
-        read -r -p "   Toggle by number (e.g. \"1 3\"), a = all, n = none, Enter = done: " picks
+        read -r -p "$(printf '    %sToggle by number ("1 3"), a all, n none, Enter done%s %s›%s ' "$dim" "$reset" "$accent" "$reset")" picks
         [[ -z $picks ]] && break
         for p in $picks; do
             case "$p" in
@@ -361,7 +410,7 @@ if [[ $repo != "/home/$username/nixcraft" ]]; then
 fi
 
 # ── 4. write the configuration ──────────────────────────────────────────────
-printf '\n%s4. Configuration%s\n' "$bold" "$reset"
+section "Configuration"
 # A new install keeps its own state version (never bump it later): the
 # existing host's, else the one /etc/nixos was installed with.
 state=$(current stateVersion)
@@ -375,7 +424,7 @@ else
     run mkdir -p "$host_dir"
 fi
 
-if [[ ! -f $host_dir/hardware-configuration.nix ]] || confirm "Regenerate $host_dir/hardware-configuration.nix?" n; then
+if [[ ! -f $host_dir/hardware-configuration.nix ]] || confirm "Regenerate hardware-configuration.nix?" n; then
     info "Generating $host_dir/hardware-configuration.nix"
     if $demo; then
         run sudo nixos-generate-config --show-hardware-config '>' "$host_dir/hardware-configuration.nix"
@@ -443,20 +492,21 @@ EOF
 info "Staging files for the flake"
 run git add -A
 
+ok "Configuration written"
 [[ -n $git_email ]] || warn "No git email set; add it to $settings_file later (git.email)."
 
 # ── 5. GitHub over SSH ──────────────────────────────────────────────────────
 # Optional: a key for pushing to GitHub. ssh picks up ~/.ssh/id_ed25519 on
 # its own and the agent (modules/user/git) remembers it, so no ssh config is
 # needed. Skipped with --yes: someone has to paste the key into GitHub.
-printf '\n%s5. GitHub over SSH%s\n' "$bold" "$reset"
+section "GitHub over SSH"
 ssh_status=skipped
 key="$HOME/.ssh/id_ed25519"
 if $assume_yes; then
-    printf '%s   Skipped with --yes; run ./install.sh again to set it up.%s\n' "$dim" "$reset"
-elif confirm "   Set up an SSH key for pushing to GitHub?" y; then
+    note "Skipped with --yes; run ./install.sh again to set it up."
+elif confirm "Set up an SSH key for pushing to GitHub?" y; then
     if [[ -f $key.pub ]]; then
-        info "Using your existing key, $key"
+        ok "Using your existing key, $key"
     else
         info "Creating $key (a passphrase is optional; Enter for none)"
         run mkdir -p -m 700 "$HOME/.ssh"
@@ -465,21 +515,21 @@ elif confirm "   Set up an SSH key for pushing to GitHub?" y; then
 
     if $demo; then
         run wl-copy '<' "$key.pub"
-        printf '%s[demo]%s would ask you to add it at https://github.com/settings/ssh/new, then test it with: ssh -T git@github.com\n' "$cyan" "$reset"
+        printf '    %sdemo%s %swould ask you to add it at%s https://github.com/settings/ssh/new\n' "$cyan" "$reset" "$dim" "$reset"
     else
-        printf '\n   Your public key:\n\n   %s%s%s\n\n' "$green" "$(cat "$key.pub")" "$reset"
+        printf '\n    Your public key:\n\n      %s%s%s\n\n' "$accent" "$(cat "$key.pub")" "$reset"
         if command -v wl-copy >/dev/null && [[ -n ${WAYLAND_DISPLAY:-} ]] && wl-copy <"$key.pub" 2>/dev/null; then
-            info "Copied it to the clipboard."
+            ok "Copied it to the clipboard."
         fi
-        printf '   Add it on GitHub: %shttps://github.com/settings/ssh/new%s\n' "$cyan" "$reset"
-        printf '   %s(title: anything, e.g. %s; key type: Authentication Key)%s\n' "$dim" "$hostname" "$reset"
-        read -r -p "   Press Enter once it's added (or type s to skip the check) " reply
+        printf '    Add it on GitHub: %shttps://github.com/settings/ssh/new%s\n' "$cyan" "$reset"
+        note "(title: anything, e.g. $hostname; key type: Authentication Key)"
+        read -r -p "$(printf '    Press Enter once it is added %s(s skips the check)%s %s›%s ' "$dim" "$reset" "$accent" "$reset")" reply
         if [[ $reply != s ]]; then
             # GitHub answers "Hi <user>! You've successfully authenticated…"
             # and exits 1 (no shell access), so judge by the message.
             reply=$(ssh -T -o StrictHostKeyChecking=accept-new -o BatchMode=yes git@github.com 2>&1 || true)
             if [[ $reply == *"successfully authenticated"* ]]; then
-                info "GitHub says: ${reply%%!*}!"
+                ok "GitHub says: ${reply%%!*}!"
                 ssh_status=connected
             else
                 warn "GitHub didn't accept the key yet: ${reply:-no answer}"
@@ -493,29 +543,41 @@ elif confirm "   Set up an SSH key for pushing to GitHub?" y; then
 fi
 
 # ── 6. build ────────────────────────────────────────────────────────────────
-on_off() { [[ $1 == true ]] && printf '%son%s' "$green" "$reset" || printf '%soff%s' "$dim" "$reset"; }
-printf '\n%sSummary%s\n' "$bold" "$reset"
-printf '   user            %s (%s)\n   host            %s\n   timezone        %s\n' "$username" "$full_name" "$hostname" "$timezone"
-printf '   git             %s <%s>\n' "$git_name" "${git_email:-not set}"
-printf '   github ssh      %s\n' "$ssh_status"
-printf '   boot loader     %s\n' "$boot_loader${grub_device:+ on $grub_device}"
-printf '   nvidia optimus  %s\n   data drive      %s\n' "$(on_off $nvidia)" "$(on_off $data_drive)"
-printf '   virtual machine %s\n' "$(on_off $vm)"
+# dot NAME true|false: a green ● for on, a dim ○ for off.
+dot() {
+    if [[ $2 == true ]]; then
+        printf '%s●%s %s  ' "$green" "$reset" "$1"
+    else
+        printf '%s○ %s%s  ' "$dim" "$1" "$reset"
+    fi
+}
+row() { printf '    %-14s %s\n' "$1" "$2"; }
+
+heading "Summary"
+row User "$username ${dim}($full_name)${reset}"
+row Host "$hostname"
+row Timezone "$timezone"
+row Git "$git_name ${dim}<${git_email:-not set}>${reset}"
+row "GitHub SSH" "$ssh_status"
+row "Boot loader" "$boot_loader${grub_device:+ on $grub_device}"
+row Hardware "$(dot "NVIDIA Optimus" "$nvidia")$(dot "data drive" "$data_drive")$(dot "VM guest" "$vm")"
+features_line=""
 for key in "${feature_keys[@]}"; do
-    printf '   %-15s %s\n' "$key" "$(on_off "${feature[$key]}")"
+    features_line+=$(dot "$key" "${feature[$key]}")
 done
+row Features "$features_line"
 echo
 
 rebuild=(sudo nixos-rebuild switch --flake "$repo#$hostname" --option experimental-features "nix-command flakes")
 
 if $demo; then
     run "${rebuild[@]}"
-    printf '\n%sDemo finished; nothing was changed.%s Run ./install.sh without --demo to do it for real.\n' "$cyan" "$reset"
+    printf '\n  %s✓ Demo finished; nothing was changed.%s %sRun ./install.sh without --demo to do it for real.%s\n\n' "$cyan" "$reset" "$dim" "$reset"
     exit 0
 fi
 
 if ! $do_switch; then
-    info "Prepared. Build with: sudo nixos-rebuild switch --flake $repo#$hostname"
+    ok "Prepared. Build with: sudo nixos-rebuild switch --flake $repo#$hostname"
     exit 0
 fi
 
@@ -524,15 +586,17 @@ confirm "Build and switch to it now?" y || {
     exit 0
 }
 
+heading "Build"
 info "Building (the first build downloads a lot; this can take a while)"
 # Flakes may not be enabled yet on a fresh install; this config enables them.
 "${rebuild[@]}"
 
-printf '\n%sDone.%s Next:\n' "$green" "$reset"
+printf '\n  %s%s✓ Done.%s Next:\n\n' "$bold" "$green" "$reset"
 cat <<EOF
-   1. Reboot (or log out) and pick Hyprland at the login screen.
-   2. Wallpapers live outside the repo: put images in ~/Pictures/wallpapers/<theme>/.
-   3. In tmux, install plugins with: prefix, then I.
-   4. Change features later by editing $settings_file (or re-running ./install.sh),
-      then: sudo nixos-rebuild switch --flake ~/nixcraft#$hostname
+    ${accent}1${reset}  Reboot (or log out) and pick Hyprland at the login screen.
+    ${accent}2${reset}  Wallpapers live outside the repo: put images in ~/Pictures/wallpapers/<theme>/.
+    ${accent}3${reset}  In tmux, install plugins with: prefix, then I.
+    ${accent}4${reset}  Change features later by editing $settings_file (or re-running ./install.sh),
+       then: ${dim}sudo nixos-rebuild switch --flake ~/nixcraft#$hostname${reset}
+
 EOF

@@ -10,15 +10,23 @@
 set -euo pipefail
 
 main() {
+    # Same markers as install.sh, colored only on a terminal.
+    local blue='' green='' red='' reset=''
+    if [[ -t 1 && -z ${NO_COLOR:-} ]]; then
+        blue=$'\033[38;5;75m' green=$'\033[32m' red=$'\033[31m' reset=$'\033[0m'
+    fi
+    say() { printf '    %s•%s %s\n' "$blue" "$reset" "$1"; }
+    fail() { printf '    %s✗ %s%s\n' "$red" "$1" "$reset" >&2; }
+
     local repo_url=${NIXCRAFT_REPO:-https://github.com/axosis00x/nixcraft}
     local dest=${NIXCRAFT_DIR:-$HOME/nixcraft}
 
     if [[ $EUID -eq 0 ]]; then
-        echo "Run this as your normal user, not root (it uses sudo where needed)." >&2
+        fail "Run this as your normal user, not root (it uses sudo where needed)."
         exit 1
     fi
     if [[ ! -e /etc/NIXOS ]]; then
-        echo "This installs a NixOS configuration; run it on NixOS." >&2
+        fail "This installs a NixOS configuration; run it on NixOS."
         exit 1
     fi
 
@@ -27,24 +35,25 @@ main() {
 
     # Fetch them once up front with Nix's per-path download log hidden, so
     # it doesn't bury the installer; the log is shown only if it fails.
-    echo "==> Getting git and pciutils from nixpkgs (the first run downloads them)"
+    echo
+    say "Getting git and pciutils from nixpkgs (the first run downloads them)"
     local log
     log=$(mktemp)
     if ! "${shell[@]}" true >"$log" 2>&1; then
         cat "$log" >&2
         rm -f "$log"
-        echo "Couldn't get git and pciutils from nixpkgs; check the network and retry." >&2
+        fail "Couldn't get git and pciutils from nixpkgs; check the network and retry."
         exit 1
     fi
     rm -f "$log"
 
     if [[ -d $dest/.git ]]; then
-        echo "==> Using the existing checkout at $dest (update it with: git -C $dest pull)"
+        printf '    %s✓%s Using the existing checkout at %s (update it with: git -C %s pull)\n' "$green" "$reset" "$dest" "$dest"
     elif [[ -e $dest ]]; then
-        echo "$dest exists but isn't a git checkout; move it aside and retry." >&2
+        fail "$dest exists but isn't a git checkout; move it aside and retry."
         exit 1
     else
-        echo "==> Cloning $repo_url to $dest"
+        say "Cloning $repo_url to $dest"
         "${shell[@]}" "git clone --quiet --depth 1 '$repo_url' '$dest'"
     fi
 

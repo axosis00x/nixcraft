@@ -636,7 +636,7 @@ PanelWindow {
 
         readonly property string activeCenterModule: bar.compact ? "compact" : bar.centerModules[bar.centerModuleIndex]
 
-        // "~" and the clock share this width so the notch doesn't resize
+        // "Desktop" and the clock share this width so the notch doesn't resize
         // when cycling between them — cava sizes itself independently, and
         // a real app title (which varies) grows/shrinks the notch too.
         readonly property real idleContentWidth: Math.max(desktopContent.implicitWidth, clockContent.implicitWidth)
@@ -705,7 +705,7 @@ PanelWindow {
             anchors.centerIn: parent
             spacing: 7
             // Only mounted once there's an actual app — no hidden icon
-            // sitting in the layout reserving space for the "~" case.
+            // sitting in the layout reserving space for the desktop case.
             visible: centerCapsule.activeCenterModule === "apps" && bar.appClass !== ""
             opacity: bar.centerMode === "normal" && centerCapsule.activeCenterModule === "apps" && bar.appClass !== "" ? 1 : 0
             Behavior on opacity {
@@ -733,20 +733,33 @@ PanelWindow {
             }
         }
 
-        Text {
+        // Nothing focused: a desktop icon and "Desktop", as on the vertical
+        // bar, laid out like the app row above so the two swap cleanly.
+        RowLayout {
             id: desktopContent
             anchors.centerIn: parent
-            text: "~"
-            color: Palette.Theme.textPrimary
-            font.family: Palette.Theme.fontMono
-            font.pixelSize: Palette.Theme.fontSizeSmall
-            font.weight: Font.DemiBold
-            // The only child on screen in this state — nothing else can
-            // push it off-center.
+            spacing: 7
             visible: centerCapsule.activeCenterModule === "apps" && bar.appClass === ""
             opacity: bar.centerMode === "normal" && centerCapsule.activeCenterModule === "apps" && bar.appClass === "" ? 1 : 0
             Behavior on opacity {
                 EffectMotion {}
+            }
+
+            Text {
+                text: "desktop_windows"
+                color: Palette.Theme.textMuted
+                font.family: Palette.Theme.fontIcons
+                font.pixelSize: 14
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            Text {
+                text: "Desktop"
+                color: Palette.Theme.textPrimary
+                font.family: Palette.Theme.fontMono
+                font.pixelSize: Palette.Theme.fontSizeSmall
+                font.weight: Font.DemiBold
+                Layout.alignment: Qt.AlignVCenter
             }
         }
 

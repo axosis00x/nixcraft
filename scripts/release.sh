@@ -268,8 +268,11 @@ git tag -a "$tag" -m "nixcraft $tag ($version_phase)"
 info "Committed and tagged $tag."
 
 if $push; then
-    git push --atomic origin HEAD "$tag"
+    # Two pushes: GitHub may not fire the tag's push event (and so the
+    # release workflow) when the tag rides along with a branch update.
+    git push origin HEAD
+    git push origin "$tag"
     info "Pushed; the release workflow will publish $tag."
 else
-    info "Push it with: ${bold}git push --atomic origin HEAD $tag${reset}"
+    info "Push it with: ${bold}git push origin HEAD && git push origin $tag${reset}"
 fi

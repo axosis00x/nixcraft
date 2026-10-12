@@ -5,20 +5,32 @@ name: Release
 on:
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+', 'v[0-9]+.[0-9]+.[0-9]+-*']
+  # Publish an already pushed tag by hand (Actions → Release → Run workflow),
+  # e.g. if its push didn't trigger this.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to publish, e.g. v0.1.0-pre-alpha.1
+        required: true
 
 permissions:
   contents: write
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
       - uses: cachix/install-nix-action@v31
       - name: Tag matches VERSION
         run: |
           version=$(tr -d '[:space:]' < VERSION)
-          [[ "v$version" == "$GITHUB_REF_NAME" ]] || { echo "::error::tag $GITHUB_REF_NAME but VERSION is $version"; exit 1; }
+          [[ "v$version" == "$TAG" ]] || { echo "::error::tag $TAG but VERSION is $version"; exit 1; }
       - name: Evaluate every nixosConfiguration
         run: |
           for host in $(nix eval --json .#nixosConfigurations --apply builtins.attrNames | jq -r '.[]'); do
@@ -29,8 +41,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          scripts/release.sh notes > notes.md
+          # Tags from before the script moved into scripts/ have it at the root.
+          release=scripts/release.sh
+          [[ -f $release ]] || release=./release.sh
+          "$release" notes > notes.md
           # vX.Y.Z-PHASE.N (pre-alpha, alpha, beta, rc) is marked as a pre-release.
           prerelease=()
-          [[ $GITHUB_REF_NAME == *-* ]] && prerelease=(--prerelease)
-          gh release create "$GITHUB_REF_NAME" --title "nixcraft $GITHUB_REF_NAME" --notes-file notes.md --verify-tag "${prerelease[@]}"
+          [[ $TAG == *-* ]] && prerelease=(--prerelease)
+          gh release create "$TAG" --title "nixcraft $TAG" --notes-file notes.md --verify-tag "${prerelease[@]}"

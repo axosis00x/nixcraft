@@ -599,8 +599,7 @@ printf '\n  %s%s✓ Done.%s Next:\n\n' "$bold" "$green" "$reset"
 cat <<EOF
     ${accent}1${reset}  Reboot (or log out) and pick Hyprland at the login screen.
     ${accent}2${reset}  Wallpapers live outside the repo: put images in ~/Pictures/wallpapers/<theme>/.
-    ${accent}3${reset}  In tmux, install plugins with: prefix, then I.
-    ${accent}4${reset}  Change features later by editing $settings_file (or re-running ./install.sh),
+    ${accent}3${reset}  Change features later by editing $settings_file (or re-running ./install.sh),
        then: ${dim}sudo nixos-rebuild switch --flake $repo#$hostname${reset}
 
 EOF

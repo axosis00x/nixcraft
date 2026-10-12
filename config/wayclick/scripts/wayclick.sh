@@ -40,7 +40,6 @@ readonly ASSET_DIR active_pack
 readonly C_RED=$'\033[1;31m'
 readonly C_GREEN=$'\033[1;32m'
 readonly C_BLUE=$'\033[1;34m'
-readonly C_CYAN=$'\033[1;36m'
 readonly C_YELLOW=$'\033[1;33m'
 readonly C_DIM=$'\033[2m'
 readonly C_RESET=$'\033[0m'
@@ -92,7 +91,18 @@ notify_user() {
 # instead of trying to apt/pacman-install them). The heavier nixpkgs lookups
 # for the actual native build only happen further down, gated behind the
 # build marker, so a normal toggle (the ALT+V hot path) stays fast.
-for tool in uv notify-send nix; do
+# The nixcraft wayclick module (modules/user/wayclick) provides
+# wayclick-python with evdev and pygame-ce prebuilt; with it there is nothing
+# to build. Without it, fall back to building a uv venv on first run.
+if command -v wayclick-python &>/dev/null; then
+    nix_python=true
+    required_tools=(notify-send)
+else
+    nix_python=false
+    required_tools=(uv notify-send nix)
+fi
+
+for tool in "${required_tools[@]}"; do
     if ! command -v "$tool" &>/dev/null; then
         printf "%b[CRITICAL]%b Missing required tool: %s (add it to home.packages)\n" "${C_RED}" "${C_RESET}" "$tool"
         exit 1
@@ -215,7 +225,7 @@ if [[ ! -d "$BASE_DIR" ]]; then
 fi
 
 # Check if VENV exists
-if [[ ! -d "$VENV_DIR" ]]; then
+if ! $nix_python && [[ ! -d "$VENV_DIR" ]]; then
     if ! $INTERACTIVE; then
         notify_user "Environment not built! Run in terminal once to initialize."
         exit 1
@@ -227,7 +237,7 @@ fi
 # Check dependencies.
 MARKER_FILE="$BASE_DIR/.build_marker_v3"
 
-if [[ ! -f "$MARKER_FILE" ]]; then
+if ! $nix_python && [[ ! -f "$MARKER_FILE" ]]; then
     if ! $INTERACTIVE; then
         notify_user "First run setup required! Run in terminal to build native extensions."
         exit 1
@@ -437,8 +447,14 @@ fi
 # The pygame-ce extension was linked against SDL2's exact nix store path at
 # build time, but that path isn't on the default runtime linker search path,
 # so every run (not just the build) needs it on LD_LIBRARY_PATH.
-runtime_lib_path="$(resolve_runtime_lib_path)"
-[[ -n "$runtime_lib_path" ]] && export LD_LIBRARY_PATH="$runtime_lib_path${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+# (The Nix-built wayclick-python already finds its libraries.)
+if $nix_python; then
+    python_bin=wayclick-python
+else
+    python_bin="$VENV_DIR/bin/python"
+    runtime_lib_path="$(resolve_runtime_lib_path)"
+    [[ -n "$runtime_lib_path" ]] && export LD_LIBRARY_PATH="$runtime_lib_path${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+fi
 
 # Without this SDL2 auto-probes audio drivers and falls all the way through
 # to the legacy OSS driver (/dev/dsp), which doesn't exist on this system.
@@ -448,6 +464,6 @@ runtime_lib_path="$(resolve_runtime_lib_path)"
 export SDL_AUDIODRIVER="${SDL_AUDIODRIVER:-pulseaudio}"
 
 printf "%b[PACK]%b Using sound pack: %s\n" "${C_BLUE}" "${C_RESET}" "$active_pack"
-ENABLE_TRACKPADS="$CONFIG_ENABLE_TRACKPADS" "$VENV_DIR/bin/python" -O "$RUNNER_SCRIPT" "$ASSET_DIR"
+ENABLE_TRACKPADS="$CONFIG_ENABLE_TRACKPADS" "$python_bin" -O "$RUNNER_SCRIPT" "$ASSET_DIR"
 
 printf "\n%b[INFO]%b WayClick stopped.\n" "${C_BLUE}" "${C_RESET}"

@@ -17,5 +17,6 @@
   userSettings.games.enable = settings.features.games;
   userSettings.looks.enable = true;
   userSettings.extra.enable = settings.features.extras;
+  userSettings.wayclick.enable = true;
   home.stateVersion = settings.stateVersion;
 }

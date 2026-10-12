@@ -12,6 +12,7 @@
     ./utils
     ./applications
     ./extra
+    ./wayclick
   ];
 
   xdg.configFile = {

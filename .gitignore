@@ -17,5 +17,6 @@ config/wayclick/.active_pack
 # config/matugen/templates instead. The folder stays so it can be picked.
 config/themes/dynamic/*
 !config/themes/dynamic/.gitkeep
+config/nvim/colors/dynamic.lua
 # Written by the HyprMod settings app (an empty one is made on first run).
 config/hypr/hyprland-gui.lua

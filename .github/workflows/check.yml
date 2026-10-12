@@ -44,7 +44,9 @@ jobs:
       - name: Shell scripts
         run: git ls-files '*.sh' | xargs nix shell --inputs-from . nixpkgs#shellcheck --command shellcheck -S warning
       - name: Lua syntax
-        run: git ls-files '*.lua' | xargs -n1 nix shell --inputs-from . nixpkgs#lua5_4 --command luac -p
+        run: |
+          git ls-files -z '*.lua' |
+            nix shell --inputs-from . nixpkgs#lua5_4 --command xargs -0 -n1 luac -p
 
   version:
     name: Version and changelog

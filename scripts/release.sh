@@ -30,7 +30,11 @@ while (($#)); do
         major | minor | patch) bump=$1 ;;
         [0-9]*.[0-9]*.[0-9]*) bump=$1 ;;
         notes) notes=true ;;
-        --phase) phase=${2:-} && shift ;;
+        --phase)
+            [[ -n ${2:-} ]] || { echo "--phase needs one of: ${phases[*]}" >&2 && exit 2; }
+            phase=$2
+            shift
+            ;;
         --phase=*) phase=${1#--phase=} ;;
         -n | --dry-run) dry_run=true ;;
         -p | --push) push=true ;;
@@ -109,13 +113,18 @@ git diff --quiet && git diff --cached --quiet ||
 last_tag=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)
 range=${last_tag:+$last_tag..}HEAD
 
-# One "hash<TAB>subject<TAB>breaking" line per commit (breaking is 1 when the
-# body has a BREAKING CHANGE footer), skipping merges and release commits.
-breaking=$(git log --no-merges --format='%h' -E --grep='^BREAKING[ -]CHANGE:' "$range")
-commits=$(git log --no-merges --format='%h%x09%s' "$range" |
-    awk -F'\t' -v breaking="$breaking" '
-        BEGIN { n = split(breaking, list, "\n"); for (i = 1; i <= n; i++) b[list[i]] = 1 }
-        $2 !~ /^chore\(release\)/ { print $1 "\t" $2 "\t" ($1 in b ? 1 : 0) }')
+# collect RANGE: one "hash<TAB>subject<TAB>breaking" line per commit
+# (breaking is 1 when the body has a BREAKING CHANGE footer), skipping
+# merges and release commits.
+collect() {
+    local breaking
+    breaking=$(git log --no-merges --format='%h' -E --grep='^BREAKING[ -]CHANGE:' "$1")
+    git log --no-merges --format='%h%x09%s' "$1" |
+        awk -F'\t' -v breaking="$breaking" '
+            BEGIN { n = split(breaking, list, "\n"); for (i = 1; i <= n; i++) b[list[i]] = 1 }
+            $2 !~ /^chore\(release\)/ { print $1 "\t" $2 "\t" ($1 in b ? 1 : 0) }'
+}
+commits=$(collect "$range")
 
 [[ -n $commits || -z $last_tag ]] || die "Nothing to release since $last_tag."
 
@@ -165,6 +174,20 @@ version_phase=$ver_phase
 tag="v$version"
 git rev-parse -q --verify "refs/tags/$tag" >/dev/null && die "Tag $tag already exists."
 newer "$version" "$current" || die "$version is not newer than $current."
+
+# A stable release's entry covers the whole cycle since the last stable
+# release, not just the commits since its final rc.
+if [[ $version_phase == stable && $last_tag == *-* ]]; then
+    last_tag=$(git describe --tags --abbrev=0 --match 'v[0-9]*' --exclude 'v*-*' 2>/dev/null || true)
+    if [[ -n $last_tag ]]; then
+        commits=$(collect "$last_tag..HEAD")
+    else
+        commits=$(collect HEAD)
+        # No stable release yet: list the commits since the first tag.
+        first_tag=$(git tag --list 'v[0-9]*' --sort=creatordate | head -1)
+        [[ -z $first_tag ]] || { commits=$(collect "$first_tag..HEAD") && last_tag=$first_tag; }
+    fi
+fi
 
 # Group the commits by type, in this order, as "- **scope:** subject (hash)".
 sections=(

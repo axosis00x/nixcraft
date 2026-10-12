@@ -25,6 +25,19 @@ main() {
     # git and lspci aren't on a fresh install; borrow them from nixpkgs.
     local shell=(nix-shell -p git pciutils --run)
 
+    # Fetch them once up front with Nix's per-path download log hidden, so
+    # it doesn't bury the installer; the log is shown only if it fails.
+    echo "==> Getting git and pciutils from nixpkgs (the first run downloads them)"
+    local log
+    log=$(mktemp)
+    if ! "${shell[@]}" true >"$log" 2>&1; then
+        cat "$log" >&2
+        rm -f "$log"
+        echo "Couldn't get git and pciutils from nixpkgs; check the network and retry." >&2
+        exit 1
+    fi
+    rm -f "$log"
+
     if [[ -d $dest/.git ]]; then
         echo "==> Using the existing checkout at $dest (update it with: git -C $dest pull)"
     elif [[ -e $dest ]]; then
@@ -32,7 +45,7 @@ main() {
         exit 1
     else
         echo "==> Cloning $repo_url to $dest"
-        "${shell[@]}" "git clone --depth 1 '$repo_url' '$dest'"
+        "${shell[@]}" "git clone --quiet --depth 1 '$repo_url' '$dest'"
     fi
 
     # Piped into bash, stdin is this script, not the keyboard: hand the

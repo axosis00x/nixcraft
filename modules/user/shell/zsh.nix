@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  settings,
   ...
 }:
 let
@@ -36,7 +37,7 @@ in
       };
 
       shellAliases = {
-        build = "sudo nixos-rebuild switch --flake ~/nixcraft";
+        build = "sudo nixos-rebuild switch --flake ${settings.repoPath}";
         clean = "sudo nix-collect-garbage -d";
         ping = "ping -c 5";
         zed = "zeditor";

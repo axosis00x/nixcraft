@@ -6,8 +6,9 @@ import "../../theme" as Palette
 
 // The user's profile picture, cut to a circle: ~/.face when one is set
 // (Settings → the picture by your name, see scripts/pfp.sh), otherwise
-// nixcraft's default, assets/pfp.png. Picking, replacing or resetting the
-// picture shows up everywhere at once, no reload needed.
+// nixcraft's default, assets/pfp.png (linked into ../../assets here).
+// Picking, replacing or resetting the picture shows up everywhere at once,
+// no reload needed.
 ClippingRectangle {
     id: root
 
@@ -15,7 +16,7 @@ ClippingRectangle {
     property real initialSize: height * 0.4
 
     readonly property string userFile: Quickshell.env("HOME") + "/.face"
-    readonly property string defaultFile: Quickshell.env("HOME") + "/nixcraft/assets/pfp.png"
+    readonly property url defaultFile: Qt.resolvedUrl("../../assets/pfp.png")
     property bool hasUserFile: false
     // Bumped on every change so the image reloads instead of using its cache.
     property int revision: 0
@@ -48,7 +49,7 @@ ClippingRectangle {
     Image {
         id: image
         anchors.fill: parent
-        source: root.hasUserFile ? "file://" + root.userFile + "?r=" + root.revision : "file://" + root.defaultFile
+        source: root.hasUserFile ? "file://" + root.userFile + "?r=" + root.revision : root.defaultFile
         sourceSize: Qt.size(root.width * 2, root.height * 2)
         fillMode: Image.PreserveAspectCrop
         asynchronous: true

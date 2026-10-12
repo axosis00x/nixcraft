@@ -402,10 +402,11 @@ else
     select_features_by_number
 fi
 
-# config/ is linked into ~/.config from /home/<user>/nixcraft (modules/user).
-if [[ $repo != "/home/$username/nixcraft" ]]; then
-    warn "The repo is at $repo, but configs are linked from /home/$username/nixcraft."
-    warn "Move or clone it there (as $username) before switching, or ~/.config links will dangle."
+# config/ is linked into ~/.config from wherever the repo is (repoPath
+# below), so it can live anywhere the user can read; another user's home
+# usually can't be.
+if [[ $repo != "/home/$username/"* ]]; then
+    warn "The repo is at $repo, outside /home/$username; $username must be able to read it."
     $demo || confirm "Continue anyway?" n || exit 1
 fi
 
@@ -440,12 +441,15 @@ info "Writing $settings_file"
 write_file "$settings_file" <<EOF
 # This machine's settings. Every folder in hosts/ is one machine, named after
 # its hostname; flake.nix builds each as nixosConfigurations.<folder> and
-# hands this file to every module as \`settings\`. ./install.sh writes it.
+# hands this file to every module as \`settings\`. ./install.sh writes it;
+# modules/settings.nix lists every option, its type and its default.
 {
-  # Login name and its home directory (/home/<username>). The repo must be
-  # cloned to /home/<username>/nixcraft (config/ is linked from there).
+  # Login name and its home directory (/home/<username>).
   username = "$username";
   fullName = "$full_name";
+
+  # Where this repo is cloned; config/ is linked into ~/.config from here.
+  repoPath = "$repo";
 
   # Git commit identity (an empty string leaves it unset).
   git = {
@@ -597,6 +601,6 @@ cat <<EOF
     ${accent}2${reset}  Wallpapers live outside the repo: put images in ~/Pictures/wallpapers/<theme>/.
     ${accent}3${reset}  In tmux, install plugins with: prefix, then I.
     ${accent}4${reset}  Change features later by editing $settings_file (or re-running ./install.sh),
-       then: ${dim}sudo nixos-rebuild switch --flake ~/nixcraft#$hostname${reset}
+       then: ${dim}sudo nixos-rebuild switch --flake $repo#$hostname${reset}
 
 EOF

@@ -24,7 +24,7 @@ in
           ]
           ++ (if builtins.pathExists hostHome then [ hostHome ] else [ ]);
           home.username = user;
-          home.homeDirectory = "/home/${user}";
+          home.homeDirectory = config.users.users.${user}.home;
         };
       }) config.systemSettings.users
     );

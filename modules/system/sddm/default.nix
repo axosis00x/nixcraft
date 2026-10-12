@@ -49,7 +49,7 @@ in
       serviceConfig.Type = "oneshot";
       script =
         let
-          face = "/home/${cfg.user}/.face";
+          face = "${config.users.users.${cfg.user}.home}/.face";
           icon = "/var/lib/AccountsService/icons/${cfg.user}";
           # Read as the user, so a ~/.face symlink can't expose a file they
           # couldn't read themselves; capped at 16 MiB.
@@ -66,7 +66,7 @@ in
     };
     systemd.paths.nixcraft-pfp-sync = lib.mkIf (cfg.avatar != null) {
       wantedBy = [ "multi-user.target" ];
-      pathConfig.PathChanged = "/home/${cfg.user}/.face";
+      pathConfig.PathChanged = "${config.users.users.${cfg.user}.home}/.face";
     };
   };
 }

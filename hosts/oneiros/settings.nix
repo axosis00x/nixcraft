@@ -1,11 +1,14 @@
 # This machine's settings. Every folder in hosts/ is one machine, named after
 # its hostname; flake.nix builds each as nixosConfigurations.<folder> and
-# hands this file to every module as `settings`. ./install.sh writes it.
+# hands this file to every module as `settings`. ./install.sh writes it;
+# modules/settings.nix lists every option, its type and its default.
 {
-  # Login name and its home directory (/home/<username>). The repo must be
-  # cloned to /home/<username>/nixcraft (config/ is linked from there).
+  # Login name and its home directory (/home/<username>).
   username = "axosis00x";
   fullName = "axosis incon";
+
+  # Where this repo is cloned; config/ is linked into ~/.config from here.
+  repoPath = "/home/axosis00x/nixcraft";
 
   # Git commit identity (an empty string leaves it unset).
   git = {

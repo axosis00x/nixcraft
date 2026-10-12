@@ -5,6 +5,8 @@ set -uo pipefail
 theme_name=${1:?usage: apply-theme.sh THEME [WALLPAPER]}
 wallpaper_override=${2:-}
 themes_dir="$HOME/.config/themes"
+# The repo's config/ folder, found through this script's own link.
+config_root=$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)
 theme_dir="$themes_dir/$theme_name"
 
 # Theme names are supplied by Quickshell, but validate again before touching
@@ -41,7 +43,7 @@ if [ "$theme_name" = "dynamic" ] && [ -n "$wallpaper" ]; then
         matugen_source="$wallpaper"
     fi
     matugen --source-color-index 0 image "$matugen_source" \
-        --config "$HOME/nixcraft/config/matugen/config.toml" \
+        --config "$config_root/matugen/config.toml" \
         --type scheme-vibrant --mode dark -q || true
 fi
 

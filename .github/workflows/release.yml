@@ -31,12 +31,8 @@ jobs:
         run: |
           version=$(tr -d '[:space:]' < VERSION)
           [[ "v$version" == "$TAG" ]] || { echo "::error::tag $TAG but VERSION is $version"; exit 1; }
-      - name: Evaluate every nixosConfiguration
-        run: |
-          for host in $(nix eval --json .#nixosConfigurations --apply builtins.attrNames | jq -r '.[]'); do
-            nix eval --raw ".#nixosConfigurations.$host.config.system.build.toplevel.drvPath"
-            echo
-          done
+      - name: Check the flake (evaluates every host)
+        run: nix flake check --print-build-logs
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}

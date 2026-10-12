@@ -36,6 +36,7 @@
   };
   outputs =
     inputs@{
+      self,
       nixpkgs,
       home-manager,
       ...
@@ -52,19 +53,36 @@
         ) (builtins.readDir ./hosts)
       );
 
+      # A host's settings.nix, checked against modules/settings.nix (types,
+      # unknown names) and filled in with its defaults.
+      mkSettings =
+        hostname:
+        let
+          file = ./hosts + "/${hostname}/settings.nix";
+          settings =
+            (lib.evalModules {
+              modules = [
+                ./modules/settings.nix
+                file
+                { inherit hostname; }
+              ];
+            }).config;
+        in
+        lib.throwIf (settings.boot.loader == "grub" && settings.boot.grubDevice == "")
+          "${toString file}: boot.loader = \"grub\" needs boot.grubDevice (the boot disk, e.g. /dev/sda)."
+          settings;
+
       mkHost =
         hostname:
         let
-          settings = import (./hosts + "/${hostname}/settings.nix") // {
-            inherit hostname;
-          };
+          settings = mkSettings hostname;
         in
         lib.nixosSystem {
           specialArgs = {
             inherit inputs settings;
           };
           modules = [
-            { nixpkgs.hostPlatform = "x86_64-linux"; }
+            { nixpkgs.hostPlatform = settings.system; }
             ./modules/host
             (./hosts + "/${hostname}/hardware-configuration.nix")
             home-manager.nixosModules.home-manager
@@ -76,8 +94,42 @@
             }
           ];
         };
+
+      # Checks and the formatter run on the build machine's platform.
+      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
+
+      # Runs `script` in a copy of this repo (git-tracked files only); the
+      # check passes if it exits 0.
+      repoCheck =
+        name: tools: script:
+        pkgs.runCommand "nixcraft-${name}" { nativeBuildInputs = tools; } ''
+          cd ${self}
+          ${script}
+          touch $out
+        '';
     in
     {
       nixosConfigurations = lib.genAttrs hostNames mkHost;
+
+      # `nix fmt` formats every .nix file except the generated hardware ones.
+      formatter.${system} = pkgs.nixfmt-tree.override {
+        settings.formatter.nixfmt.excludes = [ "hosts/*/hardware-configuration.nix" ];
+      };
+
+      # `nix flake check` runs these and also evaluates every host above;
+      # CI runs the same command (.github/workflows/check.yml).
+      checks.${system} = {
+        format = repoCheck "format" [ pkgs.nixfmt ] ''
+          find . -name '*.nix' ! -path './hosts/*/hardware-configuration.nix' -print0 |
+            xargs -0 nixfmt --check
+        '';
+        shellcheck = repoCheck "shellcheck" [ pkgs.shellcheck ] ''
+          find . -name '*.sh' -print0 | xargs -0 shellcheck -S warning
+        '';
+        lua = repoCheck "lua" [ pkgs.lua5_4 ] ''
+          find . -name '*.lua' -print0 | xargs -0 -n1 luac -p
+        '';
+      };
     };
 }

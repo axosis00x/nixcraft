@@ -14,8 +14,9 @@ Item {
     visible: false
 
     property var monitors: []
-    // Output the built-in panel mirrors, or "" when extending.
-    property string mirrorSource: "HDMI-A-1"
+    // Output the built-in panel mirrors, or "" when extending (the default,
+    // matching monitors.lua when displays.lua doesn't exist yet).
+    property string mirrorSource: ""
     readonly property bool mirror: mirrorSource !== ""
 
     readonly property var builtIn: monitors.find(m => isBuiltIn(m.name)) || null
@@ -104,8 +105,10 @@ Item {
     }
 
     function setMirror(on) {
-        var source = on ? (external ? external.name : (mirrorSource || "HDMI-A-1")) : "";
-        apply("", {}, source);
+        // Nothing to mirror without a second screen.
+        if (on && !external)
+            return;
+        apply("", {}, on ? external.name : "");
     }
 
     function render(override, outputName, source) {
@@ -199,10 +202,8 @@ Item {
         command: ["cat", root.path]
         stdout: StdioCollector {
             onStreamFinished: {
-                if (text === "")
-                    return;
                 var m = text.match(/mirror\s*=\s*"([^"]*)"/);
-                root.mirrorSource = m ? m[1] : (/mirror\s*=\s*false/.test(text) ? "" : "HDMI-A-1");
+                root.mirrorSource = m ? m[1] : "";
             }
         }
     }

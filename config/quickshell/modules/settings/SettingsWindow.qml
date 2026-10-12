@@ -298,7 +298,7 @@ FloatingWindow {
         case "mirror":
             if (!displayService.external)
                 return "Applies when a second display is connected";
-            return displayService.mirror ? "Built-in display shows " + displayService.external.name : "Extend the desktop across both";
+            return displayService.mirror ? "Built-in display shows " + displayService.mirrorSource : "Extend the desktop across both";
         default:
             return "";
         }

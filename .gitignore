@@ -1,4 +1,4 @@
-.env 
+.env
 CLAUDE.md
 config/hypr/displays.lua.revert
 # Per-machine state written at runtime (bar edge, Display settings).

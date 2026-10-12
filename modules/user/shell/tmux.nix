@@ -10,8 +10,8 @@
 }:
 let
   # omerxx's catppuccin fork (the options in tmux.conf are its own, not the
-  # upstream v2 ones), with the custom ryo flavour added next to its
-  # built-in ones. Editing that flavour file needs a rebuild.
+  # upstream v2 ones), taught to take its colors from the active nixcraft
+  # theme (tmux-palette.sh) instead of a per-flavour file.
   catppuccin = pkgs.tmuxPlugins.mkTmuxPlugin {
     pluginName = "catppuccin";
     version = "0-unstable-e30336b";
@@ -21,8 +21,10 @@ let
       rev = "e30336b79986e87b1f99e6bd9ec83cffd1da2017";
       hash = "sha256-Ig6+pB8us6YSMHwSRU3sLr9sK+L7kbx2kgxzgmpR920=";
     };
-    postInstall = ''
-      cp ${../../../config/tmux/custom/catppuccin-ryo.tmuxtheme} $target/catppuccin-ryo.tmuxtheme
+    postPatch = ''
+      substituteInPlace catppuccin.tmux \
+        --replace-fail 'done < "''${PLUGIN_DIR}/catppuccin-''${theme}.tmuxtheme"' 'done < <(nixcraft_palette "$theme")'
+      sed -i '/^main() {/i source ${./tmux-palette.sh}' catppuccin.tmux
     '';
   };
 

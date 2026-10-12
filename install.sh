@@ -131,6 +131,26 @@ pick_timezone() {
     done
 }
 
+# "nixcraft" in figlet's standard font, shaded cyan to blue, with the
+# author underneath. A quoted heredoc keeps the backslashes and quotes as-is.
+banner() {
+    local rows shades=(87 81 75 69 63) i
+    mapfile -t rows <<'BANNER'
+       _                     __ _
+ _ __ (_)_  _____ _ __ __ _ / _| |_
+| '_ \| \ \/ / __| '__/ _` | |_| __|
+| | | | |>  < (__| | | (_| |  _| |_
+|_| |_|_/_/\_\___|_|  \__,_|_|  \__|
+BANNER
+    echo
+    for i in "${!rows[@]}"; do
+        printf '   \033[1;38;5;%sm%s%s\n' "${shades[$i]}" "${rows[$i]}" "$reset"
+    done
+    printf '   %sby%s %saxosis00x%s\n\n' "$dim" "$reset" $'\033[38;5;75m' "$reset"
+    $demo && printf '   %sdemo: nothing will be changed%s\n\n' "$cyan" "$reset"
+    printf '   %sAdapts nixcraft to this machine, then builds it.%s\n\n' "$dim" "$reset"
+}
+
 # ── preflight ───────────────────────────────────────────────────────────────
 [[ $EUID -ne 0 ]] || die "Run this as your normal user, not root (it uses sudo where needed)."
 if [[ ! -e /etc/NIXOS ]]; then
@@ -142,8 +162,7 @@ repo=$(cd "$(dirname "$0")" && pwd)
 cd "$repo"
 [[ -f flake.nix && -d hosts/oneiros ]] || die "Run this from the nixcraft repository."
 
-printf '\n%snixcraft installer%s%s\n' "$bold" "$reset" "$($demo && printf ' %s(demo: nothing will be changed)%s' "$cyan" "$reset")"
-printf '%sAdapts the flake to this machine, then builds it.%s\n\n' "$dim" "$reset"
+banner
 
 # ── 1. who and where ────────────────────────────────────────────────────────
 printf '%s1. User and machine%s\n' "$bold" "$reset"
@@ -212,12 +231,13 @@ printf '\n%s3. Optional features%s\n' "$bold" "$reset"
 printf '%s   The desktop itself (Hyprland, shell, fonts, theming, screenshots, login screen) is always installed.%s\n' "$dim" "$reset"
 
 feature_keys=(virtualization games coding apps extras)
+feature_name=(Virtualization Games Coding Apps Extras)
 feature_desc=(
-    "Virtualization   virt-manager/libvirt VMs and Waydroid (Android apps)"
-    "Games            Steam"
-    "Coding           Neovim, Zed, language toolchains, Claude Code"
-    "Apps             browsers, Discord, LibreOffice, OBS, LocalSend, Obsidian…"
-    "Extras           terminal toys and monitors: btop, cava, fastfetch, cmatrix…"
+    "virt-manager/libvirt VMs and Waydroid (Android apps)"
+    "Steam"
+    "Neovim, Zed, language toolchains, Claude Code"
+    "browsers, Discord, LibreOffice, OBS, LocalSend, Obsidian…"
+    "terminal toys and monitors: btop, cava, fastfetch, cmatrix…"
 )
 declare -A feature
 for key in "${feature_keys[@]}"; do
@@ -225,17 +245,61 @@ for key in "${feature_keys[@]}"; do
     feature[$key]=${v:-true}
 done
 
-show_features() {
-    local i key mark
+# One line per feature; `cursor` (-1 for none) gets the pointer.
+draw_features() {
+    local cursor=$1 i key box pointer name
     for i in "${!feature_keys[@]}"; do
         key=${feature_keys[$i]}
-        [[ ${feature[$key]} == true ]] && mark="${green}[x]${reset}" || mark="[ ]"
-        printf '   %s %d. %s\n' "$mark" "$((i + 1))" "${feature_desc[$i]}"
+        [[ ${feature[$key]} == true ]] && box="${green}◉${reset}" || box="${dim}○${reset}"
+        if ((i == cursor)); then
+            pointer="${cyan}❯${reset}"
+            name="${bold}${feature_name[$i]}${reset}"
+        else
+            pointer=" "
+            name=${feature_name[$i]}
+        fi
+        printf '\033[2K   %s %s %-16b %s%s%s\n' "$pointer" "$box" "$name" "$dim" "${feature_desc[$i]}" "$reset"
     done
 }
 
-show_features
-if ! $assume_yes; then
+# Arrow-key checklist: ↑↓ or j/k move, Space toggles, a/n select all/none,
+# Enter confirms. Redraws in place; the cursor is hidden while it runs.
+select_features() {
+    local cursor=0 count=${#feature_keys[@]} k rest key
+    printf '\033[?25l'
+    trap 'printf "\033[?25h"' EXIT
+    while true; do
+        draw_features "$cursor"
+        printf '\033[2K   %s↑↓ move · space toggle · a all · n none · enter confirm%s\n' "$dim" "$reset"
+        IFS= read -rsn1 k
+        if [[ $k == $'\033' ]]; then
+            read -rsn2 -t 0.05 rest || true
+            k+=$rest
+        fi
+        case "$k" in
+            $'\033[A' | k) cursor=$(((cursor - 1 + count) % count)) ;;
+            $'\033[B' | j) cursor=$(((cursor + 1) % count)) ;;
+            " ")
+                key=${feature_keys[$cursor]}
+                [[ ${feature[$key]} == true ]] && feature[$key]=false || feature[$key]=true
+                ;;
+            a) for key in "${feature_keys[@]}"; do feature[$key]=true; done ;;
+            n) for key in "${feature_keys[@]}"; do feature[$key]=false; done ;;
+            "") break ;;
+        esac
+        printf '\033[%dA' $((count + 1))
+    done
+    # Leave the final choices on screen, without the pointer or help line.
+    printf '\033[%dA' $((count + 1))
+    draw_features -1
+    printf '\033[2K'
+    printf '\033[?25h'
+}
+
+# Without a keyboard (piped input), fall back to typing numbers.
+select_features_by_number() {
+    local picks p key
+    draw_features -1
     while true; do
         read -r -p "   Toggle by number (e.g. \"1 3\"), a = all, n = none, Enter = done: " picks
         [[ -z $picks ]] && break
@@ -253,8 +317,16 @@ if ! $assume_yes; then
                     ;;
             esac
         done
-        show_features
+        draw_features -1
     done
+}
+
+if $assume_yes; then
+    draw_features -1
+elif [[ -t 0 && -t 1 ]]; then
+    select_features
+else
+    select_features_by_number
 fi
 
 # config/ is linked into ~/.config from /home/<user>/nixcraft (modules/user).

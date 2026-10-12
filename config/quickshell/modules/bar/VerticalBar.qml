@@ -11,8 +11,9 @@ import "../../theme" as Palette
 // edges), holding grouped pills — launcher and workspaces at the top, the
 // focused window's icon and title running down the middle, and tray,
 // status, clock and power at the bottom. In island mode the strip lifts off
-// the edge instead: inset on every side, fully rounded, fillets gone — the
-// same switch the horizontal bar's notch makes (Notch.qml).
+// the edge instead: inset on every side, rounded with the same capsule radius
+// as the horizontal bar, fillets gone — the same switch the horizontal bar's
+// notch makes (Notch.qml).
 Item {
     id: root
 
@@ -46,7 +47,7 @@ Item {
         anchors.bottomMargin: root.inset
         anchors.leftMargin: root.inset
         width: root.thickness - root.inset
-        radius: Palette.Theme.radiusLarge * root.islandness
+        radius: root.bar.capsuleRadius * root.islandness
         color: Palette.Theme.bg
     }
 

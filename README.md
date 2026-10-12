@@ -64,8 +64,9 @@ nix-shell -p git --run "git clone https://github.com/axosis00x/nixcraft ~/nixcra
 cd ~/nixcraft
 ```
 
-Clone it into the home of the user who will use the desktop, at exactly
-`~/nixcraft`: the configs in `config/` are linked into `~/.config` from there.
+Clone it into the home of the user who will use the desktop. `~/nixcraft` is
+the usual place, but anywhere they can read works: the installer records the
+location as `repoPath`, and `config/` is linked into `~/.config` from there.
 
 ### 3. Run the installer
 
@@ -147,7 +148,7 @@ Pick Hyprland at the login screen. A few things to do once:
   only that machine imports. See `hosts/oneiros/home.nix`.
 - **Wallpapers** are read from `~/Pictures/wallpapers/<theme>/`, outside the
   repo. Add a folder per theme you use.
-- **Tmux plugins** are ignored by Git. Install them in tmux with `prefix`, then `I`.
+- **Tmux plugins** come with the system (from Nix); there's nothing to install.
 - **Monitors** start at their best mode, placed automatically. Change
   resolution, scale and mirroring in _Settings → Display_; that's saved per
   machine in `config/hypr/displays.lua`, which isn't tracked by Git.
@@ -196,9 +197,10 @@ sudo nixos-rebuild switch --flake .#<hostname>
 | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `path ... does not exist` or a file is not found  | A new file isn't tracked. Run `git add -A`; flakes ignore untracked files.                            |
 | `flake ... does not provide attribute ...#<host>` | No `hosts/<host>/settings.nix`: the folder name is the hostname after `#`.                            |
+| `The option ... does not exist` / `is not of type` | A typo or wrong value in `settings.nix`; `modules/settings.nix` lists every option and its type.      |
 | `experimental feature 'flakes' is disabled`       | First build only: add `--option experimental-features "nix-command flakes"`.                          |
 | Boot hangs waiting for a disk                     | `dataDrive = true` on a machine without that drive. Set it to `false` in its `settings.nix`.          |
 | Black screen or no Hyprland                       | Check `nvidiaOptimus` in its `settings.nix`, and the GPU options in `modules/system/gpu`.             |
 | Doesn't boot after switching                      | Wrong `boot.loader` for the firmware. Pick the previous generation at boot, then fix `settings.nix`.  |
-| `~/.config/...` links are broken                  | The repo isn't at `/home/<username>/nixcraft`. Move it there and rebuild.                             |
+| `~/.config/...` links are broken                  | `repoPath` in its `settings.nix` doesn't match where the repo is. Fix it and rebuild.                 |
 | Undo a bad switch                                 | `sudo nixos-rebuild switch --rollback`, or pick an older generation at boot.                          |

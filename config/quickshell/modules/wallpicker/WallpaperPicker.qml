@@ -11,8 +11,9 @@ import "../../components/material"
 Item {
     id: root
 
-    anchors.fill: parent
     visible: false
+    // Still visible while the close delay runs, but on its way out.
+    readonly property bool closing: closeTimer.running
     focus: visible
 
     property real maxWidth: 4000
@@ -56,11 +57,12 @@ Item {
 
     function open() {
         if (launcher && launcher.visible)
-            launcher.closeLauncher(true);
+            launcher.closeLauncher();
         if (controlCenter && controlCenter.visible)
-            controlCenter.closeControlCenter(true);
+            controlCenter.closeControlCenter();
         if (powerMenu && powerMenu.visible)
-            powerMenu.closePowerMenu(true);
+            powerMenu.closePowerMenu();
+        closeTimer.stop();
         aboutToOpen();
         visible = true;
         hintShown = false;
@@ -72,13 +74,15 @@ Item {
     function close(immediate) {
         if (!visible)
             return;
-        aboutToClose();
+        if (!closing)
+            aboutToClose();
         if (immediate) {
             closeTimer.stop();
             visible = false;
             return;
         }
-        closeTimer.restart();
+        if (!closing)
+            closeTimer.start();
     }
 
     function show() {
@@ -90,7 +94,7 @@ Item {
     }
 
     function toggle() {
-        if (visible)
+        if (visible && !closing)
             close();
         else
             open();

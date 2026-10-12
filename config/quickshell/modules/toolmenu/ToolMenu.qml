@@ -8,8 +8,9 @@ import "../../components/material"
 Item {
     id: root
 
-    anchors.fill: parent
     visible: false
+    // Still visible while the close delay runs, but on its way out.
+    readonly property bool closing: closeTimer.running
     focus: visible
 
     property real maxWidth: 4000
@@ -66,12 +67,13 @@ Item {
 
     function openToolMenu() {
         if (launcher && launcher.visible && typeof launcher.closeLauncher === "function")
-            launcher.closeLauncher(true);
+            launcher.closeLauncher();
         if (controlCenter && controlCenter.visible && typeof controlCenter.closeControlCenter === "function")
-            controlCenter.closeControlCenter(true);
-        if (visible)
+            controlCenter.closeControlCenter();
+        if (visible && !closing)
             return;
         selectedIndex = 0;
+        closeTimer.stop();
         aboutToOpen();
         visible = true;
         forceActiveFocus();
@@ -80,17 +82,19 @@ Item {
     function closeToolMenu(immediate) {
         if (!visible)
             return;
-        aboutToClose();
+        if (!closing)
+            aboutToClose();
         if (immediate) {
             closeTimer.stop();
             visible = false;
             return;
         }
-        closeTimer.restart();
+        if (!closing)
+            closeTimer.start();
     }
 
     function toggleToolMenu() {
-        if (visible)
+        if (visible && !closing)
             closeToolMenu();
         else
             openToolMenu();

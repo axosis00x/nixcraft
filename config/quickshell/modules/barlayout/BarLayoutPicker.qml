@@ -11,8 +11,9 @@ import "../../components/material"
 Item {
     id: root
 
-    anchors.fill: parent
     visible: false
+    // Still visible while the close delay runs, but on its way out.
+    readonly property bool closing: closeTimer.running
 
     required property var service
     property var launcher: null
@@ -40,7 +41,7 @@ Item {
     IpcHandler {
         target: "barlayout"
         function toggle(): void {
-            if (root.visible)
+            if (root.visible && !root.closing)
                 root.close();
             else
                 root.open();
@@ -77,16 +78,17 @@ Item {
 
     function open() {
         if (launcher && launcher.visible)
-            launcher.closeLauncher(true);
+            launcher.closeLauncher();
         if (controlCenter && controlCenter.visible)
-            controlCenter.closeControlCenter(true);
+            controlCenter.closeControlCenter();
         if (powerMenu && powerMenu.visible)
-            powerMenu.closePowerMenu(true);
+            powerMenu.closePowerMenu();
         selected = 0;
         for (var i = 0; i < options.length; i++) {
             if (service && options[i].value === service.style)
                 selected = i;
         }
+        closeTimer.stop();
         aboutToOpen();
         visible = true;
         forceActiveFocus();
@@ -95,13 +97,15 @@ Item {
     function close(immediate) {
         if (!root.visible)
             return;
-        aboutToClose();
+        if (!closing)
+            aboutToClose();
         if (immediate) {
             closeTimer.stop();
             visible = false;
             return;
         }
-        closeTimer.restart();
+        if (!closing)
+            closeTimer.start();
     }
 
     Timer {

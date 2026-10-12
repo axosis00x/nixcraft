@@ -15,8 +15,9 @@ import "../../theme" as Palette
 // get their own icon, and single entries can be deleted.
 Item {
     id: root
-    anchors.fill: parent
     visible: false
+    // Still visible while the close delay runs, but on its way out.
+    readonly property bool closing: closeTimer.running
     focus: visible
 
     required property var service
@@ -59,7 +60,7 @@ Item {
     IpcHandler {
         target: "clipboard"
         function toggle(): void {
-            root.visible ? root.close() : root.open();
+            root.visible && !root.closing ? root.close() : root.open();
         }
         function open(): void {
             root.open();
@@ -73,6 +74,7 @@ Item {
         search.text = "";
         query = "";
         selected = 0;
+        closeTimer.stop();
         aboutToOpen();
         visible = true;
         service.refresh();
@@ -81,13 +83,15 @@ Item {
     function close(immediate) {
         if (!visible)
             return;
-        aboutToClose();
+        if (!closing)
+            aboutToClose();
         if (immediate) {
             closeTimer.stop();
             visible = false;
             return;
         }
-        closeTimer.restart();
+        if (!closing)
+            closeTimer.start();
     }
     function copy(index) {
         if (index >= 0 && index < entries.length) {

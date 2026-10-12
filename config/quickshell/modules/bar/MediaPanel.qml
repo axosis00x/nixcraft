@@ -17,6 +17,8 @@ Item {
     signal aboutToClose
 
     visible: false
+    // Still visible while the close delay runs, but on its way out.
+    readonly property bool closing: hideTimer.running
     focus: true
 
     Keys.onPressed: event => {
@@ -172,19 +174,23 @@ Item {
     // ── Public API ────────────────────────────────────────────────────────────
     function open() {
         visible = true;
+        hideTimer.stop();
         root.aboutToOpen();
     }
 
     function close(immediately) {
-        root.aboutToClose();
-        if (immediately)
+        if (!closing)
+            root.aboutToClose();
+        if (immediately) {
+            hideTimer.stop();
             visible = false;
-        else
-            hideTimer.restart();
+        } else if (!closing) {
+            hideTimer.start();
+        }
     }
 
     function toggleMediaPanel() {
-        if (visible)
+        if (visible && !closing)
             close(false);
         else
             open();

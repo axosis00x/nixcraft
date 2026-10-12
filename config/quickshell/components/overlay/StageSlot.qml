@@ -1,0 +1,78 @@
+import QtQuick
+import "../../theme" as Palette
+
+// One panel's place on a CenterOverlay stage (a Notch).
+//
+// The panel keeps its own size and stays pinned to the stage's screen edge,
+// so while the slab springs to a new size its clip reveals (or hides) the
+// panel instead of squeezing the layout through every in-between size.
+//
+// Switching panels crossfades them, Caelestia-style: the outgoing one fades
+// and sinks back towards the edge, and after a beat the incoming one rises
+// out of it. A panel also fades out on its own close (aboutToClose) before
+// the slab collapses.
+Item {
+    id: slot
+
+    required property Item panel
+    // The Notch the panel sits in; its `panel` property names the one shown.
+    required property Item stage
+    // Bottom-stage panels rise from the bottom screen edge, top-stage ones
+    // drop from the top.
+    property bool fromBottom: false
+    // How far a panel travels from the edge as it fades.
+    property real drift: 14
+
+    property bool leaving: false
+    readonly property bool shown: stage.panel === panel && !leaving
+
+    property real reveal: shown ? 1 : 0
+    Behavior on reveal {
+        SequentialAnimation {
+            // The incoming panel waits for the outgoing one to clear.
+            PauseAnimation {
+                duration: slot.shown ? Palette.Theme.effectFast / 2 : 0
+            }
+            NumberAnimation {
+                duration: slot.shown ? Palette.Theme.effectDefault : Palette.Theme.effectFast
+                easing.type: Easing.OutCubic
+            }
+        }
+    }
+
+    Connections {
+        target: slot.panel
+        ignoreUnknownSignals: true
+        function onAboutToOpen() { slot.leaving = false; }
+        function onAboutToClose() { slot.leaving = true; }
+        function onVisibleChanged() {
+            if (!slot.panel.visible)
+                slot.leaving = false;
+        }
+    }
+
+    Binding { target: slot.panel; property: "width"; value: slot.panel.implicitWidth }
+    Binding { target: slot.panel; property: "height"; value: slot.panel.implicitHeight }
+    Binding {
+        target: slot.panel
+        property: "x"
+        value: slot.panel.parent ? Math.round((slot.panel.parent.width - slot.panel.width) / 2) : 0
+    }
+    Binding {
+        target: slot.panel
+        property: "y"
+        value: {
+            const travel = slot.drift * (1 - slot.reveal);
+            if (!slot.fromBottom)
+                return -travel;
+            return (slot.panel.parent ? slot.panel.parent.height - slot.panel.height : 0) + travel;
+        }
+    }
+    Binding { target: slot.panel; property: "opacity"; value: slot.reveal }
+    Binding { target: slot.panel; property: "scale"; value: 0.96 + 0.04 * slot.reveal }
+    Binding {
+        target: slot.panel
+        property: "transformOrigin"
+        value: slot.fromBottom ? Item.Bottom : Item.Top
+    }
+}

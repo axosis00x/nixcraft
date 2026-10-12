@@ -319,7 +319,7 @@ PanelWindow {
     function toggleLauncher() {
         if (!launcher)
             return;
-        if (launcher.visible)
+        if (launcher.visible && !launcher.closing)
             launcher.closeLauncher();
         else
             launcher.openLauncher();

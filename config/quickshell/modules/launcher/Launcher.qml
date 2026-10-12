@@ -20,8 +20,9 @@ import "../../components/material"
 Item {
     id: root
 
-    anchors.fill: parent
     visible: false
+    // Still visible while the close delay runs, but on its way out.
+    readonly property bool closing: closeTimer.running
 
     property real maxWidth: 4000
     property var controlCenter: null
@@ -145,7 +146,7 @@ Item {
     IpcHandler {
         target: "launcher"
         function toggle(): void {
-            if (root.visible)
+            if (root.visible && !root.closing)
                 root.closeLauncher();
             else
                 root.openLauncher();
@@ -423,7 +424,7 @@ Item {
         var commandText = entry.command ? entry.command.join(" ").toLowerCase() : "";
         var entryName = (entry.name || "").toLowerCase();
         if (entryName === "uuctl" || commandText.indexOf("uuctl") !== -1) {
-            closeLauncher(true);
+            closeLauncher();
             if (serviceManager)
                 serviceManager.open();
             return;
@@ -755,9 +756,10 @@ Item {
 
     function openLauncher() {
         if (root.controlCenter && root.controlCenter.visible && typeof root.controlCenter.closeControlCenter === "function")
-            root.controlCenter.closeControlCenter(true);
-        if (root.visible)
+            root.controlCenter.closeControlCenter();
+        if (root.visible && !closing)
             return;
+        closeTimer.stop();
         aboutToOpen();
         searchInput.text = "";
         query = "";
@@ -773,13 +775,15 @@ Item {
         if (shaderService && shaderService.isPreviewing) {
             shaderService.cancelPreview();
         }
-        aboutToClose();
+        if (!closing)
+            aboutToClose();
         if (immediate) {
             closeTimer.stop();
             root.visible = false;
             return;
         }
-        closeTimer.restart();
+        if (!closing)
+            closeTimer.start();
     }
 
     Timer {

@@ -17,7 +17,6 @@ import "../../components/material"
 Item {
     id: root
 
-    anchors.fill: parent
     visible: false
 
     property var widgetsService: null

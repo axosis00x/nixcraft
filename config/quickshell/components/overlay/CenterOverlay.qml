@@ -74,39 +74,11 @@ PanelWindow {
 
     property var currentTargetPanel: null
 
-    readonly property var activeTopPanel: {
-        if (currentTargetPanel && currentTargetPanel.visible && isTopModule(currentTargetPanel))
-            return currentTargetPanel;
-        if (controlCenterItem.visible)
-            return controlCenterItem;
-        if (powerMenuItem.visible)
-            return powerMenuItem;
-        if (toolMenuItem.visible)
-            return toolMenuItem;
-        if (mediaPanelItem.visible)
-            return mediaPanelItem;
-        return null;
-    }
-
-    readonly property var activeBottomPanel: {
-        if (currentTargetPanel && currentTargetPanel.visible && !isTopModule(currentTargetPanel))
-            return currentTargetPanel;
-        if (launcherItem.visible)
-            return launcherItem;
-        if (themePickerItem.visible)
-            return themePickerItem;
-        if (clipboardItem.visible)
-            return clipboardItem;
-        if (serviceManagerItem.visible)
-            return serviceManagerItem;
-        if (calendarPickerItem.visible)
-            return calendarPickerItem;
-        if (barLayoutPickerItem.visible)
-            return barLayoutPickerItem;
-        if (wallpaperPickerItem.visible)
-            return wallpaperPickerItem;
-        return null;
-    }
+    // Only the panel that last opened owns its stage. One that was just
+    // switched away from stays visible a moment longer while its StageSlot
+    // fades it out, but no longer holds the stage open.
+    readonly property var activeTopPanel: currentTargetPanel && currentTargetPanel.visible && isTopModule(currentTargetPanel) ? currentTargetPanel : null
+    readonly property var activeBottomPanel: currentTargetPanel && currentTargetPanel.visible && !isTopModule(currentTargetPanel) ? currentTargetPanel : null
 
     // The dock is the bottom stage's resting state: it shows whenever no
     // bottom panel is open, and the slab morphs between it and those panels.
@@ -170,54 +142,58 @@ PanelWindow {
 
     // All center-origin panels share this layer surface. Closing every other
     // panel before a new one appears prevents stacked backdrops and focus.
+    // They close with their normal delay, not immediately, so their StageSlot
+    // can crossfade them into the new panel.
     function presentOnly(panel) {
         currentTargetPanel = panel;
         if (panel !== launcherItem && launcherItem.visible)
-            launcherItem.closeLauncher(true);
+            launcherItem.closeLauncher();
         if (panel !== controlCenterItem && controlCenterItem.visible)
-            controlCenterItem.closeControlCenter(true);
+            controlCenterItem.closeControlCenter();
         if (panel !== powerMenuItem && powerMenuItem.visible)
-            powerMenuItem.closePowerMenu(true);
+            powerMenuItem.closePowerMenu();
         if (panel !== themePickerItem && themePickerItem.visible)
-            themePickerItem.close(true);
+            themePickerItem.close();
         if (panel !== clipboardItem && clipboardItem.visible)
-            clipboardItem.close(true);
+            clipboardItem.close();
         if (panel !== serviceManagerItem && serviceManagerItem.visible)
-            serviceManagerItem.close(true);
+            serviceManagerItem.close();
         if (panel !== mediaPanelItem && mediaPanelItem.visible)
-            mediaPanelItem.close(true);
+            mediaPanelItem.close();
         if (panel !== toolMenuItem && toolMenuItem.visible)
-            toolMenuItem.closeToolMenu(true);
+            toolMenuItem.closeToolMenu();
         if (panel !== calendarPickerItem && calendarPickerItem.visible)
-            calendarPickerItem.close(true);
+            calendarPickerItem.close();
         if (panel !== barLayoutPickerItem && barLayoutPickerItem.visible)
-            barLayoutPickerItem.close(true);
+            barLayoutPickerItem.close();
         if (panel !== wallpaperPickerItem && wallpaperPickerItem.visible)
-            wallpaperPickerItem.close(true);
+            wallpaperPickerItem.close();
     }
 
+    // Closes the panel on screen, not one still fading out from a switch.
     function closeActive() {
-        if (launcherItem.visible)
+        const panel = activeTopPanel || activeBottomPanel;
+        if (panel === launcherItem)
             launcherItem.closeLauncher();
-        else if (controlCenterItem.visible)
+        else if (panel === controlCenterItem)
             controlCenterItem.closeControlCenter();
-        else if (powerMenuItem.visible)
+        else if (panel === powerMenuItem)
             powerMenuItem.closePowerMenu();
-        else if (themePickerItem.visible)
+        else if (panel === themePickerItem)
             themePickerItem.close();
-        else if (clipboardItem.visible)
+        else if (panel === clipboardItem)
             clipboardItem.close();
-        else if (serviceManagerItem.visible)
+        else if (panel === serviceManagerItem)
             serviceManagerItem.close();
-        else if (mediaPanelItem.visible)
+        else if (panel === mediaPanelItem)
             mediaPanelItem.close();
-        else if (toolMenuItem.visible)
+        else if (panel === toolMenuItem)
             toolMenuItem.closeToolMenu();
-        else if (calendarPickerItem.visible)
+        else if (panel === calendarPickerItem)
             calendarPickerItem.close();
-        else if (barLayoutPickerItem.visible)
+        else if (panel === barLayoutPickerItem)
             barLayoutPickerItem.close();
-        else if (wallpaperPickerItem.visible)
+        else if (panel === wallpaperPickerItem)
             wallpaperPickerItem.close();
     }
 
@@ -347,7 +323,8 @@ PanelWindow {
 
         Dock {
             id: dockItem
-            visible: bottomStage.panel === dockItem
+            // Stays up while its slot fades it out under the next panel.
+            visible: bottomStage.panel === dockItem || dockSlot.reveal > 0
             maxWidth: root.width
             widgetsService: root.widgetsService
         }
@@ -410,6 +387,20 @@ PanelWindow {
             themeService: themeService
         }
     }
+
+    // Size, position and switch motion for every panel (see StageSlot.qml).
+    StageSlot { panel: controlCenterItem; stage: topStage }
+    StageSlot { panel: powerMenuItem; stage: topStage }
+    StageSlot { panel: toolMenuItem; stage: topStage }
+    StageSlot { panel: mediaPanelItem; stage: topStage }
+    StageSlot { id: dockSlot; panel: dockItem; stage: bottomStage; fromBottom: true }
+    StageSlot { panel: launcherItem; stage: bottomStage; fromBottom: true }
+    StageSlot { panel: themePickerItem; stage: bottomStage; fromBottom: true }
+    StageSlot { panel: clipboardItem; stage: bottomStage; fromBottom: true }
+    StageSlot { panel: serviceManagerItem; stage: bottomStage; fromBottom: true }
+    StageSlot { panel: calendarPickerItem; stage: bottomStage; fromBottom: true }
+    StageSlot { panel: barLayoutPickerItem; stage: bottomStage; fromBottom: true }
+    StageSlot { panel: wallpaperPickerItem; stage: bottomStage; fromBottom: true }
 
     DockPopups {
         id: dockPopups

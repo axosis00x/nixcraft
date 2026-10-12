@@ -16,8 +16,9 @@ import "../../components/material"
 // through a ScriptModel and the panel resizes to fit.
 Item {
     id: root
-    anchors.fill: parent
     visible: false
+    // Still visible while the close delay runs, but on its way out.
+    readonly property bool closing: closeTimer.running
     focus: visible
 
     required property var service
@@ -53,7 +54,7 @@ Item {
     IpcHandler {
         target: "theme"
         function toggle(): void {
-            root.visible ? root.close() : root.open();
+            root.visible && !root.closing ? root.close() : root.open();
         }
         function open(): void {
             root.open();
@@ -65,13 +66,14 @@ Item {
 
     function open() {
         if (launcher && launcher.visible)
-            launcher.closeLauncher(true);
+            launcher.closeLauncher();
         if (controlCenter && controlCenter.visible)
-            controlCenter.closeControlCenter(true);
+            controlCenter.closeControlCenter();
         if (powerMenu && powerMenu.visible)
-            powerMenu.closePowerMenu(true);
+            powerMenu.closePowerMenu();
         search.text = "";
         query = "";
+        closeTimer.stop();
         aboutToOpen();
         visible = true;
         service.refresh();
@@ -83,13 +85,15 @@ Item {
     function close(immediate) {
         if (!visible)
             return;
-        aboutToClose();
+        if (!closing)
+            aboutToClose();
         if (immediate) {
             closeTimer.stop();
             visible = false;
             return;
         }
-        closeTimer.restart();
+        if (!closing)
+            closeTimer.start();
     }
 
     function apply(index) {

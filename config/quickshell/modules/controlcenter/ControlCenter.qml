@@ -11,8 +11,9 @@ import "../notification"
 Item {
     id: root
 
-    anchors.fill: parent
     visible: false
+    // Still visible while the close delay runs, but on its way out.
+    readonly property bool closing: closeTimer.running
 
     property real maxWidth: 4000
     property real maxHeight: 4000
@@ -150,9 +151,10 @@ Item {
 
     function openControlCenter() {
         if (root.bar && typeof root.bar.closeLauncher === "function")
-            root.bar.closeLauncher(true);
-        if (root.visible)
+            root.bar.closeLauncher();
+        if (root.visible && !closing)
             return;
+        closeTimer.stop();
         aboutToOpen();
         syncFromBar();
         refreshAll();
@@ -162,18 +164,20 @@ Item {
     function closeControlCenter(immediate) {
         if (!root.visible)
             return;
-        aboutToClose();
+        if (!closing)
+            aboutToClose();
         detailMode = "none";
         if (immediate) {
             closeTimer.stop();
             visible = false;
             return;
         }
-        closeTimer.restart();
+        if (!closing)
+            closeTimer.start();
     }
 
     function toggleControlCenter() {
-        if (visible)
+        if (visible && !closing)
             closeControlCenter();
         else
             openControlCenter();

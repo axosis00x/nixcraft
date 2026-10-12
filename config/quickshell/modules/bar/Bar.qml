@@ -48,7 +48,7 @@ PanelWindow {
     // Only the dimension that isn't pinned down by anchors on both sides
     // actually applies: implicitHeight governs thickness in horizontal mode,
     // implicitWidth governs thickness in vertical mode.
-    implicitHeight: 34
+    implicitHeight: Ui.barHeight
     // The vertical window is a little wider than the strip so the concave
     // fillets can hang off it; only the strip reserves space and takes
     // input.

@@ -55,6 +55,10 @@ ShellRoot {
     Osd {
         id: mainOsd
     }
+    // Rounded screen corners and edge frame, with the left bar in notch mode.
+    ScreenFrame {
+        barLayout: barLayoutService
+    }
     LockScreen {
         id: lockScreen
     }

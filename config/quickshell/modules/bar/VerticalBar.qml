@@ -4,6 +4,7 @@ import Quickshell.Widgets
 import QtQuick
 import QtQuick.Layouts
 import "../../components/material"
+import "../../config/Ui.js" as Ui
 import "../../theme" as Palette
 
 // Left-edge bar in the spirit of Caelestia's: one solid strip fused to the
@@ -18,9 +19,11 @@ Item {
     id: root
 
     required property var bar
-    // Width of the solid strip; the fillets hang just outside it.
+    // Width of the solid strip; the fillets hang just outside it. In notch
+    // mode they curve into the screen frame's inner edge, at its radius
+    // (components/overlay/ScreenFrame.qml).
     property real thickness: 44
-    property real filletSize: 8
+    property real filletSize: Ui.screenFrameRadius
 
     property real islandness: bar.island ? 1 : 0
     // Quick and without overshoot: a springy inset makes the whole strip
@@ -34,6 +37,8 @@ Item {
     // The island keeps the strip's full width; Bar.qml widens the reserved
     // space by the gap so the inset never squeezes the pills.
     readonly property real inset: bar.islandGap * islandness
+    // The screen frame's band along the top and bottom edges (notch mode).
+    readonly property real frameInset: Ui.screenFrameBorder * (1 - islandness)
 
     // Pills sit pillInset in from the strip's sides, and their corners are
     // concentric with the island's: the bar's capsule radius less that inset.
@@ -58,6 +63,7 @@ Item {
     RoundCorner {
         anchors.left: strip.right
         anchors.top: parent.top
+        anchors.topMargin: root.frameInset
         corner: "topLeft"
         size: root.filletSize
         color: strip.color
@@ -67,6 +73,7 @@ Item {
     RoundCorner {
         anchors.left: strip.right
         anchors.bottom: parent.bottom
+        anchors.bottomMargin: root.frameInset
         corner: "bottomLeft"
         size: root.filletSize
         color: strip.color

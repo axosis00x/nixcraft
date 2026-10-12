@@ -12,4 +12,13 @@ const listPanelWidth = 440
 // services/BarLayoutService.qml, which owns the live-toggleable, persisted
 // top/left choice).
 const barThickness = 40
+// Height of the horizontal (top) bar.
+const barHeight = 34
 
+
+// The screen frame shown with the left bar in notch mode
+// (components/overlay/ScreenFrame.qml): its width along each edge and the
+// radius of its inner corners. The left bar's curved joins use the same
+// numbers so the two meet without a seam.
+const screenFrameBorder = 4
+const screenFrameRadius = 10

@@ -5,6 +5,33 @@ All notable changes to nixcraft are recorded here. Versions follow
 `scripts/release.sh` from the [Conventional Commits](https://www.conventionalcommits.org)
 since the previous release.
 
+## [0.1.0-pre-alpha.3] - 2026-10-12
+
+### Features
+
+- **tmux:** plugins from Nix instead of TPM (2388abd)
+- **flake:** typed host settings, flake checks and formatter (4082c2f)
+- **settings:** choose a profile picture (65a3533)
+
+### Fixes
+
+- **themes:** solid tmux colors for ryo and transparent (05dd6da)
+- **tmux:** status bar colors from every theme, not only catppuccin flavours (d168511)
+
+### Refactors
+
+- **theme:** keep the generated nvim dynamic colors out of git (b92777e)
+- **theme:** keep active-theme state out of git (a6e9bd6)
+- read repo and home paths instead of hardcoding them (41822ee)
+
+### Style
+
+- **install:** consistent colored installer interface (11476e6)
+
+### Documentation
+
+- update README for repoPath, settings checks and tmux (39e282c)
+
 ## [0.1.0-pre-alpha.2] - 2026-10-12
 
 ### Features

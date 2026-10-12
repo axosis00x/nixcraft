@@ -6,7 +6,8 @@
 }:
 let
   cfg = config.systemSettings.storage;
-in {
+in
+{
   options = {
     systemSettings.storage = {
       enable = lib.mkEnableOption "Mount the DataSSD drive";

@@ -39,14 +39,18 @@
 
     # UEFI machines boot with systemd-boot, legacy BIOS ones with GRUB on
     # the disk in settings.boot.grubDevice (install.sh detects both).
-    boot.loader = if settings.boot.loader == "grub" then {
-      grub.enable = true;
-      grub.device = settings.boot.grubDevice;
-    } else {
-      systemd-boot.enable = true;
-      efi.canTouchEfiVariables = true;
-      efi.efiSysMountPoint = settings.boot.efiMount;
-    };
+    boot.loader =
+      if settings.boot.loader == "grub" then
+        {
+          grub.enable = true;
+          grub.device = settings.boot.grubDevice;
+        }
+      else
+        {
+          systemd-boot.enable = true;
+          efi.canTouchEfiVariables = true;
+          efi.efiSysMountPoint = settings.boot.efiMount;
+        };
 
     # Running inside a VM: share the clipboard and resize with the host's
     # viewer (SPICE agent; Hyprland starts its session half, see

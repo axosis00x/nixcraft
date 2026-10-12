@@ -8,7 +8,7 @@ let
   cfg = config.userSettings.media;
 in
 {
- imports = [
+  imports = [
     ./mpv.nix
   ];
   options = {

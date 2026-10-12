@@ -8,7 +8,8 @@
 }:
 let
   cfg = config.userSettings.extra;
-in {
+in
+{
   options.userSettings.extra = {
     enable = lib.mkEnableOption "extra utilities";
   };

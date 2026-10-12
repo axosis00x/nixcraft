@@ -1,7 +1,13 @@
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 let
   cfg = config.systemSettings.gpu;
-in {
+in
+{
   options = {
     systemSettings.gpu = {
       enable = lib.mkEnableOption "Enable NVIDIA Optimus (Intel + NVIDIA hybrid) graphics";

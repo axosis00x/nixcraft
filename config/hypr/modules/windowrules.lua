@@ -14,6 +14,29 @@ hl.window_rule({
     center = true,
 })
 
+-- Zenity dialogs (file pickers, prompts) always float, centered, instead of
+-- tiling. Newer zenity versions report the org.gnome.Zenity class.
+hl.window_rule({
+    name = "zenity-float",
+    match = {
+        class = "^(zenity|org\\.gnome\\.Zenity)$",
+    },
+    float = true,
+    center = true,
+})
+
+-- File choosers (zenity's included) are drawn by the GTK desktop portal, not
+-- the app asking for them: float those too, at a usable size.
+hl.window_rule({
+    name = "portal-dialog-float",
+    match = {
+        class = "^(xdg-desktop-portal-gtk)$",
+    },
+    float = true,
+    size = "900 600",
+    center = true,
+})
+
 for _, class in ipairs({ "brave-browser", "zen-twilight", "vesktop", "helium", "brave" }) do
     hl.window_rule({
         name = class .. "-full-opacity",

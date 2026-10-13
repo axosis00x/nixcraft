@@ -19,6 +19,9 @@ Item {
     property real maxHeight: 4000
     property var notificationCenter
     property var bar
+    // The media panel, whose player choice and cached cover art the
+    // dashboard's media views reuse.
+    property var media: null
     property var idleService: null
     property string powerProfile: "balanced"
     property bool powerProfileLoaded: false
@@ -82,8 +85,45 @@ Item {
     readonly property int notificationCount: notificationCenter ? notificationCenter.count : 0
     readonly property bool showingDetail: detailMode !== "none"
 
-    implicitWidth: Math.max(380, Math.min(maxWidth - 2, 450))
-    implicitHeight: showingDetail ? Math.max(320, Math.min(maxHeight - 4, 400)) : Math.max(440, Math.min(maxHeight - 4, 480))
+    // ── dashboard tabs (Caelestia-style) ───────────────────────────
+    // Overview opens first; the controls that used to be the whole panel
+    // are the second tab. The last tab used is kept while the shell runs.
+    readonly property var tabs: [
+        { id: "overview", icon: "dashboard", label: "Overview" },
+        { id: "controls", icon: "tune", label: "Controls" },
+        { id: "notifications", icon: "notifications", label: "Notifications" },
+        { id: "performance", icon: "speed", label: "Performance" }
+    ]
+    property int tab: 0
+    onVisibleChanged: if (visible)
+        overviewPage.reset()
+
+    // Opens straight onto a tab by id (overview, controls, notifications,
+    // performance); IPC: qs ipc call controlcenter tab notifications
+    function openTab(id) {
+        var i = tabs.findIndex(t => t.id === id);
+        if (i < 0)
+            return;
+        tab = i;
+        if (!visible || closing)
+            openControlCenter();
+    }
+
+    // Shorter than the old standalone panel: the notifications list scrolls.
+    // Toggles and sliders only; notifications have their own tab.
+    // Sized to its contents plus the same 10px margin all round.
+    readonly property real controlsHeight: showingDetail ? Math.max(320, Math.min(maxHeight - 4, 380)) : controlsColumn.implicitHeight + 20
+    readonly property real pageHeight: [overviewPage.implicitHeight, controlsHeight, notificationsPage.implicitHeight, performancePage.implicitHeight][tab]
+
+    implicitWidth: Math.max(380, Math.min(maxWidth - 2, 480))
+    // The tab row sits a little below the top edge; count that offset too,
+    // or it comes out of the gap at the bottom of every page.
+    implicitHeight: Math.min(maxHeight - 4, dashTabs.anchors.topMargin + dashTabs.implicitHeight + pageHeight)
+
+    SystemStats {
+        id: systemStats
+        running: root.visible && (root.tab === 0 || root.tab === 3)
+    }
 
     signal aboutToOpen
     signal aboutToClose
@@ -197,6 +237,9 @@ Item {
 
     // Scan / discover only while the matching list is open.
     onDetailModeChanged: {
+        // The Wi-Fi / Bluetooth lists live on the controls tab.
+        if (detailMode !== "none")
+            tab = 1;
         if (wifiDevice)
             wifiDevice.scannerEnabled = detailMode === "wifi";
         setDiscovering(detailMode === "bluetooth");
@@ -870,9 +913,93 @@ Item {
         id: hyprsunsetSet
     }
 
+    DashTabs {
+        id: dashTabs
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.topMargin: 6
+        tabs: root.tabs
+        current: root.tab
+        onPicked: index => root.tab = index
+    }
+
+    Item {
+        id: pageArea
+        anchors.top: dashTabs.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+
+        DashPage {
+            anchors.fill: parent
+            index: 0
+            current: root.tab
+
+            DashOverview {
+                id: overviewPage
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                media: root.media
+                stats: systemStats
+                active: root.visible && root.tab === 0
+            }
+        }
+
+        DashPage {
+            anchors.fill: parent
+            index: 2
+            current: root.tab
+
+            DashNotifications {
+                id: notificationsPage
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                center: root
+            }
+        }
+
+        DashPage {
+            anchors.fill: parent
+            index: 3
+            current: root.tab
+
+            DashPerformance {
+                id: performancePage
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                stats: systemStats
+            }
+        }
+    }
+
+    // The controls tab: the original control center (tiles, sliders,
+    // toggles, notifications and the Wi-Fi / Bluetooth lists), unchanged,
+    // sliding in and out like the other pages.
     RowLayout {
-        anchors.fill: parent
+        id: controlsPage
+        anchors.fill: pageArea
         spacing: 0
+
+        readonly property bool shown: root.tab === 1
+        opacity: shown ? 1 : 0
+        visible: opacity > 0.01
+        enabled: shown
+
+        Behavior on opacity {
+            EffectMotion {}
+        }
+
+        transform: Translate {
+            x: controlsPage.shown ? 0 : (root.tab > 1 ? -28 : 28)
+
+            Behavior on x {
+                SpatialMotion {}
+            }
+        }
 
         Item {
             id: contentArea
@@ -900,268 +1027,147 @@ Item {
                 }
 
                 ColumnLayout {
+                    id: controlsColumn
                     anchors.fill: parent
-                    anchors.leftMargin: 16
-                    anchors.rightMargin: 16
-                    anchors.bottomMargin: 16
-                    anchors.topMargin: 18
+                    anchors.margins: 10
                     spacing: 10
 
-                    ColumnLayout {
+                    // Connectivity: Wi-Fi and Bluetooth as wide pills.
+                    RowLayout {
                         Layout.fillWidth: true
-                        spacing: 12
+                        spacing: 10
 
-                        RowLayout {
+                        ConnectionPill {
                             Layout.fillWidth: true
-                            spacing: 10
-
-                            Tile {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 64
-                                icon: root.networkIcon()
-                                title: "Network"
-                                subtitle: root.networkSubtitle()
-                                active: root.networkActive()
-                                onClicked: root.toggleNetwork()
-                                onRightClicked: root.openWifiList()
-                            }
-
-                            Tile {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 64
-                                icon: root.bluetoothIcon()
-                                title: "Bluetooth"
-                                subtitle: root.bluetoothTileSubtitle()
-                                active: root.bluetoothLoaded && root.bluetoothEnabled
-                                onClicked: root.toggleBluetooth()
-                                onRightClicked: root.openBluetoothList()
-                            }
+                            Layout.preferredWidth: 1
+                            icon: root.networkIcon()
+                            title: "Network"
+                            subtitle: root.networkSubtitle()
+                            active: root.networkActive()
+                            onClicked: root.toggleNetwork()
+                            onOpenList: root.openWifiList()
                         }
 
-                        RowLayout {
+                        ConnectionPill {
                             Layout.fillWidth: true
-                            spacing: 10
-
-                            Surface {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: slidersInner.implicitHeight + 20
-                                radius: Palette.Theme.radiusMedium
-                                color: Palette.Theme.surfaceContainerLow
-                                tintOpacity: 0.025
-
-                                ColumnLayout {
-                                    id: slidersInner
-                                    anchors.fill: parent
-                                    anchors.margins: 10
-                                    spacing: 2
-
-                                    ControlSlider {
-                                        Layout.fillWidth: true
-                                        iconGlyph: root.volumeIcon()
-                                        value: root.volumeValue
-                                        onIconClicked: root.toggleMute()
-                                        onIconRightClicked: root.openWiremix()
-                                        onValueRequested: value => root.setVolume(value)
-                                    }
-
-                                    ControlSlider {
-                                        Layout.fillWidth: true
-                                        iconGlyph: root.brightnessIcon()
-                                        value: root.brightnessValue
-                                        onValueRequested: value => root.setBrightness(value)
-                                    }
-
-                                    ControlSlider {
-                                        Layout.fillWidth: true
-                                        iconGlyph: root.micIcon()
-                                        value: root.micValue
-                                        onIconClicked: root.toggleMicMute()
-                                        onValueRequested: value => root.setMic(value)
-                                    }
-                                }
-                            }
-
-                            Surface {
-                                Layout.preferredHeight: slidersInner.implicitHeight + 20
-                                Layout.preferredWidth: slidersInner.implicitHeight + 20
-                                radius: Palette.Theme.radiusMedium
-                                color: Palette.Theme.surfaceContainerLow
-                                tintOpacity: 0.025
-
-                                GridLayout {
-                                    id: gridInner
-                                    anchors.fill: parent
-                                    anchors.margins: 10
-                                    columns: 2
-                                    columnSpacing: 10
-                                    rowSpacing: 10
-
-                                    Tile {
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        iconOnly: true
-                                        icon: root.hyprsunsetIcon()
-                                        title: "Night"
-                                        tint: Palette.Theme.secondaryText
-                                        active: root.hyprsunsetEnabled
-                                        onClicked: root.toggleHyprsunset()
-                                    }
-
-                                    Tile {
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        iconOnly: true
-                                        icon: root.gameModeIcon()
-                                        title: "Game Mode"
-                                        tint: Palette.Theme.info
-                                        active: root.dndEnabled
-                                        onClicked: root.toggleDnd()
-                                    }
-
-                                    Tile {
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        iconOnly: true
-                                        icon: root.keepAwakeIcon()
-                                        title: "Keep Awake"
-                                        tint: Palette.Theme.success
-                                        active: root.keepAwake
-                                        onClicked: root.toggleKeepAwake()
-                                    }
-
-                                    Tile {
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        iconOnly: true
-                                        icon: root.powerIcon()
-                                        title: "Power"
-                                        tint: Palette.Theme.warning
-                                        active: root.powerProfileLoaded
-                                        shapeRadius: root.powerProfileShapeRadius()
-                                        pulseKey: root.powerProfile
-                                        onClicked: root.cyclePowerProfile()
-                                    }
-                                }
-                            }
+                            Layout.preferredWidth: 1
+                            icon: root.bluetoothIcon()
+                            title: "Bluetooth"
+                            subtitle: root.bluetoothTileSubtitle()
+                            active: root.bluetoothLoaded && root.bluetoothEnabled
+                            onClicked: root.toggleBluetooth()
+                            onOpenList: root.openBluetoothList()
                         }
                     }
 
-                    // Notifications: a tonal card like the groups above, with a
-                    // header (icon, title, count, DND state, clear) and either
-                    // the list or a calm empty state.
-                    Surface {
+                    // The original pairing: sliders, and the four quick
+                    // toggles in a square beside them.
+                    RowLayout {
                         Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.topMargin: 2
-                        // No container fill — the cards carry the surface.
-                        color: "transparent"
-                        tintOpacity: 0
+                        spacing: 10
 
-                        ColumnLayout {
-                            anchors.fill: parent
-                            anchors.margins: 0
-                            spacing: 8
+                        Surface {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: slidersInner.implicitHeight + 20
+                            radius: Palette.Theme.radiusSmall
+                            color: Palette.Theme.surfaceContainerLow
+                            tintOpacity: 0.025
 
-                            RowLayout {
-                                Layout.fillWidth: true
-                                Layout.leftMargin: 4
-                                spacing: 8
+                            ColumnLayout {
+                                id: slidersInner
+                                anchors.fill: parent
+                                anchors.margins: 10
+                                spacing: 2
 
-                                Text {
-                                    text: root.dndEnabled ? "notifications_off" : "notifications"
-                                    color: root.dndEnabled ? Palette.Theme.textMuted : Palette.Theme.accent
-                                    font.family: Palette.Theme.fontIcons
-                                    font.pixelSize: Palette.Theme.iconSize
-                                    Layout.alignment: Qt.AlignVCenter
-                                }
-
-                                Text {
-                                    text: "Notifications"
-                                    color: Palette.Theme.textPrimary
-                                    font.family: Palette.Theme.fontSans
-                                    font.pixelSize: Palette.Theme.fontSizeBody
-                                    font.weight: Font.DemiBold
-                                    Layout.alignment: Qt.AlignVCenter
-                                }
-
-                                // Count badge.
-                                Rectangle {
-                                    visible: root.notificationCount > 0
-                                    Layout.alignment: Qt.AlignVCenter
-                                    implicitWidth: Math.max(20, countText.implicitWidth + 12)
-                                    implicitHeight: 20
-                                    radius: height / 2
-                                    color: Palette.Theme.accentTonal
-
-                                    Text {
-                                        id: countText
-                                        anchors.centerIn: parent
-                                        text: root.notificationCount
-                                        color: Palette.Theme.accent
-                                        font.family: Palette.Theme.fontSans
-                                        font.pixelSize: Palette.Theme.fontSizeXs
-                                        font.weight: Font.DemiBold
-                                    }
-                                }
-
-                                Item {
+                                ControlSlider {
                                     Layout.fillWidth: true
+                                    iconGlyph: root.volumeIcon()
+                                    value: root.volumeValue
+                                    onIconClicked: root.toggleMute()
+                                    onIconRightClicked: root.openWiremix()
+                                    onValueRequested: value => root.setVolume(value)
                                 }
 
-                                ActionChip {
-                                    label: "Clear all"
-                                    visible: root.notificationCount > 0
-                                    onClicked: root.clearAllNotifications()
+                                ControlSlider {
+                                    Layout.fillWidth: true
+                                    iconGlyph: root.brightnessIcon()
+                                    value: root.brightnessValue
+                                    onValueRequested: value => root.setBrightness(value)
+                                }
+
+                                ControlSlider {
+                                    Layout.fillWidth: true
+                                    iconGlyph: root.micIcon()
+                                    value: root.micValue
+                                    onIconClicked: root.toggleMicMute()
+                                    onValueRequested: value => root.setMic(value)
                                 }
                             }
+                        }
 
-                            Item {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
+                        Surface {
+                            Layout.preferredHeight: slidersInner.implicitHeight + 20
+                            Layout.preferredWidth: slidersInner.implicitHeight + 20
+                            radius: Palette.Theme.radiusSmall
+                            color: Palette.Theme.surfaceContainerLow
+                            tintOpacity: 0.025
 
-                                // Empty state.
-                                Column {
-                                    anchors.centerIn: parent
-                                    spacing: 6
-                                    visible: root.notificationCount === 0
+                            GridLayout {
+                                anchors.fill: parent
+                                anchors.margins: 10
+                                columns: 2
+                                columnSpacing: 10
+                                rowSpacing: 10
 
-                                    Text {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        text: root.dndEnabled ? "do_not_disturb_on" : "notifications_paused"
-                                        color: Palette.Theme.textMuted
-                                        font.family: Palette.Theme.fontIcons
-                                        font.pixelSize: 30
-                                        opacity: 0.6
-                                    }
-
-                                    Text {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        text: root.dndEnabled ? "Do not disturb is on" : "You're all caught up"
-                                        color: Palette.Theme.textSecondary
-                                        font.family: Palette.Theme.fontSans
-                                        font.pixelSize: Palette.Theme.fontSizeBody
-                                    }
+                                Tile {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    iconOnly: true
+                                    icon: root.hyprsunsetIcon()
+                                    title: "Night"
+                                    tint: Palette.Theme.secondaryText
+                                    active: root.hyprsunsetEnabled
+                                    onClicked: root.toggleHyprsunset()
                                 }
 
-                                ListView {
-                                    anchors.fill: parent
-                                    clip: true
-                                    spacing: 10
-                                    model: root.notificationCenter ? root.notificationCenter.groupedNotifications : []
-                                    visible: root.notificationCount > 0
-                                    reuseItems: true
-                                    cacheBuffer: 320
+                                Tile {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    iconOnly: true
+                                    icon: root.gameModeIcon()
+                                    title: "Game Mode"
+                                    tint: Palette.Theme.info
+                                    active: root.dndEnabled
+                                    onClicked: root.toggleDnd()
+                                }
 
-                                    delegate: NotificationGroupCard {
-                                        required property var modelData
-                                        width: ListView.view.width
-                                        notificationCenter: root.notificationCenter
-                                        group: modelData
-                                    }
+                                Tile {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    iconOnly: true
+                                    icon: root.keepAwakeIcon()
+                                    title: "Keep Awake"
+                                    tint: Palette.Theme.success
+                                    active: root.keepAwake
+                                    onClicked: root.toggleKeepAwake()
+                                }
+
+                                Tile {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    iconOnly: true
+                                    icon: root.powerIcon()
+                                    title: "Power"
+                                    tint: Palette.Theme.warning
+                                    active: root.powerProfileLoaded
+                                    shapeRadius: root.powerProfileShapeRadius()
+                                    pulseKey: root.powerProfile
+                                    onClicked: root.cyclePowerProfile()
                                 }
                             }
                         }
                     }
+
                 }
             }
 

@@ -55,7 +55,7 @@ ShellRoot {
     Osd {
         id: mainOsd
     }
-    // Rounded screen corners and edge frame, with the left bar in notch mode.
+    // Rounded screen corners and edge frame, in notch mode.
     ScreenFrame {
         barLayout: barLayoutService
     }
@@ -85,6 +85,11 @@ ShellRoot {
         }
         function close(): void {
             root.closeControlCenter();
+        }
+        // Straight to a dashboard tab: overview, controls, notifications, performance.
+        function tab(name: string): void {
+            if (overlay.controlCenter)
+                overlay.controlCenter.openTab(name);
         }
         // Straight to the Wi-Fi / Bluetooth lists.
         function wifi(): void {

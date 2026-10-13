@@ -80,22 +80,29 @@ local gruvbox_theme = {
 -- theme_name.txt (see each theme's config/themes/<name>/neovim.lua). Themes
 -- not listed here just use their colorscheme plugin's own lualine "auto"
 -- theme.
---
--- Rounded, isolated "pill" look — mode and filetype sit in their own
--- capsule (half-circle caps via the round separator glyphs), instead of
--- LazyVim's default flag-shaped/connected powerline sections.
 local theme_overrides = {
   ryo = ryo_theme,
   gruvbox = gruvbox_theme,
 }
-local SEPARATOR = "█"
+-- Layout: [mode] file  branch ............ diagnostics  LSP ~ servers  [folder][line:col]
+-- Every block is a parallelogram: slanted "/" on both ends.
+local function lsp_names()
+  local names = {}
+  for _, client in ipairs(vim.lsp.get_clients({ bufnr = 0 })) do
+    if client.name ~= "copilot" then
+      table.insert(names, client.name)
+    end
+  end
+  return #names > 0 and ("LSP ~ " .. table.concat(names, ", ")) or ""
+end
+
 return {
   {
     "nvim-lualine/lualine.nvim",
     opts = function(_, opts)
       opts.options = opts.options or {}
       opts.options.component_separators = ""
-      opts.options.section_separators = { left = "", right = "" }
+      opts.options.section_separators = { left = "", right = "" }
       opts.options.globalstatus = true
       local override = theme_overrides[current_theme_name()]
       if override then
@@ -105,22 +112,26 @@ return {
         lualine_a = {
           {
             "mode",
-            fmt = function(str)
-              return str
-            end,
-            separator = { left = SEPARATOR, right = SEPARATOR },
+            icon = "",
+            separator = { left = "", right = "" },
             padding = { left = 1, right = 1 },
           },
         },
-        lualine_b = {},
+        lualine_b = {
+          { "filetype", icon_only = true, padding = { left = 1, right = 0 } },
+          {
+            "filename",
+            path = 0,
+            symbols = { modified = " ●", readonly = " ", unnamed = "[No Name]", newfile = "[New]" },
+            padding = { left = 0, right = 1 },
+          },
+        },
         lualine_c = {
-          { "progress", padding = { left = 1, right = 0 } },
-          { "location", padding = { left = 0, right = 1 } },
+          { "branch", icon = "", padding = { left = 1, right = 1 } },
         },
         lualine_x = {
           -- Macro recording ("recording @q"), search count, etc. — driven by
-          -- noice's status API. LazyVim's default lualine ships this; it was
-          -- dropped when this file replaced `opts.sections` wholesale.
+          -- noice's status API.
           {
             function()
               return require("noice").api.status.command.get()
@@ -147,23 +158,33 @@ return {
           },
           {
             "diagnostics",
-            symbols = { error = " ", warn = " ", info = " ", hint = " " },
+            symbols = { error = "󰅚 ", warn = "󰀪 ", info = " ", hint = "󰌶 " },
             padding = { left = 0, right = 1 },
+          },
+          {
+            lsp_names,
+            icon = "",
+            color = function()
+              return { fg = Snacks.util.color("Function") }
+            end,
+            padding = { left = 1, right = 1 },
           },
         },
         lualine_y = {
           {
             function()
-              return #(vim.lsp.get_clients({ bufnr = 0 })) > 0 and "󰒋 Lsp" or ""
+              return vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
             end,
-            padding = { left = 0, right = 1 },
+            icon = "󰉋",
+            separator = { left = "", right = "" },
+            padding = { left = 1, right = 1 },
           },
         },
         lualine_z = {
           {
-            "filetype",
-            icon_only = false,
-            separator = { left = SEPARATOR, right = SEPARATOR },
+            "location",
+            icon = "",
+            separator = { left = "", right = "" },
             padding = { left = 1, right = 1 },
           },
         },

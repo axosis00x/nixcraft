@@ -16,6 +16,8 @@ import "../../modules/wallpicker"
 import "../../modules/dock"
 import "../../services"
 import "../../components/material"
+import "../../config/Ui.js" as Ui
+import "../../theme" as Palette
 
 PanelWindow {
     id: root
@@ -232,16 +234,35 @@ PanelWindow {
     // In island mode the bar's island is inset like the other bar capsules.
     readonly property real barSlabHeight: root.verticalBar ? 0 : (bar ? bar.height - (root.island ? bar.islandGap : 0) : 34)
 
+    // With the left bar in notch mode the screen has a frame (ScreenFrame.qml,
+    // same condition). The stages then grow out of it, Caelestia-style: in
+    // the frame's color, from its inner edge, joined by curves at its radius.
+    readonly property bool framed: barLayout ? (barLayout.loaded && barLayout.vertical && !root.island) : false
+    property real frameInset: framed ? Ui.screenFrameBorder : 0
+    Behavior on frameInset {
+        EffectMotion {}
+    }
+    readonly property color stageColor: framed ? Palette.Theme.bg : Palette.Theme.surfaceContainer
+    readonly property real stageTint: framed ? 0 : Palette.Theme.surfaceTintOpacity
+    readonly property real stageWing: framed ? Ui.screenFrameRadius : 9
+
     // ── TOP STAGE (Control Center, Power Menu, Tool Menu, Media Panel) ───
     Notch {
         id: topStage
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
+        anchors.topMargin: root.frameInset
         bottomAligned: false
         island: root.island
         islandGap: bar ? bar.islandGap : 4
-        wingSize: 9
+        wingSize: root.stageWing
         slabRadius: 20
+        color: root.stageColor
+        tintOpacity: root.stageTint
+
+        Behavior on color {
+            ColorMotion {}
+        }
 
         readonly property var panel: root.activeTopPanel
 
@@ -299,11 +320,18 @@ PanelWindow {
         id: bottomStage
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
+        anchors.bottomMargin: root.frameInset
         bottomAligned: true
         island: root.island
         islandGap: 8
-        wingSize: 9
+        wingSize: root.stageWing
         slabRadius: 20
+        color: root.stageColor
+        tintOpacity: root.stageTint
+
+        Behavior on color {
+            ColorMotion {}
+        }
 
         readonly property var panel: root.activeBottomPanel ? root.activeBottomPanel : (root.dockShown ? dockItem : null)
 

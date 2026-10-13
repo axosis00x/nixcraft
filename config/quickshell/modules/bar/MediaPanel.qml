@@ -467,17 +467,10 @@ Item {
                 }
             }
 
-            // Elapsed · wave · total
+            // The wave runs the full width; the times sit with the controls.
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
-
-                Text {
-                    text: root.formatTime(waveArea.dragging ? waveArea.dragProgress * root.trackLength : (root.player ? root.player.position : 0))
-                    color: Palette.Theme.textMuted
-                    font.family: Palette.Theme.fontMono
-                    font.pixelSize: Palette.Theme.fontSizeXs
-                }
 
                 Item {
                     id: waveArea
@@ -616,125 +609,142 @@ Item {
                         }
                     }
                 }
+            }
+
+            // Elapsed · controls (centred) · total
+            Item {
+                Layout.fillWidth: true
+                Layout.topMargin: 2
+                implicitHeight: controlsRow.implicitHeight
 
                 Text {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.formatTime(waveArea.dragging ? waveArea.dragProgress * root.trackLength : (root.player ? root.player.position : 0))
+                    color: Palette.Theme.textMuted
+                    font.family: Palette.Theme.fontMono
+                    font.pixelSize: Palette.Theme.fontSizeXs
+                }
+
+                Text {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
                     visible: root.lengthKnown
                     text: root.formatTime(root.trackLength)
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontMono
                     font.pixelSize: Palette.Theme.fontSizeXs
                 }
-            }
 
-            // Controls
-            RowLayout {
-                Layout.alignment: Qt.AlignLeft
-                Layout.topMargin: 2
-                spacing: 6
+                RowLayout {
+                    id: controlsRow
+                    anchors.centerIn: parent
+                    spacing: 6
 
-                ToggleControl {
-                    icon: "shuffle"
-                    supported: root.hasPlayer && root.player.shuffleSupported
-                    on: supported && root.player.shuffle
-                    onClicked: root.player.shuffle = !root.player.shuffle
-                }
-
-                SkipControl {
-                    icon: "skip_previous"
-                    direction: -1
-                    enabled: root.hasPlayer && root.player.canGoPrevious
-                    onClicked: root.player.previous()
-                }
-
-                // Play / pause: a cookie that slowly turns while playing.
-                Item {
-                    id: playButton
-                    implicitWidth: 36
-                    implicitHeight: 36
-                    readonly property bool playing: root.hasPlayer && root.player.isPlaying
-
-                    scale: playMouse.pressed ? 0.88 : 1
-                    Behavior on scale {
-                        SpatialMotion {
-                            fast: true
-                            bouncy: true
-                        }
+                    ToggleControl {
+                        icon: "shuffle"
+                        supported: root.hasPlayer && root.player.shuffleSupported
+                        on: supported && root.player.shuffle
+                        onClicked: root.player.shuffle = !root.player.shuffle
                     }
 
-                    CookieShape {
-                        id: cookie
-                        anchors.fill: parent
-                        color: Palette.Theme.accent
-                        lobes: 8
-                        amplitude: 0.07
-
-                        // Pauses (rather than stops) with playback, so it
-                        // resumes from the angle it stopped at.
-                        NumberAnimation on rotation {
-                            from: 0
-                            to: 360
-                            duration: 12000
-                            loops: Animation.Infinite
-                            running: root.visible
-                            paused: running && !playButton.playing
-                        }
+                    SkipControl {
+                        icon: "skip_previous"
+                        direction: -1
+                        enabled: root.hasPlayer && root.player.canGoPrevious
+                        onClicked: root.player.previous()
                     }
 
-                    Text {
-                        id: playIcon
-                        anchors.centerIn: parent
-                        text: playButton.playing ? "pause" : "play_arrow"
-                        color: Palette.Theme.accentText
-                        font.family: Palette.Theme.fontIcons
-                        font.pixelSize: Palette.Theme.iconSizeLarge
-                        // Pops when it switches between play and pause.
-                        onTextChanged: iconPop.restart()
+                    // Play / pause: a cookie that slowly turns while playing.
+                    Item {
+                        id: playButton
+                        implicitWidth: 36
+                        implicitHeight: 36
+                        readonly property bool playing: root.hasPlayer && root.player.isPlaying
 
-                        SequentialAnimation {
-                            id: iconPop
-                            NumberAnimation {
-                                target: playIcon
-                                property: "scale"
-                                to: 0.6
-                                duration: Palette.Theme.effectFast
-                                easing.type: Easing.OutCubic
-                            }
-                            NumberAnimation {
-                                target: playIcon
-                                property: "scale"
-                                to: 1
-                                duration: Palette.Theme.motionDefault
-                                easing.type: Easing.OutBack
-                                easing.overshoot: Palette.Theme.springBouncy
+                        scale: playMouse.pressed ? 0.88 : 1
+                        Behavior on scale {
+                            SpatialMotion {
+                                fast: true
+                                bouncy: true
                             }
                         }
+
+                        CookieShape {
+                            id: cookie
+                            anchors.fill: parent
+                            color: Palette.Theme.accent
+                            lobes: 8
+                            amplitude: 0.07
+
+                            // Pauses (rather than stops) with playback, so it
+                            // resumes from the angle it stopped at.
+                            NumberAnimation on rotation {
+                                from: 0
+                                to: 360
+                                duration: 12000
+                                loops: Animation.Infinite
+                                running: root.visible
+                                paused: running && !playButton.playing
+                            }
+                        }
+
+                        Text {
+                            id: playIcon
+                            anchors.centerIn: parent
+                            text: playButton.playing ? "pause" : "play_arrow"
+                            color: Palette.Theme.accentText
+                            font.family: Palette.Theme.fontIcons
+                            font.pixelSize: Palette.Theme.iconSizeLarge
+                            // Pops when it switches between play and pause.
+                            onTextChanged: iconPop.restart()
+
+                            SequentialAnimation {
+                                id: iconPop
+                                NumberAnimation {
+                                    target: playIcon
+                                    property: "scale"
+                                    to: 0.6
+                                    duration: Palette.Theme.effectFast
+                                    easing.type: Easing.OutCubic
+                                }
+                                NumberAnimation {
+                                    target: playIcon
+                                    property: "scale"
+                                    to: 1
+                                    duration: Palette.Theme.motionDefault
+                                    easing.type: Easing.OutBack
+                                    easing.overshoot: Palette.Theme.springBouncy
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            id: playMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: if (root.player && root.player.canTogglePlaying)
+                                root.player.togglePlaying()
+                        }
                     }
 
-                    MouseArea {
-                        id: playMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: if (root.player && root.player.canTogglePlaying)
-                            root.player.togglePlaying()
+                    SkipControl {
+                        icon: "skip_next"
+                        direction: 1
+                        enabled: root.hasPlayer && root.player.canGoNext
+                        onClicked: root.player.next()
                     }
-                }
 
-                SkipControl {
-                    icon: "skip_next"
-                    direction: 1
-                    enabled: root.hasPlayer && root.player.canGoNext
-                    onClicked: root.player.next()
-                }
-
-                ToggleControl {
-                    // off → all → one
-                    icon: supported && root.player.loopState === MprisLoopState.Track ? "repeat_one" : "repeat"
-                    supported: root.hasPlayer && root.player.loopSupported
-                    on: supported && root.player.loopState !== MprisLoopState.None
-                    onClicked: {
-                        var l = root.player.loopState;
-                        root.player.loopState = l === MprisLoopState.None ? MprisLoopState.Playlist : (l === MprisLoopState.Playlist ? MprisLoopState.Track : MprisLoopState.None);
+                    ToggleControl {
+                        // off → all → one
+                        icon: supported && root.player.loopState === MprisLoopState.Track ? "repeat_one" : "repeat"
+                        supported: root.hasPlayer && root.player.loopSupported
+                        on: supported && root.player.loopState !== MprisLoopState.None
+                        onClicked: {
+                            var l = root.player.loopState;
+                            root.player.loopState = l === MprisLoopState.None ? MprisLoopState.Playlist : (l === MprisLoopState.Playlist ? MprisLoopState.Track : MprisLoopState.None);
+                        }
                     }
                 }
             }

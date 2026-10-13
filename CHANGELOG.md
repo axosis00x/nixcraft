@@ -5,6 +5,36 @@ All notable changes to nixcraft are recorded here. Versions follow
 `scripts/release.sh` from the [Conventional Commits](https://www.conventionalcommits.org)
 since the previous release.
 
+## [0.1.0-pre-alpha.4] - 2026-10-13
+
+### Features
+
+- **workspaces:** overview with labelled cards, special workspaces and shortcuts (5922d2c)
+- **notifications:** morphing cards with a newest-first size hierarchy (ecaf82f)
+- **controlcenter:** tabbed dashboard with overview, controls, notifications and performance (b000f72)
+- **frame:** screen frame for every bar in notch mode, notch and panels grow out of it (53f153e)
+- **hypr:** float zenity dialogs and portal file choosers (eca1b73)
+- **nvim:** slanted lualine blocks with square ends (1ef18f6)
+- **nvim:** slanted lualine blocks with file, branch, LSP and project (3b30587)
+- **nvim:** clean, compact explorer and thin moonfly separator (3354abf)
+- **overlay:** panels grow out of the screen frame with the left notch bar (c1376fd)
+- **shell:** screen frame with the left notch bar (a04eaab)
+- **bar:** show a desktop icon and label in the top bar when nothing is focused (a6d8d9e)
+
+### Fixes
+
+- user settings (20cd8d2)
+
+### Style
+
+- **media:** full-width wave with times beside centred controls (35b0846)
+- **bar:** round vertical bar pills like the compact bar's capsules (b0081ae)
+
+### Chores
+
+- updates (75b2775)
+- rename VERSION to version (de5f27f)
+
 ## [0.1.0-pre-alpha.3] - 2026-10-12
 
 ### Features

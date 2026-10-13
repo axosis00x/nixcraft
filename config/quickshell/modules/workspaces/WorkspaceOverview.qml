@@ -3,12 +3,18 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Widgets
 import "../../theme" as Palette
 import "../../components/material"
 
+// Every workspace at a glance: cards floating over the dimmed desktop, each
+// labelled with its number and window count ("current" on the one you're
+// on), live window thumbnails inside, special workspaces in their own
+// column, and the shortcuts underneath. Drag a window onto another card to
+// move it there; 1–9 / 0 jump straight to a workspace.
 PanelWindow {
     id: root
 
@@ -16,6 +22,11 @@ PanelWindow {
 
     readonly property int selected: service ? service.selected : 0
     readonly property bool active: service ? service.active : false
+    readonly property int currentId: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : 1
+    readonly property var specials: Hyprland.workspaces.values.filter(w => w.id < 0)
+
+    readonly property real cardW: 196
+    readonly property real cardH: 110
 
     visible: active
 
@@ -58,7 +69,7 @@ PanelWindow {
     Rectangle {
         anchors.fill: parent
         color: "#000000"
-        opacity: root.active ? 0.35 : 0
+        opacity: root.active ? 0.75 : 0
         Behavior on opacity {
             EffectMotion {}
         }
@@ -71,6 +82,8 @@ PanelWindow {
 
         Keys.onLeftPressed: root.service.step(-1)
         Keys.onRightPressed: root.service.step(1)
+        Keys.onUpPressed: root.service.step(-5)
+        Keys.onDownPressed: root.service.step(5)
         Keys.onTabPressed: event => {
             if (event.modifiers & Qt.ShiftModifier)
                 root.service.step(-1);
@@ -80,251 +93,342 @@ PanelWindow {
         Keys.onReturnPressed: root.service.confirm()
         Keys.onEnterPressed: root.service.confirm()
         Keys.onEscapePressed: root.service.cancel()
+        // 1–9 and 0 (workspace 10) jump straight there.
+        Keys.onPressed: event => {
+            if (event.key >= Qt.Key_0 && event.key <= Qt.Key_9) {
+                var index = event.key === Qt.Key_0 ? 9 : event.key - Qt.Key_1;
+                root.service.selectIndex(index);
+                root.service.confirm();
+                event.accepted = true;
+            }
+        }
     }
 
-    // Fixed 5×2 grid — one cell per Hyprland workspace (1-10, matching the
-    // SUPER+1..0 keybinds). Windows in a workspace render as live thumbnails
-    // inside its cell and can be dragged onto another cell to move them
-    // there without switching to it.
-    Rectangle {
-        id: panel
+    Column {
         anchors.centerIn: parent
+        spacing: 22
 
-        readonly property int columns: 5
-        readonly property int rows: 2
-        readonly property int cellSpacing: 5
-        readonly property int cellW: 210
-        readonly property int cellH: 120
-        readonly property int pad: 10
+        Row {
+            spacing: 28
 
-        width: columns * cellW + (columns - 1) * cellSpacing + pad * 2
-        height: rows * cellH + (rows - 1) * cellSpacing + pad * 2
+            Grid {
+                id: grid
+                columns: 5
+                columnSpacing: 14
+                rowSpacing: 18
 
-        radius: Palette.Theme.radiusLarge
-        color: Palette.Theme.surfaceContainer
+                Repeater {
+                    model: 10
 
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.LeftButton
-            onClicked: {}
-        }
+                    delegate: Column {
+                        id: cell
+                        required property int index
 
-        Grid {
-            anchors.fill: parent
-            anchors.margins: panel.pad
-            columns: panel.columns
-            spacing: panel.cellSpacing
+                        readonly property int workspaceId: index + 1
+                        readonly property var ws: root.service.workspaceFor(workspaceId)
+                        readonly property int windowCount: ws ? ws.toplevels.values.length : 0
+                        readonly property bool focused: index === root.selected
 
-            Repeater {
-                model: 10
+                        spacing: 6
 
-                delegate: Item {
-                    id: cell
-                    required property int index
-
-                    readonly property int workspaceId: index + 1
-                    readonly property var ws: root.service.workspaceFor(workspaceId)
-                    readonly property bool focused: index === root.selected
-                    readonly property bool hasWindows: winRepeater.count > 0
-
-                    width: panel.cellW
-                    height: panel.cellH
-                    z: focused ? 1 : 0
-                    scale: focused ? 1.0 : 0.97
-                    opacity: focused ? 1.0 : 0.85
-
-                    Behavior on scale {
-                        SpatialMotion {
-                            fast: true
-                        }
-                    }
-                    Behavior on opacity {
-                        EffectMotion {}
-                    }
-
-                    Rectangle {
-                        id: card
-                        anchors.fill: parent
-                        radius: Palette.Theme.radiusSmall
-                        color: cell.hasWindows ? Palette.Theme.surfaceContainerHigh : Palette.Theme.surfaceContainerLow
-
-                        // Soft tint + ring instead of a flat saturated stroke —
-                        // reads as "selected" without clashing against live
-                        // thumbnail content behind it.
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: parent.radius
-                            visible: cell.focused
-                            color: Palette.Theme.accent
-                            opacity: 0.10
+                        CardLabel {
+                            width: root.cardW
+                            badge: String(cell.workspaceId)
+                            text: cell.windowCount === 0 ? "empty" : cell.windowCount + (cell.windowCount === 1 ? " window" : " windows")
+                            current: cell.workspaceId === root.currentId
                         }
 
-                        border.width: cell.focused ? 1.5 : 0
-                        border.color: Palette.Theme.accent
-
-                        layer.enabled: cell.focused
-                        layer.effect: MultiEffect {
-                            shadowEnabled: true
-                            shadowColor: Qt.rgba(0, 0, 0, 0.45)
-                            shadowBlur: 0.6
-                            shadowVerticalOffset: 3
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            visible: !cell.hasWindows
-                            text: cell.workspaceId
-                            color: Palette.Theme.textMuted
-                            opacity: 0.4
-                            font.family: Palette.Theme.fontMono
-                            font.pixelSize: Palette.Theme.fontSizeHeadline
-                        }
-
-                        // up to 4 windows tiled in a mini 2×2; a 5th+ just
-                        // shows a "+N" badge instead of shrinking further.
-                        // Plain Item (not a Grid/positioner) so a dragged
-                        // tile owns its x/y instead of fighting a layout
-                        // that would otherwise snap it straight back.
                         Item {
-                            id: winArea
-                            anchors.fill: parent
-                            anchors.margins: 4
+                            width: root.cardW
+                            height: root.cardH
 
-                            Repeater {
-                                id: winRepeater
-                                model: cell.ws ? cell.ws.toplevels : null
+                            WorkspaceCard {
+                                anchors.fill: parent
+                                ws: cell.ws
+                                label: String(cell.workspaceId)
+                                focused: cell.focused
+                                draggable: true
+                                onActivated: {
+                                    root.service.selectIndex(cell.index);
+                                    root.service.confirm();
+                                }
+                                onHoveredEmpty: root.service.selectIndex(cell.index)
+                            }
 
-                                delegate: Item {
-                                    id: winTile
-                                    required property var modelData
-                                    required property int index
-
-                                    readonly property bool overflow: winRepeater.count > 4 && winTile.index === 3
-                                    readonly property int cols: winRepeater.count > 1 ? 2 : 1
-                                    readonly property real tileW: cols > 1 ? (winArea.width - 3) / 2 : winArea.width
-                                    readonly property real tileH: winRepeater.count > 2 ? (winArea.height - 3) / 2 : winArea.height
-                                    readonly property real restX: (winTile.index % cols) * (tileW + 3)
-                                    readonly property real restY: Math.floor(winTile.index / cols) * (tileH + 3)
-
-                                    readonly property bool hovered: winDrag.containsMouse && !winDrag.drag.active
-
-                                    visible: winTile.index < 4
-                                    width: tileW
-                                    height: tileH
-                                    x: restX
-                                    y: restY
-                                    scale: winTile.hovered ? 1.04 : 1.0
-
-                                    Behavior on scale {
-                                        SpatialMotion {
-                                            fast: true
-                                        }
-                                    }
-
-                                    Rectangle {
-                                        id: winCard
-                                        anchors.fill: parent
-                                        radius: 6
-                                        color: Palette.Theme.surfaceContainerHighest
-                                        clip: true
-
-                                        ScreencopyView {
-                                            anchors.fill: parent
-                                            visible: !winTile.overflow
-                                            captureSource: winTile.modelData.wayland
-                                            live: root.active
-                                            paintCursor: false
-                                        }
-
-                                        // hover "glimpse" — a brief soft
-                                        // white wash, no border/outline
-                                        Rectangle {
-                                            anchors.fill: parent
-                                            visible: !winTile.overflow
-                                            color: Palette.Theme.textPrimary
-                                            opacity: winTile.hovered ? Palette.Theme.stateHover : 0
-
-                                            Behavior on opacity {
-                                                EffectMotion {}
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            anchors.fill: parent
-                                            visible: winTile.overflow
-                                            color: Palette.Theme.surfaceContainerHighest
-
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: "+" + (winRepeater.count - 3)
-                                                color: Palette.Theme.textMuted
-                                                font.family: Palette.Theme.fontMono
-                                                font.pixelSize: Palette.Theme.fontSizeBody
-                                            }
-                                        }
-
-                                        IconImage {
-                                            anchors.left: parent.left
-                                            anchors.bottom: parent.bottom
-                                            anchors.margins: 3
-                                            implicitSize: 14
-                                            visible: !winTile.overflow && winTile.modelData.wayland && winTile.modelData.wayland.appId
-                                            source: winTile.modelData.wayland && winTile.modelData.wayland.appId ? Quickshell.iconPath(winTile.modelData.wayland.appId, true) : ""
-                                            smooth: true
-                                        }
-                                    }
-
-                                    Drag.active: winDrag.drag.active
-                                    Drag.keys: ["workspace-window"]
-                                    Drag.hotSpot.x: width / 2
-                                    Drag.hotSpot.y: height / 2
-
-                                    MouseArea {
-                                        id: winDrag
-                                        anchors.fill: parent
-                                        enabled: !winTile.overflow
-                                        acceptedButtons: Qt.LeftButton
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        drag.target: winTile
-                                        onPressed: winTile.z = 100
-                                        onReleased: {
-                                            winTile.Drag.drop();
-                                            winTile.z = 0;
-                                            winTile.x = winTile.restX;
-                                            winTile.y = winTile.restY;
-                                        }
-                                        onClicked: {
-                                            root.service.selectIndex(cell.index);
-                                            root.service.confirm();
-                                        }
-                                    }
+                            DropArea {
+                                anchors.fill: parent
+                                keys: ["workspace-window"]
+                                onEntered: root.service.selectIndex(cell.index)
+                                onDropped: drop => {
+                                    if (drop.source && drop.source.modelData)
+                                        root.service.moveWindowToWorkspace(drop.source.modelData.address, cell.workspaceId);
                                 }
                             }
                         }
                     }
+                }
+            }
 
-                    DropArea {
+            Rectangle {
+                visible: root.specials.length > 0
+                width: 1
+                height: grid.height
+                color: Palette.Theme.accent
+                opacity: 0.35
+            }
+
+            Column {
+                visible: root.specials.length > 0
+                spacing: 12
+
+                Text {
+                    text: "SPECIAL"
+                    color: Palette.Theme.accent
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: Palette.Theme.fontSizeXs
+                    font.weight: Font.Bold
+                    font.letterSpacing: 2
+                }
+
+                Repeater {
+                    model: root.specials
+
+                    delegate: Column {
+                        id: special
+                        required property var modelData
+                        readonly property int windowCount: modelData.toplevels.values.length
+                        readonly property string title: modelData.name.replace(/^special:/, "")
+
+                        spacing: 6
+
+                        CardLabel {
+                            width: root.cardW
+                            badge: special.title.charAt(0).toUpperCase()
+                            text: special.title + "  ·  " + (special.windowCount === 0 ? "empty" : special.windowCount + (special.windowCount === 1 ? " window" : " windows"))
+                        }
+
+                        WorkspaceCard {
+                            width: root.cardW
+                            height: root.cardH
+                            ws: special.modelData
+                            label: special.title.charAt(0).toUpperCase()
+                            onActivated: {
+                                root.service.cancel();
+                                Hyprland.dispatch("togglespecialworkspace " + special.title);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "1–9 / 0 workspace  ·  ← → ↑ ↓ move  ·  drag windows between cards  ·  Enter go  ·  Esc close"
+            color: Palette.Theme.textMuted
+            font.family: Palette.Theme.fontSans
+            font.pixelSize: Palette.Theme.fontSizeXs
+        }
+    }
+
+    // ── pieces ─────────────────────────────────────────────────────
+
+    // "[3] 1 window ............ current" above a card.
+    component CardLabel: Item {
+        id: label
+        property string badge: ""
+        property string text: ""
+        property bool current: false
+
+        height: 18
+
+        Row {
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 6
+
+            Rectangle {
+                width: Math.max(18, badgeText.implicitWidth + 8)
+                height: 18
+                radius: 5
+                color: label.current ? Palette.Theme.accent : Palette.Theme.surfaceSolid
+
+                Text {
+                    id: badgeText
+                    anchors.centerIn: parent
+                    text: label.badge
+                    color: label.current ? Palette.Theme.accentText : Palette.Theme.textPrimary
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: Palette.Theme.fontSizeXs
+                    font.weight: Font.Bold
+                }
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: label.text
+                color: Palette.Theme.textSecondary
+                font.family: Palette.Theme.fontSans
+                font.pixelSize: Palette.Theme.fontSizeXs
+            }
+        }
+
+        Text {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            visible: label.current
+            text: "current"
+            color: Palette.Theme.accent
+            font.family: Palette.Theme.fontSans
+            font.pixelSize: Palette.Theme.fontSizeXs
+            font.weight: Font.DemiBold
+        }
+    }
+
+    // A workspace's card: its windows as live thumbnails (up to four, then
+    // "+N"), or its number faintly when empty. The selected card wears an
+    // accent outline.
+    component WorkspaceCard: Rectangle {
+        id: card
+        property var ws: null
+        property string label: ""
+        property bool focused: false
+        property bool draggable: false
+        signal activated
+        signal hoveredEmpty
+
+        readonly property bool hasWindows: tiles.count > 0
+
+        radius: Palette.Theme.radiusMedium
+        // Opaque, so translucent themes don't show the desktop through it.
+        color: Palette.Theme.surfaceSolid
+        border.width: focused ? 2 : 1
+        border.color: focused ? Palette.Theme.accent : Palette.Theme.outlineSoft
+        scale: focused ? 1 : 0.97
+
+        Behavior on scale {
+            SpatialMotion {
+                fast: true
+            }
+        }
+        Behavior on border.color {
+            ColorMotion {}
+        }
+
+        layer.enabled: focused
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Qt.rgba(0, 0, 0, 0.45)
+            shadowBlur: 0.6
+            shadowVerticalOffset: 3
+        }
+
+        Text {
+            anchors.centerIn: parent
+            visible: !card.hasWindows
+            text: card.label
+            color: Palette.Theme.textMuted
+            opacity: 0.35
+            font.family: Palette.Theme.fontSans
+            font.pixelSize: Palette.Theme.fontSizeHeadline
+            font.weight: Font.Bold
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            visible: !card.hasWindows
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onEntered: card.hoveredEmpty()
+            onClicked: card.activated()
+        }
+
+        // Plain Item (not a positioner) so a dragged tile owns its x/y.
+        Item {
+            id: area
+            anchors.fill: parent
+            anchors.margins: 5
+
+            Repeater {
+                id: tiles
+                model: card.ws ? card.ws.toplevels : null
+
+                delegate: Item {
+                    id: tile
+                    required property var modelData
+                    required property int index
+
+                    readonly property bool overflow: tiles.count > 4 && index === 3
+                    readonly property int cols: tiles.count > 1 ? 2 : 1
+                    readonly property real tileW: cols > 1 ? (area.width - 4) / 2 : area.width
+                    readonly property real tileH: tiles.count > 2 ? (area.height - 4) / 2 : area.height
+                    readonly property real restX: (index % cols) * (tileW + 4)
+                    readonly property real restY: Math.floor(index / cols) * (tileH + 4)
+
+                    visible: index < 4
+                    width: tileW
+                    height: tileH
+                    x: restX
+                    y: restY
+
+                    ClippingRectangle {
                         anchors.fill: parent
-                        keys: ["workspace-window"]
-                        onEntered: root.service.selectIndex(cell.index)
-                        onDropped: drop => {
-                            if (drop.source && drop.source.modelData)
-                                root.service.moveWindowToWorkspace(drop.source.modelData.address, cell.workspaceId);
+                        radius: Palette.Theme.radiusXs
+                        color: Palette.Theme.surfaceContainerHighest
+
+                        ScreencopyView {
+                            anchors.fill: parent
+                            visible: !tile.overflow
+                            captureSource: tile.modelData.wayland
+                            live: root.active
+                            paintCursor: false
+                        }
+
+                        StateLayer {
+                            radius: parent.radius
+                            hovered: tileMouse.containsMouse && !tileMouse.drag.active
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            visible: tile.overflow
+                            text: "+" + (tiles.count - 3)
+                            color: Palette.Theme.textMuted
+                            font.family: Palette.Theme.fontSans
+                            font.pixelSize: Palette.Theme.fontSizeBody
+                        }
+
+                        IconImage {
+                            anchors.left: parent.left
+                            anchors.bottom: parent.bottom
+                            anchors.margins: 3
+                            implicitSize: 14
+                            visible: !tile.overflow && tile.modelData.wayland && tile.modelData.wayland.appId
+                            source: tile.modelData.wayland && tile.modelData.wayland.appId ? Quickshell.iconPath(tile.modelData.wayland.appId, true) : ""
+                            smooth: true
                         }
                     }
 
+                    Drag.active: tileMouse.drag.active
+                    Drag.keys: ["workspace-window"]
+                    Drag.hotSpot.x: width / 2
+                    Drag.hotSpot.y: height / 2
+
                     MouseArea {
+                        id: tileMouse
                         anchors.fill: parent
-                        visible: !cell.hasWindows
-                        acceptedButtons: Qt.LeftButton
+                        enabled: !tile.overflow
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onEntered: root.service.selectIndex(cell.index)
-                        onClicked: {
-                            root.service.selectIndex(cell.index);
-                            root.service.confirm();
+                        drag.target: card.draggable ? tile : null
+                        onPressed: tile.z = 100
+                        onReleased: {
+                            tile.Drag.drop();
+                            tile.z = 0;
+                            tile.x = tile.restX;
+                            tile.y = tile.restY;
                         }
+                        onClicked: card.activated()
                     }
                 }
             }

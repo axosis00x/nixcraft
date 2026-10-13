@@ -50,6 +50,7 @@
     },
     "codex-acp": {
       "default_config_options": {
+        "model": "gpt-6-luna",
         "reasoning_effort": "medium",
       },
       "type": "registry",

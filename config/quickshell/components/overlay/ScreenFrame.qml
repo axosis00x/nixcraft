@@ -23,7 +23,9 @@ Variants {
     readonly property real radius: Ui.screenFrameRadius
     // Only with the left bar in notch mode: the top bar and island mode
     // have no frame, and it fades out when switching to them.
-    readonly property bool shown: barLayout ? (barLayout.loaded && barLayout.vertical && !barLayout.island) : false
+    // In notch mode, for every bar position; island mode has no frame.
+    readonly property bool shown: barLayout ? (barLayout.loaded && !barLayout.island) : false
+    readonly property bool vertical: barLayout ? barLayout.vertical : false
 
     model: Quickshell.screens
 
@@ -96,7 +98,7 @@ Variants {
         // One invisible strip per edge without the bar, reserving the band's
         // width so windows stay clear of it.
         Variants {
-            model: root.shown ? ["top", "bottom", "right"] : []
+            model: root.shown ? (root.vertical ? ["top", "bottom", "right"] : ["left", "bottom", "right"]) : []
 
             PanelWindow {
                 required property string modelData

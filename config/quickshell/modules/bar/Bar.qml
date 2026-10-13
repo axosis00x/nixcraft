@@ -48,7 +48,10 @@ PanelWindow {
     // Only the dimension that isn't pinned down by anchors on both sides
     // actually applies: implicitHeight governs thickness in horizontal mode,
     // implicitWidth governs thickness in vertical mode.
-    implicitHeight: Ui.barHeight
+    // Notch mode adds the screen frame's band along the top, so the bar
+    // grows by it and the capsules keep their usual gaps below and beside it.
+    readonly property real frameInset: island ? 0 : Ui.screenFrameBorder
+    implicitHeight: Ui.barHeight + frameInset
     // The vertical window is a little wider than the strip so the concave
     // fillets can hang off it; only the strip reserves space and takes
     // input.
@@ -467,7 +470,9 @@ PanelWindow {
             top: parent.top
             left: parent.left
             right: parent.right
-            topMargin: 4
+            topMargin: 4 + bar.frameInset
+            leftMargin: bar.frameInset
+            rightMargin: bar.frameInset
         }
         height: 30
 
@@ -631,8 +636,18 @@ PanelWindow {
         islandGap: bar.islandGap
         slabWidth: centerContentWidth + 24
         slabRadius: bar.capsuleRadius
-        wingSize: 9
         clipContent: false
+
+        // Notch mode: grow out of the screen frame (ScreenFrame.qml) like
+        // the panels do, in its color, from its inner edge, curving into it.
+        anchors.topMargin: bar.island ? 0 : Ui.screenFrameBorder
+        wingSize: bar.island ? 9 : Ui.screenFrameRadius
+        color: bar.island ? Palette.Theme.surfaceContainer : Palette.Theme.bg
+        tintOpacity: bar.island ? Palette.Theme.surfaceTintOpacity : 0
+
+        Behavior on color {
+            ColorMotion {}
+        }
 
         readonly property string activeCenterModule: bar.compact ? "compact" : bar.centerModules[bar.centerModuleIndex]
 
@@ -666,7 +681,7 @@ PanelWindow {
         // the edge for the entire drop.
         // In island mode the island is inset like the other bar capsules
         // (barRow's 4px top margin), so it's that much shorter.
-        readonly property real restHeight: bar.island ? bar.height - bar.islandGap : bar.height
+        readonly property real restHeight: bar.height - (bar.island ? bar.islandGap : Ui.screenFrameBorder)
         slabHeight: 0
 
         Behavior on slabHeight {

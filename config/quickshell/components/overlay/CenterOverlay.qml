@@ -232,13 +232,22 @@ PanelWindow {
     readonly property real barSlabWidth: bar ? (bar.centerCapsuleSlabWidth || 120) : 120
     readonly property bool island: barLayout ? barLayout.island : false
     // In island mode the bar's island is inset like the other bar capsules.
-    readonly property real barSlabHeight: root.verticalBar ? 0 : (bar ? bar.height - (root.island ? bar.islandGap : 0) : 34)
+    // Notch mode takes the frame's band off the top (the notch hangs below it).
+    readonly property real barSlabHeight: root.verticalBar ? 0 : (bar ? bar.height - (root.island ? bar.islandGap : Ui.screenFrameBorder) : 34)
 
     // With the left bar in notch mode the screen has a frame (ScreenFrame.qml,
     // same condition). The stages then grow out of it, Caelestia-style: in
     // the frame's color, from its inner edge, joined by curves at its radius.
-    readonly property bool framed: barLayout ? (barLayout.loaded && barLayout.vertical && !root.island) : false
+    // A fullscreen app covers the frame, so panels hang from the screen edge
+    // again instead of leaving a gap where the frame would be.
+    readonly property bool fullscreenActive: ToplevelManager.activeToplevel ? ToplevelManager.activeToplevel.fullscreen : false
+    readonly property bool framed: barLayout ? (barLayout.loaded && !root.island && !fullscreenActive) : false
+    // Panels hang from the frame's inner edge, top and bottom.
     property real frameInset: framed ? Ui.screenFrameBorder : 0
+    property real topFrameInset: framed ? Ui.screenFrameBorder : 0
+    Behavior on topFrameInset {
+        EffectMotion {}
+    }
     Behavior on frameInset {
         EffectMotion {}
     }
@@ -251,7 +260,7 @@ PanelWindow {
         id: topStage
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        anchors.topMargin: root.frameInset
+        anchors.topMargin: root.topFrameInset
         bottomAligned: false
         island: root.island
         islandGap: bar ? bar.islandGap : 4
@@ -294,6 +303,7 @@ PanelWindow {
             notificationCenter: root.notificationCenter
             bar: root.bar
             idleService: root.idleService
+            media: mediaPanelItem
         }
 
         PowerMenu {

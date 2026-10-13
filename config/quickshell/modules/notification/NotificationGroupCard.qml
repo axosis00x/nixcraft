@@ -8,6 +8,9 @@ ColumnLayout {
 
     required property var notificationCenter
     required property var group // { appName, items: [...] }
+    // The newest group shows its top card in full; the rest are compact
+    // (they open on hover), so the list has a clear size hierarchy.
+    property bool featured: true
     readonly property bool expanded: notificationCenter ? notificationCenter.isExpanded(group.appName) : false
     readonly property bool hasStack: group.items.length > 1
 
@@ -48,7 +51,7 @@ ColumnLayout {
             canDismiss: root.group.items[0].live
             dismissOnActivate: false
             onDismissed: root.notificationCenter.dismissRecord(root.group.items[0])
-            compact: root.hasStack
+            compact: root.hasStack || !root.featured
             onActivated: {
                 if (root.hasStack)
                     root.notificationCenter.toggleGroup(root.group.appName);

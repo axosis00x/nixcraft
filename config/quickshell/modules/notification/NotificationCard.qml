@@ -40,9 +40,23 @@ Surface {
             return Math.floor(diffSec / 3600) + "h ago";
         return Math.floor(diffSec / 86400) + "d ago";
     }
+    // Compact cards morph open on hover: the full text springs into view
+    // and the corners round out, then they settle back when the pointer
+    // leaves. Full cards always show everything.
+    readonly property bool open: !compact || cardMouse.containsMouse
     height: implicitHeight
     implicitHeight: content.implicitHeight + 22
-    radius: Palette.Theme.radiusMedium
+    radius: open && compact ? Palette.Theme.radiusLarge : Palette.Theme.radiusMedium
+    clip: true
+
+    Behavior on height {
+        SpatialMotion {
+            fast: true
+        }
+    }
+    Behavior on radius {
+        SpatialMotion {}
+    }
     // One step above the panel/section it sits on, so cards read as cards.
     // Layered over surfaceContainer so translucent themes (whose "high"
     // surfaces are thin white washes) still get a solid-enough card.
@@ -173,7 +187,7 @@ Surface {
                 font.pixelSize: Palette.Theme.fontSizeSmall
                 lineHeight: 1.15
                 wrapMode: Text.WordWrap
-                maximumLineCount: card.compact ? 2 : 5
+                maximumLineCount: card.open ? 5 : 2
                 elide: Text.ElideRight
                 visible: text !== ""
                 Layout.fillWidth: true

@@ -40,11 +40,11 @@ Item {
     // The screen frame's band along the top and bottom edges (notch mode).
     readonly property real frameInset: Ui.screenFrameBorder * (1 - islandness)
 
-    // Pills sit pillInset in from the strip's sides, and their corners are
-    // concentric with the island's: the bar's capsule radius less that inset.
+    // Pills sit pillInset in from the strip's sides, rounded like the
+    // horizontal bar's capsules (the shared capsule radius).
     readonly property real pillInset: 6
     readonly property real pillWidth: strip.width - pillInset * 2
-    readonly property real pillRadius: bar.capsuleRadius - pillInset
+    readonly property real pillRadius: bar.capsuleRadius
 
     // ── strip ───────────────────────────────────────────────────────
     Rectangle {

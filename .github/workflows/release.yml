@@ -27,10 +27,13 @@ jobs:
         with:
           ref: ${{ env.TAG }}
       - uses: cachix/install-nix-action@v31
-      - name: Tag matches VERSION
+      - name: Tag matches the version file
         run: |
-          version=$(tr -d '[:space:]' < VERSION)
-          [[ "v$version" == "$TAG" ]] || { echo "::error::tag $TAG but VERSION is $version"; exit 1; }
+          # Tags from before the rename have it as VERSION.
+          file=version
+          [[ -f $file ]] || file=VERSION
+          version=$(tr -d '[:space:]' < "$file")
+          [[ "v$version" == "$TAG" ]] || { echo "::error::tag $TAG but $file is $version"; exit 1; }
       - name: Check the flake (evaluates every host)
         run: nix flake check --print-build-logs
       - name: Publish

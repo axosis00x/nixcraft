@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# nixcraft release: bumps VERSION, writes the CHANGELOG.md entry from the
+# nixcraft release: bumps the version file, writes the CHANGELOG.md entry from the
 # Conventional Commits since the last tag, then commits and tags the version.
 # Pushing the tag makes the release workflow publish a GitHub release.
 #
@@ -12,7 +12,7 @@
 #   scripts/release.sh --phase beta    move to a phase (0.1.0-alpha.3 → 0.1.0-beta.1; "stable" → 0.1.0)
 #   scripts/release.sh --dry-run       print the entry and version, change nothing
 #   scripts/release.sh --push          also push the commit and tag to origin
-#   scripts/release.sh notes [VERSION] print a version's CHANGELOG.md entry (default: VERSION file)
+#   scripts/release.sh notes [VERSION] print a version's CHANGELOG.md entry (default: the version file)
 set -euo pipefail
 
 # Work from the repo root, one level above scripts/.
@@ -90,9 +90,9 @@ newer() {
     ((a_rank > b_rank || (a_rank == b_rank && a_n > n)))
 }
 
-current=$(tr -d '[:space:]' <VERSION 2>/dev/null || true)
+current=$(tr -d '[:space:]' <version 2>/dev/null || true)
 current=${current:-0.0.0}
-[[ $current =~ $semver ]] || die "VERSION is not X.Y.Z or X.Y.Z-PHASE.N: $current"
+[[ $current =~ $semver ]] || die "version is not X.Y.Z or X.Y.Z-PHASE.N: $current"
 [[ -z $phase ]] || phase_rank "$phase" >/dev/null
 
 # notes [VERSION]: the body of that version's "## [VERSION]" section.
@@ -260,9 +260,9 @@ older=$(awk 'found || /^## \[/ { found = 1; print }' CHANGELOG.md 2>/dev/null ||
     printf '%s\n\n%s\n' "$(sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' <<<"$header")" "$entry"
     [[ -z $older ]] || printf '\n%s\n' "$older"
 } >CHANGELOG.md
-printf '%s\n' "$version" >VERSION
+printf '%s\n' "$version" >version
 
-git add VERSION CHANGELOG.md
+git add version CHANGELOG.md
 git commit -q -m "chore(release): $tag"
 git tag -a "$tag" -m "nixcraft $tag ($version_phase)"
 info "Committed and tagged $tag."

@@ -85,7 +85,8 @@ local theme_overrides = {
   gruvbox = gruvbox_theme,
 }
 -- Layout: [mode] file  branch ............ diagnostics  LSP ~ servers  [folder][line:col]
--- Every block is a parallelogram: slanted "/" on both ends.
+-- Blocks are slanted "/" where they meet each other, and square at the two
+-- ends of the line so it sits flush with the window edges.
 local function lsp_names()
   local names = {}
   for _, client in ipairs(vim.lsp.get_clients({ bufnr = 0 })) do
@@ -113,7 +114,8 @@ return {
           {
             "mode",
             icon = "",
-            separator = { left = "", right = "" },
+            -- Square at the window edge, slanted where it meets the next block.
+            separator = { left = "", right = "" },
             padding = { left = 1, right = 1 },
           },
         },
@@ -184,7 +186,8 @@ return {
           {
             "location",
             icon = "",
-            separator = { left = "", right = "" },
+            -- Slanted where it meets the folder block, square at the window edge.
+            separator = { left = "", right = "" },
             padding = { left = 1, right = 1 },
           },
         },

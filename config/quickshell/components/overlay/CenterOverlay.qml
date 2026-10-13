@@ -318,6 +318,7 @@ PanelWindow {
             maxWidth: root.width
             launcher: launcherItem
             controlCenter: controlCenterItem
+            bar: root.bar
         }
 
         MediaPanel {

@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Layouts
 import "../../components/material"
 import "../../theme" as Palette
 
@@ -15,45 +14,55 @@ Item {
     signal picked(int index)
 
     implicitHeight: 38
+    readonly property real tabContentWidth: {
+        var total = 0;
+        for (var i = 0; i < repeater.count; i++) {
+            var slot = repeater.itemAt(i);
+            if (slot)
+                total += slot.width;
+        }
+        return total;
+    }
+    readonly property real tabGap: Math.max(0, (row.width - tabContentWidth) / (tabs.length + 1))
+    function tabContentWidthBefore(index) {
+        var total = 0;
+        for (var i = 0; i < index; i++) {
+            var slot = repeater.itemAt(i);
+            if (slot)
+                total += slot.width;
+        }
+        return total;
+    }
 
-    // Each tab is as wide as its icon and name; equal gaps go before,
-    // between and after them, so the spacing looks even whatever the labels.
-    RowLayout {
+    // Position each tab using one shared gap, including both outer edges.
+    Item {
         id: row
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.leftMargin: 8
-        anchors.rightMargin: 8
         anchors.top: parent.top
         anchors.bottom: divider.top
-        spacing: 0
 
         Repeater {
             id: repeater
             model: root.tabs
 
-            // A flexible gap, then the tab; one more gap closes the row, so
-            // every gap (outer ones included) gets the same width.
-            RowLayout {
+            Item {
                 id: slot
                 required property var modelData
                 required property int index
                 readonly property alias tab: tab
 
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                spacing: 0
-
-                Item {
-                    Layout.fillWidth: true
-                }
+                x: root.tabGap * (index + 1) + root.tabContentWidthBefore(index)
+                width: tab.implicitWidth
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
 
                 Item {
                     id: tab
                     readonly property bool selected: slot.index === root.current
 
-                    Layout.fillHeight: true
                     implicitWidth: content.implicitWidth
+                    anchors.fill: parent
 
                     Row {
                         id: content
@@ -87,6 +96,7 @@ Item {
                     }
 
                     MouseArea {
+                        id: mouse
                         anchors.fill: parent
                         anchors.margins: -6
                         hoverEnabled: true
@@ -97,9 +107,6 @@ Item {
             }
         }
 
-        Item {
-            Layout.fillWidth: true
-        }
     }
 
     Rectangle {

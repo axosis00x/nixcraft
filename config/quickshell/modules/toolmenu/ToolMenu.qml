@@ -16,6 +16,7 @@ Item {
     property real maxWidth: 4000
     property var launcher: null
     property var controlCenter: null
+    property var bar: null
     property int selectedIndex: 0
 
     implicitWidth: Math.min(maxWidth - 24, actions.length * 48 + (actions.length - 1) * 8 + 16)
@@ -157,6 +158,8 @@ Item {
                 delegate: Rectangle {
                     required property var modelData
                     required property int index
+                    readonly property bool recordAction: modelData.name === "Record"
+                    readonly property bool recording: recordAction && root.bar && root.bar.isRecording
 
                     Layout.minimumWidth: 48
                     Layout.preferredWidth: 48
@@ -171,7 +174,8 @@ Item {
                     }
 
                     color: index === root.selectedIndex ? Palette.Theme.accent : Palette.Theme.surfaceContainerHigh
-                    border.width: 0
+                    border.width: recording ? 1 : 0
+                    border.color: Palette.Theme.errorColor
 
                     Behavior on color {
                         ColorMotion {}
@@ -187,9 +191,30 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         text: modelData.icon
-                        color: index === root.selectedIndex ? Palette.Theme.accentText : Palette.Theme.textPrimary
+                        color: recording || index === root.selectedIndex ? Palette.Theme.accentText : Palette.Theme.textPrimary
                         font.family: Palette.Theme.fontIcons
                         font.pixelSize: Palette.Theme.iconSize
+                    }
+
+                    Rectangle {
+                        visible: recording
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.rightMargin: 3
+                        anchors.topMargin: 3
+                        width: 8
+                        height: 8
+                        radius: width / 2
+                        color: Palette.Theme.errorColor
+                        border.width: 1
+                        border.color: Palette.Theme.surfaceContainer
+
+                        SequentialAnimation on opacity {
+                            running: recording
+                            loops: Animation.Infinite
+                            NumberAnimation { to: 0.25; duration: 650; easing.type: Easing.InOutSine }
+                            NumberAnimation { to: 1; duration: 650; easing.type: Easing.InOutSine }
+                        }
                     }
 
                     MouseArea {

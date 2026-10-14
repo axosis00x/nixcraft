@@ -3,9 +3,9 @@ import QtQuick.Layouts
 import "../../components/material"
 import "../../theme" as Palette
 
-// A wide connectivity toggle (Wi-Fi, Bluetooth), Caelestia-style: an icon
-// disc that fills with the accent when on, a title and status, and an arrow
-// that opens the device list. Click the pill to toggle it.
+// A connection card. Clicking it toggles its radio; the arrow (or a right
+// click) opens the network or device list. On, it fills with tonal accent and
+// its corners round out further.
 Rectangle {
     id: root
 
@@ -16,11 +16,14 @@ Rectangle {
     signal clicked
     signal openList
 
-    implicitHeight: 56
-    radius: height / 2
+    implicitHeight: 64
+    radius: active ? Palette.Theme.radiusLarge : Palette.Theme.radiusMedium
     color: active ? Palette.Theme.accentTonal : Palette.Theme.surfaceContainerLow
-    scale: mouse.pressed ? 0.97 : 1
+    scale: mouse.pressed ? 0.985 : 1
 
+    Behavior on radius {
+        SpatialMotion {}
+    }
     Behavior on color {
         ColorMotion {}
     }
@@ -33,6 +36,7 @@ Rectangle {
 
     StateLayer {
         radius: parent.radius
+        tone: root.active ? Palette.Theme.accent : Palette.Theme.textPrimary
         hovered: mouse.containsMouse
         pressed: mouse.pressed
     }
@@ -48,13 +52,13 @@ Rectangle {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 8
+        anchors.leftMargin: 10
         anchors.rightMargin: 6
         spacing: 10
 
         Rectangle {
-            Layout.preferredWidth: 40
-            Layout.preferredHeight: 40
+            Layout.preferredWidth: 36
+            Layout.preferredHeight: 36
             radius: width / 2
             color: root.active ? Palette.Theme.accent : Palette.Theme.surfaceContainerHigh
 
@@ -65,8 +69,9 @@ Rectangle {
             Text {
                 anchors.centerIn: parent
                 text: root.icon
-                color: root.active ? Palette.Theme.accentText : Palette.Theme.textSecondary
+                color: root.active ? Palette.Theme.bg : Palette.Theme.textSecondary
                 font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
                 font.pixelSize: Palette.Theme.iconSize
             }
         }

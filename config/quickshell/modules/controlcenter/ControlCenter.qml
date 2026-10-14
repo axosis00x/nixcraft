@@ -90,7 +90,7 @@ Item {
     // are the second tab. The last tab used is kept while the shell runs.
     readonly property var tabs: [
         { id: "overview", icon: "dashboard", label: "Overview" },
-        { id: "controls", icon: "tune", label: "Controls" },
+        { id: "controls", icon: "settings_suggest", label: "Controls" },
         { id: "notifications", icon: "notifications", label: "Notifications" },
         { id: "performance", icon: "speed", label: "Performance" }
     ]
@@ -1013,6 +1013,7 @@ Item {
                 scale: root.showingDetail ? 0.98 : 1
                 transformOrigin: Item.Top
                 enabled: !root.showingDetail
+                visible: opacity > 0.01
 
                 Behavior on opacity {
                     EffectMotion {
@@ -1032,36 +1033,47 @@ Item {
                     anchors.margins: 10
                     spacing: 10
 
-                    // Connectivity: Wi-Fi and Bluetooth as wide pills.
+                    // The glyph matrix beside the two connection cards, as one
+                    // block of equal height.
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 10
 
-                        ConnectionPill {
-                            Layout.fillWidth: true
-                            Layout.preferredWidth: 1
-                            icon: root.networkIcon()
-                            title: "Network"
-                            subtitle: root.networkSubtitle()
-                            active: root.networkActive()
-                            onClicked: root.toggleNetwork()
-                            onOpenList: root.openWifiList()
+                        // A square glyph as tall as both cards together.
+                        PixelGlyphPanel {
+                            Layout.preferredWidth: connectionRows.implicitHeight
+                            Layout.preferredHeight: connectionRows.implicitHeight
+                            running: controlsPage.shown && !root.showingDetail && root.visible
                         }
 
-                        ConnectionPill {
+                        ColumnLayout {
+                            id: connectionRows
                             Layout.fillWidth: true
-                            Layout.preferredWidth: 1
-                            icon: root.bluetoothIcon()
-                            title: "Bluetooth"
-                            subtitle: root.bluetoothTileSubtitle()
-                            active: root.bluetoothLoaded && root.bluetoothEnabled
-                            onClicked: root.toggleBluetooth()
-                            onOpenList: root.openBluetoothList()
+                            spacing: 10
+
+                            ConnectionPill {
+                                Layout.fillWidth: true
+                                icon: root.networkIcon()
+                                title: "Network"
+                                subtitle: root.networkSubtitle()
+                                active: root.networkActive()
+                                onClicked: root.toggleNetwork()
+                                onOpenList: root.openWifiList()
+                            }
+
+                            ConnectionPill {
+                                Layout.fillWidth: true
+                                icon: root.bluetoothIcon()
+                                title: "Bluetooth"
+                                subtitle: root.bluetoothTileSubtitle()
+                                active: root.bluetoothLoaded && root.bluetoothEnabled
+                                onClicked: root.toggleBluetooth()
+                                onOpenList: root.openBluetoothList()
+                            }
                         }
                     }
 
-                    // The original pairing: sliders, and the four quick
-                    // toggles in a square beside them.
+                    // Keep the original slider and square-toggle pairing.
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 10
@@ -1179,6 +1191,9 @@ Item {
                 scale: root.showingDetail ? 1 : 0.98
                 transformOrigin: Item.Top
                 enabled: root.showingDetail
+                // Hidden once faded out: a merely disabled item still takes
+                // hover, which blocked the controls underneath.
+                visible: opacity > 0.01
 
                 Behavior on opacity {
                     EffectMotion {
@@ -1406,6 +1421,7 @@ Item {
                                     text: "wifi_password"
                                     color: authLayer.hasError ? Palette.Theme.errorColor : Palette.Theme.accent
                                     font.family: Palette.Theme.fontIcons
+                                    font.weight: Palette.Theme.iconWeight
                                     font.pixelSize: Palette.Theme.iconSizeLarge
                                 }
                             }
@@ -1458,6 +1474,7 @@ Item {
                                         text: "lock"
                                         color: Palette.Theme.textMuted
                                         font.family: Palette.Theme.fontIcons
+                                        font.weight: Palette.Theme.iconWeight
                                         font.pixelSize: Palette.Theme.iconSizeSmall
                                     }
 
@@ -1511,6 +1528,7 @@ Item {
                                     text: root.authBusy ? "progress_activity" : (authLayer.hasError ? "error" : "info")
                                     color: authLayer.hasError ? Palette.Theme.errorColor : (root.authBusy ? Palette.Theme.accent : Palette.Theme.textMuted)
                                     font.family: Palette.Theme.fontIcons
+                                    font.weight: Palette.Theme.iconWeight
                                     font.pixelSize: Palette.Theme.iconSizeSmall
 
                                     RotationAnimator on rotation {

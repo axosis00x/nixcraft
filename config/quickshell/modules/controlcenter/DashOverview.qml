@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import "../../components/material"
 import "../../services"
+import "../../services/weather"
 import "../../theme" as Palette
 
 // The dashboard's first tab, kept minimal: who and when on top, the
@@ -25,9 +26,7 @@ Item {
         precision: SystemClock.Minutes
     }
 
-    WeatherService {
-        id: weather
-    }
+    readonly property var weather: WeatherService
 
     // Back to the current month each time the dashboard opens.
     function reset() {

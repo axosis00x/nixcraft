@@ -1,14 +1,16 @@
+pragma Singleton
+
 import Quickshell
 import Quickshell.Io
 import QtQuick
 
-// Standalone weather fetch/cache for the desktop weather widget. Mirrors
-// modules/bar/Weather.qml's wttr.in + cache-file approach but is kept
-// separate so the desktop widget can be toggled independently of the bar
-// (and doesn't need the bar's nmcli reconnect-triggered refresh).
-Item {
+// Shared weather fetch/cache for the desktop weather widget and the
+// dashboard. A singleton, so there's one wttr.in request every five
+// minutes however many places show the weather (wttr.in rate-limits).
+// Mirrors modules/bar/Weather.qml's wttr.in + cache-file approach but is
+// kept separate so the widgets can be toggled independently of the bar.
+Singleton {
     id: root
-    visible: false
 
     property string tempC: ""
     property string conditionText: ""

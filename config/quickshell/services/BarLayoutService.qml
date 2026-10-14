@@ -91,8 +91,7 @@ Item {
 
         JsonAdapter {
             id: state
-            // Matches the value you had set directly in config/Ui.js before
-            // this became a live-toggleable, persisted setting.
+            // The default before this became a live-toggleable, persisted setting.
             property bool vertical: true
             property bool island: false
             property bool compact: false

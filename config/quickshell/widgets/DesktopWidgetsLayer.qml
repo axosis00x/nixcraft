@@ -2,6 +2,7 @@ import Quickshell
 import Quickshell.Wayland
 import QtQuick
 import "../services"
+import "../services/weather"
 
 // Hosts the desktop widgets (clock, weather, audio wave) on the wlr background layer —
 // below normal windows, above the wallpaper — so they read as part of the
@@ -63,9 +64,7 @@ PanelWindow {
         }
     }
 
-    WeatherService {
-        id: weatherService
-    }
+    readonly property var weatherService: WeatherService
 
     ClockWidget {
         id: clockWidget

@@ -22,7 +22,10 @@ Surface {
     }
     function dismissNotification() {
         card.dismissed();
-        if (card.canDismiss && card.actionTarget)
+        // A handler of `dismissed` (the notification center's record
+        // removal) may already have closed it; dismissing a closed
+        // notification again logs "Cannot close destroyed notification".
+        if (card.canDismiss && card.actionTarget && card.actionTarget.tracked)
             card.actionTarget.dismiss();
     }
     // Notification history records carry a receivedAt (ms since epoch) set

@@ -83,8 +83,8 @@ PanelWindow {
         service: weatherService
         widgetsService: root.widgetsService
         visible: root.weatherOn
-        defaultX: root.width - root.margin - 148
-        defaultY: root.height - root.margin - 76
+        defaultX: root.width - root.margin - weatherWidget.implicitWidth
+        defaultY: root.height - root.margin - weatherWidget.implicitHeight
     }
 
     // Bottom-left corner until dragged.

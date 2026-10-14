@@ -91,7 +91,9 @@ Item {
         anchors.fill: parent
         radius: Palette.Theme.radiusLarge
         // Same language as the rest of the shell: tonal surface, no outline.
-        color: Qt.alpha(Palette.Theme.surfaceContainer, 0.85)
+        color: Palette.Theme.widgetSurface
+        border.width: 1
+        border.color: Palette.Theme.outlineSoft
 
         layer.enabled: true
         layer.effect: MultiEffect {

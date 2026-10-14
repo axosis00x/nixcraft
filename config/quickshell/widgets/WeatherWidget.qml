@@ -3,9 +3,10 @@ import QtQuick.Layouts
 import QtQuick.Effects
 import "../theme" as Palette
 
-// Desktop weather widget: a pill holding the current temperature and
-// condition glyph, sourced from services/WeatherService.qml. Shares the
-// clock widget's translucent card styling so the pair reads as one set.
+// Desktop weather widget: the condition glyph and temperature up top with
+// the place and today's high/low beside them, then a row of details (feels
+// like, humidity, wind). Data comes from services/WeatherService.qml; the
+// card matches the clock widget so the pair reads as one set.
 Item {
     id: root
 
@@ -20,8 +21,8 @@ Item {
     readonly property bool isStale: service ? service.isStale : false
     readonly property string glyph: service ? service.iconGlyph(service.weatherCode) : "cloud"
 
-    implicitWidth: 148
-    implicitHeight: 76
+    implicitWidth: 248
+    implicitHeight: 128
     width: implicitWidth
     height: implicitHeight
     visible: available
@@ -29,14 +30,16 @@ Item {
     // Free-floating on the desktop layer (not laid out by a parent Layout),
     // so position has to be set explicitly — falls back to the caller's
     // default corner spot until the widget has been dragged at least once.
-    x: widgetsService && widgetsService.hasPosition(widgetId) ? widgetsService.positionX(widgetId) : defaultX
-    y: widgetsService && widgetsService.hasPosition(widgetId) ? widgetsService.positionY(widgetId) : defaultY
+    // Clamped so a saved spot from a smaller layout stays on screen.
+    x: Math.min(widgetsService && widgetsService.hasPosition(widgetId) ? widgetsService.positionX(widgetId) : defaultX, parent ? parent.width - width : 0)
+    y: Math.min(widgetsService && widgetsService.hasPosition(widgetId) ? widgetsService.positionY(widgetId) : defaultY, parent ? parent.height - height : 0)
 
     Rectangle {
         anchors.fill: parent
         radius: Palette.Theme.radiusLarge
-        // Same language as the rest of the shell: tonal surface, no outline.
-        color: Qt.alpha(Palette.Theme.surfaceContainer, 0.85)
+        color: Palette.Theme.widgetSurface
+        border.width: 1
+        border.color: Palette.Theme.outlineSoft
 
         layer.enabled: true
         layer.effect: MultiEffect {
@@ -47,34 +50,131 @@ Item {
         }
     }
 
-    RowLayout {
-        anchors.centerIn: parent
+    ColumnLayout {
+        anchors.fill: parent
+        anchors.margins: 14
         spacing: 10
         opacity: root.isStale ? 0.55 : 1.0
 
-        Rectangle {
-            implicitWidth: 40
-            implicitHeight: 40
-            radius: Palette.Theme.radiusSmall
-            color: Qt.alpha(Palette.Theme.accent, 0.18)
-            Layout.alignment: Qt.AlignVCenter
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 12
 
-            Text {
-                anchors.centerIn: parent
-                text: root.glyph
-                color: Palette.Theme.accent
-                font.family: Palette.Theme.fontIcons
-                font.pixelSize: Palette.Theme.iconSizeLarge
+            Rectangle {
+                Layout.preferredWidth: 48
+                Layout.preferredHeight: 48
+                radius: width / 2
+                color: Palette.Theme.accentTonal
+
+                Text {
+                    anchors.centerIn: parent
+                    text: root.glyph
+                    color: Palette.Theme.accent
+                    font.family: Palette.Theme.fontIcons
+                    font.weight: Palette.Theme.iconWeight
+                    font.pixelSize: Palette.Theme.iconSizeLarge + 4
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 0
+
+                Text {
+                    text: root.tempC + "°"
+                    color: Palette.Theme.textPrimary
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: Palette.Theme.fontSizeDisplay
+                    font.weight: Font.Bold
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: root.service ? root.service.conditionText : ""
+                    color: Palette.Theme.textSecondary
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: Palette.Theme.fontSizeSmall
+                    elide: Text.ElideRight
+                }
+            }
+
+            ColumnLayout {
+                Layout.alignment: Qt.AlignTop
+                spacing: 2
+
+                Text {
+                    Layout.alignment: Qt.AlignRight
+                    Layout.maximumWidth: 90
+                    visible: text !== ""
+                    text: root.service ? root.service.location : ""
+                    color: Palette.Theme.textPrimary
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: Palette.Theme.fontSizeSmall
+                    font.weight: Font.DemiBold
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    Layout.alignment: Qt.AlignRight
+                    visible: root.service && root.service.highC !== ""
+                    text: root.service ? "↑" + root.service.highC + "°  ↓" + root.service.lowC + "°" : ""
+                    color: Palette.Theme.textSecondary
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: Palette.Theme.fontSizeXs
+                }
             }
         }
 
-        Text {
-            Layout.alignment: Qt.AlignVCenter
-            text: root.tempC + "°"
-            color: Palette.Theme.textPrimary
-            font.family: Palette.Theme.fontMono
-            font.pixelSize: Palette.Theme.fontSizeDisplay
-            font.weight: Font.Bold
+        // Details, as three evenly spread chips.
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+
+            Detail {
+                icon: "thermostat"
+                text: root.service && root.service.feelsLikeC !== "" ? root.service.feelsLikeC + "°" : "--"
+            }
+            Detail {
+                icon: "humidity_percentage"
+                text: root.service && root.service.humidity !== "" ? root.service.humidity + "%" : "--"
+            }
+            Detail {
+                icon: "air"
+                text: root.service && root.service.windKmph !== "" ? root.service.windKmph + " km/h" : "--"
+            }
+        }
+    }
+
+    component Detail: Rectangle {
+        property string icon: ""
+        property string text: ""
+
+        Layout.fillWidth: true
+        Layout.preferredHeight: 28
+        radius: height / 2
+        color: Palette.Theme.widgetChip
+
+        Row {
+            anchors.centerIn: parent
+            spacing: 4
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: parent.parent.icon
+                color: Palette.Theme.accent
+                font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
+                font.pixelSize: Palette.Theme.iconSizeSmall
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: parent.parent.text
+                color: Palette.Theme.textPrimary
+                font.family: Palette.Theme.fontSans
+                font.pixelSize: Palette.Theme.fontSizeXs
+                font.weight: Font.Medium
+            }
         }
     }
 

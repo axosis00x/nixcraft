@@ -6,7 +6,6 @@ import QtQuick.Layouts
 import Quickshell.Hyprland
 import Quickshell.Widgets
 import "../../components/material"
-import "../../config/Ui.js" as Ui
 import "../../theme" as Palette
 
 PanelWindow {
@@ -27,7 +26,7 @@ PanelWindow {
     // Space the vertical bar reserves at the screen edge. Island mode adds
     // the gap on top of the strip's width instead of taking it out of the
     // strip, so the pills keep their room.
-    readonly property real verticalReserve: Ui.barThickness + (island ? islandGap : 0)
+    readonly property real verticalReserve: Palette.Theme.barThickness + (island ? islandGap : 0)
 
     // Compact style: the separate capsules hide and the center notch becomes
     // a phone-style status notch (workspaces, time, network, battery).
@@ -50,8 +49,8 @@ PanelWindow {
     // implicitWidth governs thickness in vertical mode.
     // Notch mode adds the screen frame's band along the top, so the bar
     // grows by it and the capsules keep their usual gaps below and beside it.
-    readonly property real frameInset: island ? 0 : Ui.screenFrameBorder
-    implicitHeight: Ui.barHeight + frameInset
+    readonly property real frameInset: island ? 0 : Palette.Theme.screenFrameBorder
+    implicitHeight: Palette.Theme.barHeight + frameInset
     // The vertical window is a little wider than the strip so the concave
     // fillets can hang off it; only the strip reserves space and takes
     // input.
@@ -618,7 +617,7 @@ PanelWindow {
         visible: bar.vertical
         anchors.fill: parent
         bar: bar
-        thickness: Ui.barThickness
+        thickness: Palette.Theme.barThickness
     }
 
     Weather {
@@ -641,8 +640,8 @@ PanelWindow {
 
         // Notch mode: grow out of the screen frame (ScreenFrame.qml) like
         // the panels do, in its color, from its inner edge, curving into it.
-        anchors.topMargin: bar.island ? 0 : Ui.screenFrameBorder
-        wingSize: bar.island ? 9 : Ui.screenFrameRadius
+        anchors.topMargin: bar.island ? 0 : Palette.Theme.screenFrameBorder
+        wingSize: bar.island ? 9 : Palette.Theme.screenFrameRadius
         color: bar.island ? Palette.Theme.surfaceContainer : Palette.Theme.bg
         tintOpacity: bar.island ? Palette.Theme.surfaceTintOpacity : 0
 
@@ -682,7 +681,7 @@ PanelWindow {
         // the edge for the entire drop.
         // In island mode the island is inset like the other bar capsules
         // (barRow's 4px top margin), so it's that much shorter.
-        readonly property real restHeight: bar.height - (bar.island ? bar.islandGap : Ui.screenFrameBorder)
+        readonly property real restHeight: bar.height - (bar.island ? bar.islandGap : Palette.Theme.screenFrameBorder)
         slabHeight: 0
 
         Behavior on slabHeight {

@@ -79,6 +79,20 @@ QtObject {
 
     readonly property int iconButtonSize: 30
 
+    // Shell layout. The bar's thickness when vertical (see
+    // services/BarLayoutService.qml for the persisted top/left choice) and
+    // its height when horizontal; the width shared by the list panels
+    // (launcher, theme picker, clipboard, calendar, service manager) so they
+    // open at one size; and the screen frame shown in notch mode
+    // (components/overlay/ScreenFrame.qml): its width along each edge and
+    // the radius of its inner corners, which the left bar's curved joins
+    // reuse so the two meet without a seam.
+    readonly property int barThickness: 40
+    readonly property int barHeight: 34
+    readonly property int listPanelWidth: 440
+    readonly property int screenFrameBorder: 4
+    readonly property int screenFrameRadius: 10
+
     // Motion (Material 3 Expressive). "Spatial" motion — position, size,
     // shape, scale — springs past its target and settles; "effects" motion
     // — color, opacity — eases without overshoot. Use the atoms in

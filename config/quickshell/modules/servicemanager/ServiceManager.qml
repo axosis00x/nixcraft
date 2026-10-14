@@ -3,7 +3,6 @@ import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
 import "../../components/material"
-import "../../config/Ui.js" as Ui
 import "../../theme" as Palette
 
 Item {

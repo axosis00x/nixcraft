@@ -6,7 +6,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../../components/material"
-import "../../config/Ui.js" as Ui
 import "../../theme" as Palette
 
 // Clipboard history, laid out like the launcher: a pill search field on the
@@ -51,7 +50,7 @@ Item {
     }
 
     readonly property int visibleRows: Math.max(1, Math.min(maxVisible, entries.length))
-    implicitWidth: Math.min(maxWidth - 32, Ui.listPanelWidth)
+    implicitWidth: Math.min(maxWidth - 32, Palette.Theme.listPanelWidth)
     implicitHeight: searchRow.height + visibleRows * itemH + 6
 
     signal aboutToOpen

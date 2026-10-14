@@ -5,7 +5,6 @@ import Quickshell.Io
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import "../../config/Ui.js" as Ui
 import "../../theme" as Palette
 import "../../components/material"
 
@@ -45,7 +44,7 @@ Item {
 
     readonly property int visibleRows: Math.max(1, Math.min(maxVisible, themes.length))
     // Same footprint as the launcher (row height, rows, width).
-    implicitWidth: Math.min(maxWidth - 32, Ui.listPanelWidth)
+    implicitWidth: Math.min(maxWidth - 32, Palette.Theme.listPanelWidth)
     implicitHeight: searchRow.height + visibleRows * itemH + 6
 
     signal aboutToOpen

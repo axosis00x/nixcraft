@@ -3,13 +3,12 @@ import Quickshell.Wayland
 import QtQuick
 import QtQuick.Shapes
 import "../material"
-import "../../config/Ui.js" as Ui
 import "../../theme" as Palette
 
 // The left bar's screen frame: a band in the bar's color along every edge,
 // with rounded inner corners, so the bar and the frame read as one surface
 // the desktop sits inside (Caelestia-style). Island mode floats the bar off
-// the edge, and the frame fades out. Its size is in config/Ui.js.
+// the edge, and the frame fades out. Its size is in theme/Theme.qml.
 //
 // It sits just above the wallpaper, under windows, bars and panels, so they
 // draw over it, and takes no input. The edges without a bar reserve its
@@ -19,8 +18,8 @@ Variants {
 
     required property var barLayout
 
-    readonly property real border: Ui.screenFrameBorder
-    readonly property real radius: Ui.screenFrameRadius
+    readonly property real border: Palette.Theme.screenFrameBorder
+    readonly property real radius: Palette.Theme.screenFrameRadius
     // Only with the left bar in notch mode: the top bar and island mode
     // have no frame, and it fades out when switching to them.
     // In notch mode, for every bar position; island mode has no frame.

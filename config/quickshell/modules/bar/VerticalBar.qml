@@ -4,7 +4,6 @@ import Quickshell.Widgets
 import QtQuick
 import QtQuick.Layouts
 import "../../components/material"
-import "../../config/Ui.js" as Ui
 import "../../theme" as Palette
 
 // Left-edge bar in the spirit of Caelestia's: one solid strip fused to the
@@ -23,7 +22,7 @@ Item {
     // mode they curve into the screen frame's inner edge, at its radius
     // (components/overlay/ScreenFrame.qml).
     property real thickness: 44
-    property real filletSize: Ui.screenFrameRadius
+    property real filletSize: Palette.Theme.screenFrameRadius
 
     property real islandness: bar.island ? 1 : 0
     // Quick and without overshoot: a springy inset makes the whole strip
@@ -38,7 +37,7 @@ Item {
     // space by the gap so the inset never squeezes the pills.
     readonly property real inset: bar.islandGap * islandness
     // The screen frame's band along the top and bottom edges (notch mode).
-    readonly property real frameInset: Ui.screenFrameBorder * (1 - islandness)
+    readonly property real frameInset: Palette.Theme.screenFrameBorder * (1 - islandness)
 
     // Pills sit pillInset in from the strip's sides, rounded like the
     // horizontal bar's capsules (the shared capsule radius).

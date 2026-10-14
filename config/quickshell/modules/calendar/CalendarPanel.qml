@@ -3,7 +3,6 @@ import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
 import "../../components/material"
-import "../../config/Ui.js" as Ui
 import "../../theme" as Palette
 
 // Small interactive month calendar, hosted in the shared bottom stage
@@ -20,7 +19,7 @@ Item {
 
     // Same width as the launcher/clipboard/theme picker; height fits the
     // month (5 or 6 weeks) rather than a fixed box.
-    implicitWidth: Math.min(maxWidth - 32, Ui.listPanelWidth)
+    implicitWidth: Math.min(maxWidth - 32, Palette.Theme.listPanelWidth)
     implicitHeight: Math.min(maxHeight - 12, content.implicitHeight + 28)
 
     signal aboutToOpen

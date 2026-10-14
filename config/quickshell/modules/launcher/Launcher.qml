@@ -4,7 +4,6 @@ import Quickshell.Widgets
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import "../../config/Ui.js" as Ui
 import "../../theme" as Palette
 import "../../components/material"
 
@@ -136,7 +135,7 @@ Item {
     // Grows and shrinks with the results (the stage springs to follow), so
     // the field stays put at the bottom and the list rises out of it.
     readonly property int visibleRows: Math.max(1, Math.min(maxVisible, currentList.length))
-    implicitWidth: Math.min(maxWidth - 32, Ui.listPanelWidth)
+    implicitWidth: Math.min(maxWidth - 32, Palette.Theme.listPanelWidth)
     implicitHeight: searchRow.height + visibleRows * itemH + listPanel.Layout.topMargin
 
     // ── IPC ───────────────────────────────────────────────────────

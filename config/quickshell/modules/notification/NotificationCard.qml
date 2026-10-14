@@ -43,11 +43,20 @@ Surface {
     // Compact cards morph open on hover: the full text springs into view
     // and the corners round out, then they settle back when the pointer
     // leaves. Full cards always show everything.
-    readonly property bool open: !compact || cardMouse.containsMouse
+    readonly property bool open: !compact || cardHover.hovered
+    readonly property bool critical: notification && notification.urgency === NotificationUrgency.Critical
+    // How many notifications this card stands for (a stacked group), shown
+    // as a pill beside the app name.
+    property int count: 1
+
     height: implicitHeight
-    implicitHeight: content.implicitHeight + 22
+    implicitHeight: content.implicitHeight + 24
     radius: open && compact ? Palette.Theme.radiusLarge : Palette.Theme.radiusMedium
-    clip: true
+    color: Palette.Theme.surfaceContainer
+    tint: critical ? Palette.Theme.errorColor : Palette.Theme.surfaceTint
+    tintOpacity: critical ? 0.12 : 0.03
+    outlineWidth: critical ? 1 : 0
+    outlineColor: Qt.alpha(Palette.Theme.errorColor, 0.5)
 
     Behavior on height {
         SpatialMotion {
@@ -57,12 +66,6 @@ Surface {
     Behavior on radius {
         SpatialMotion {}
     }
-    // One step above the panel/section it sits on, so cards read as cards.
-    // Layered over surfaceContainer so translucent themes (whose "high"
-    // surfaces are thin white washes) still get a solid-enough card.
-    color: Qt.tint(Palette.Theme.surfaceContainer, Palette.Theme.surfaceContainerHigh)
-    tint: notification && notification.urgency === NotificationUrgency.Critical ? Palette.Theme.accent : Palette.Theme.surfaceTint
-    tintOpacity: notification && notification.urgency === NotificationUrgency.Critical ? 0.16 : 0.04
 
     // Keeps the "Xm ago" label advancing while the panel stays open, rather
     // than freezing at whatever it read on first render.
@@ -74,15 +77,17 @@ Surface {
         onTriggered: timeAgoText.text = card.timeAgo(card.notification.receivedAt)
     }
 
-    Rectangle {
-        anchors.fill: parent
-        radius: parent.radius
-        color: Palette.Theme.surfaceTint
-        opacity: cardMouse.containsMouse ? 0.06 : 0.025
-        Behavior on opacity {
-            EffectMotion {}
-        }
+    // Hover over the whole card, including its buttons.
+    HoverHandler {
+        id: cardHover
     }
+
+    StateLayer {
+        radius: card.radius
+        hovered: cardHover.hovered
+        pressed: cardMouse.pressed
+    }
+
     MouseArea {
         id: cardMouse
         anchors.fill: parent
@@ -94,28 +99,25 @@ Surface {
                 card.dismissNotification();
         }
     }
+
     RowLayout {
         id: content
         anchors {
             left: parent.left
             right: parent.right
             top: parent.top
-            margins: 11
-            rightMargin: 50
+            margins: 12
         }
         spacing: 12
-        Rectangle {
-            implicitWidth: 44
-            implicitHeight: 44
-            radius: Palette.Theme.radiusSmall
-            color: Palette.Theme.surfaceContainerHighest
-            clip: true
-            // Top-aligned rather than centered on the row: a bulky body
-            // (long text, action chips) makes the text column taller than
-            // the fixed 56px icon, and centering it against that height
-            // would float the icon away from the app name/title it belongs
-            // next to.
+
+        // The app's image, or a bell on a tonal circle when there is none.
+        ClippingRectangle {
             Layout.alignment: Qt.AlignTop
+            implicitWidth: 40
+            implicitHeight: 40
+            radius: icon.status === Image.Ready ? Palette.Theme.radiusSmall : width / 2
+            color: icon.status === Image.Ready ? "transparent" : (card.critical ? Qt.alpha(Palette.Theme.errorColor, 0.18) : Palette.Theme.accentTonal)
+
             Image {
                 id: icon
                 anchors.fill: parent
@@ -133,44 +135,76 @@ Surface {
                     }
                 }
             }
+
             Text {
                 anchors.centerIn: parent
                 visible: icon.status !== Image.Ready
-                text: ""
-                color: Palette.Theme.textSecondary
+                text: card.critical ? "priority_high" : "notifications"
+                color: card.critical ? Palette.Theme.errorColor : Palette.Theme.accent
                 font.family: Palette.Theme.fontIcons
-                font.pixelSize: 26
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                opacity: icon.status === Image.Null || icon.status === Image.Error ? 1 : 0
-                Behavior on opacity {
-                    EffectMotion {}
-                }
+                font.weight: Palette.Theme.iconWeight
+                font.pixelSize: Palette.Theme.iconSize
             }
         }
+
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 5
+            spacing: 2
+
+            // app · time  [count]  ............  ✕
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                Layout.preferredHeight: 22
+                spacing: 6
+
                 Text {
-                    text: card.notification ? (card.notification.appName || "Application") : ""
+                    Layout.fillWidth: true
+                    text: (card.notification ? (card.notification.appName || "Application") : "") + (timeAgoText.text !== "" ? "  ·  " + timeAgoText.text : "")
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontSans
                     font.pixelSize: Palette.Theme.fontSizeXs
                     elide: Text.ElideRight
-                    Layout.fillWidth: true
                 }
+
+                // Only a source for the label above; never drawn itself.
                 Text {
                     id: timeAgoText
+                    visible: false
                     text: card.notification ? card.timeAgo(card.notification.receivedAt) : ""
-                    color: Palette.Theme.textMuted
-                    font.family: Palette.Theme.fontSans
-                    font.pixelSize: Palette.Theme.fontSizeXs
-                    visible: text !== ""
+                }
+
+                Rectangle {
+                    visible: card.count > 1
+                    implicitWidth: Math.max(20, countText.implicitWidth + 10)
+                    implicitHeight: 18
+                    radius: height / 2
+                    color: Palette.Theme.accentTonal
+
+                    Text {
+                        id: countText
+                        anchors.centerIn: parent
+                        text: card.count
+                        color: Palette.Theme.accent
+                        font.family: Palette.Theme.fontSans
+                        font.pixelSize: Palette.Theme.fontSizeXs
+                        font.weight: Font.DemiBold
+                    }
+                }
+
+                IconButton {
+                    icon: "close"
+                    implicitWidth: 22
+                    implicitHeight: 22
+                    iconSize: Palette.Theme.iconSizeSmall
+                    opacity: cardHover.hovered ? 1 : 0.45
+                    onClicked: card.dismissNotification()
+
+                    Behavior on opacity {
+                        EffectMotion {}
+                    }
                 }
             }
+
             Text {
                 text: card.notification ? (card.notification.summary || "Notification") : ""
                 color: Palette.Theme.textPrimary
@@ -179,7 +213,9 @@ Surface {
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
                 Layout.fillWidth: true
+                Layout.rightMargin: 4
             }
+
             Text {
                 text: card.bodyText
                 color: Palette.Theme.textSecondary
@@ -191,10 +227,12 @@ Surface {
                 elide: Text.ElideRight
                 visible: text !== ""
                 Layout.fillWidth: true
+                Layout.rightMargin: 4
             }
+
             RowLayout {
                 Layout.fillWidth: true
-                Layout.topMargin: 2
+                Layout.topMargin: 6
                 spacing: 8
                 visible: card.actionTarget && card.actionTarget.actions.length > 0
                 Repeater {
@@ -202,8 +240,8 @@ Surface {
                     delegate: ActionChip {
                         required property var modelData
                         label: card.actionLabel(modelData)
-                        chipHeight: 22
-                        fontPixelSize: 10
+                        chipHeight: 24
+                        fontPixelSize: Palette.Theme.fontSizeXs
                         horizontalPadding: 14
                         onClicked: {
                             modelData.invoke();
@@ -215,16 +253,5 @@ Surface {
                 }
             }
         }
-    }
-    IconButton {
-        icon: "\u{e5cd}"
-        implicitWidth: 28
-        implicitHeight: 28
-        anchors {
-            right: parent.right
-            rightMargin: 11
-            verticalCenter: parent.verticalCenter
-        }
-        onClicked: card.dismissNotification()
     }
 }

@@ -35,8 +35,8 @@ ColumnLayout {
                 }
                 height: topCard.implicitHeight
                 radius: Palette.Theme.radiusMedium
-                color: Qt.tint(Palette.Theme.surfaceContainer, Palette.Theme.surfaceContainerHigh)
-                opacity: 0.5 - depth * 0.15
+                color: Palette.Theme.surfaceContainer
+                opacity: 0.6 - depth * 0.2
                 z: -depth
             }
         }
@@ -52,32 +52,10 @@ ColumnLayout {
             dismissOnActivate: false
             onDismissed: root.notificationCenter.dismissRecord(root.group.items[0])
             compact: root.hasStack || !root.featured
+            count: root.expanded ? 1 : root.group.items.length
             onActivated: {
                 if (root.hasStack)
                     root.notificationCenter.toggleGroup(root.group.appName);
-            }
-        }
-
-        Rectangle {
-            visible: root.hasStack
-            width: 22
-            height: 22
-            radius: 11
-            color: Palette.Theme.accent
-            anchors {
-                right: topCard.right
-                top: topCard.top
-                rightMargin: 6
-                topMargin: 6
-            }
-
-            Text {
-                anchors.centerIn: parent
-                text: String(root.group.items.length)
-                color: Palette.Theme.surface
-                font.family: Palette.Theme.fontSans
-                font.pixelSize: Palette.Theme.fontSizeXs
-                font.weight: Font.Bold
             }
         }
     }

@@ -111,6 +111,8 @@ Item {
         anchors.topMargin: 14
         anchors.bottomMargin: 14
         levels: root.levels
+        attack: 0.65
+        release: 0.16
     }
 
     // Drag-to-reposition. Position is persisted on release rather than on

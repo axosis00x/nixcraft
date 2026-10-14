@@ -16,7 +16,6 @@ in
       wget
       curl
       glib
-      polkit_gnome
       gsettings-desktop-schemas
       vips
       util-linux

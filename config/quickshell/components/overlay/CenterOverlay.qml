@@ -5,6 +5,7 @@ import "../material"
 import "../../modules/launcher"
 import "../../modules/controlcenter"
 import "../../modules/powermenu"
+import "../../modules/polkit"
 import "../../modules/theme"
 import "../../modules/clipboard"
 import "../../modules/servicemanager"
@@ -16,7 +17,6 @@ import "../../modules/wallpicker"
 import "../../modules/dock"
 import "../../services"
 import "../../components/material"
-import "../../config/Ui.js" as Ui
 import "../../theme" as Palette
 
 PanelWindow {
@@ -64,14 +64,15 @@ PanelWindow {
     readonly property bool active: (activeTopPanel !== null) || (activeBottomPanel !== null)
 
     // Central modules origin edge:
-    // Top origin: Control Center, Power Menu, Tool Menu, Media Panel.
+    // Top origin: Control Center, Power Menu, Tool Menu, Media Panel, Polkit.
     // Bottom origin: Launcher (shaders/sounds live inside it), Theme, Clipboard,
     // Service Manager, Calendar, Bar Layout, Wallpaper Picker.
     function isTopModule(panel) {
         return panel === controlCenterItem
             || panel === powerMenuItem
             || panel === toolMenuItem
-            || panel === mediaPanelItem;
+            || panel === mediaPanelItem
+            || panel === polkitItem;
     }
 
     property var currentTargetPanel: null
@@ -170,6 +171,8 @@ PanelWindow {
             barLayoutPickerItem.close();
         if (panel !== wallpaperPickerItem && wallpaperPickerItem.visible)
             wallpaperPickerItem.close();
+        if (panel !== polkitItem && polkitItem.visible)
+            polkitItem.close();
     }
 
     // Closes the panel on screen, not one still fading out from a switch.
@@ -197,6 +200,8 @@ PanelWindow {
             barLayoutPickerItem.close();
         else if (panel === wallpaperPickerItem)
             wallpaperPickerItem.close();
+        else if (panel === polkitItem)
+            polkitItem.close();
     }
 
     ThemeService {
@@ -233,7 +238,7 @@ PanelWindow {
     readonly property bool island: barLayout ? barLayout.island : false
     // In island mode the bar's island is inset like the other bar capsules.
     // Notch mode takes the frame's band off the top (the notch hangs below it).
-    readonly property real barSlabHeight: root.verticalBar ? 0 : (bar ? bar.height - (root.island ? bar.islandGap : Ui.screenFrameBorder) : 34)
+    readonly property real barSlabHeight: root.verticalBar ? 0 : (bar ? bar.height - (root.island ? bar.islandGap : Palette.Theme.screenFrameBorder) : 34)
 
     // With the left bar in notch mode the screen has a frame (ScreenFrame.qml,
     // same condition). The stages then grow out of it, Caelestia-style: in
@@ -243,8 +248,8 @@ PanelWindow {
     readonly property bool fullscreenActive: ToplevelManager.activeToplevel ? ToplevelManager.activeToplevel.fullscreen : false
     readonly property bool framed: barLayout ? (barLayout.loaded && !root.island && !fullscreenActive) : false
     // Panels hang from the frame's inner edge, top and bottom.
-    property real frameInset: framed ? Ui.screenFrameBorder : 0
-    property real topFrameInset: framed ? Ui.screenFrameBorder : 0
+    property real frameInset: framed ? Palette.Theme.screenFrameBorder : 0
+    property real topFrameInset: framed ? Palette.Theme.screenFrameBorder : 0
     Behavior on topFrameInset {
         EffectMotion {}
     }
@@ -253,7 +258,7 @@ PanelWindow {
     }
     readonly property color stageColor: framed ? Palette.Theme.bg : Palette.Theme.surfaceContainer
     readonly property real stageTint: framed ? 0 : Palette.Theme.surfaceTintOpacity
-    readonly property real stageWing: framed ? Ui.screenFrameRadius : 9
+    readonly property real stageWing: framed ? Palette.Theme.screenFrameRadius : 9
 
     // ── TOP STAGE (Control Center, Power Menu, Tool Menu, Media Panel) ───
     Notch {
@@ -323,6 +328,11 @@ PanelWindow {
 
         MediaPanel {
             id: mediaPanelItem
+        }
+
+        PolkitPanel {
+            id: polkitItem
+            maxWidth: root.width
         }
     }
 
@@ -432,6 +442,7 @@ PanelWindow {
     StageSlot { panel: powerMenuItem; stage: topStage }
     StageSlot { panel: toolMenuItem; stage: topStage }
     StageSlot { panel: mediaPanelItem; stage: topStage }
+    StageSlot { panel: polkitItem; stage: topStage }
     StageSlot { id: dockSlot; panel: dockItem; stage: bottomStage; fromBottom: true }
     StageSlot { panel: launcherItem; stage: bottomStage; fromBottom: true }
     StageSlot { panel: themePickerItem; stage: bottomStage; fromBottom: true }
@@ -489,5 +500,9 @@ PanelWindow {
     Connections {
         target: wallpaperPickerItem
         function onAboutToOpen() { root.presentOnly(wallpaperPickerItem); }
+    }
+    Connections {
+        target: polkitItem
+        function onAboutToOpen() { root.presentOnly(polkitItem); }
     }
 }

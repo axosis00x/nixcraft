@@ -22,7 +22,8 @@ in
         wl-clipboard
         grimblast
         playerctl
-        polkit_gnome
+        # The shell's audio visualizers (bar and desktop widget).
+        cava
         awww
         wiremix
         grim
@@ -48,15 +49,7 @@ in
       ];
       configPackages = [ pkgs.hyprland ];
     };
-    systemd.user.services.polkit-gnome-authentication-agent-1 = {
-      Unit.Description = "Polkit GNOME Authentication Agent";
-      Unit.After = [ "graphical-session.target" ];
-      Install.WantedBy = [ "graphical-session.target" ];
-      Service = {
-        Type = "simple";
-        ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
-        Restart = "on-failure";
-      };
-    };
+    # No separate polkit agent: the Quickshell shell is the agent
+    # (config/quickshell/modules/polkit), and polkitd allows only one.
   };
 }

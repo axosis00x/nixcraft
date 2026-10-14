@@ -67,17 +67,24 @@ Item {
     // which routes hyprctl dispatch through an `hl.dispatch(hl.dsp...)` Lua
     // eval bridge instead and rejects the old string form. Go through
     // `hyprctl eval` directly so these actually take effect.
+    //
+    // Hyprland warps the pointer to whichever window ends up focused, which
+    // made the pointer jump when a window was dropped on another workspace.
+    // Like the dock, turn cursor.no_warps on for just this one dispatch and
+    // put the user's setting back afterwards.
+    function dispatchWithoutWarp(dispatch) {
+        dispatchProcess.exec(["hyprctl", "eval", "local w = hl.get_config('cursor.no_warps') " + "hl.config({ cursor = { no_warps = true } }) " + "hl.dispatch(" + dispatch + ") " + "hl.config({ cursor = { no_warps = w } })"]);
+    }
+
     function focusWorkspace(id) {
-        dispatchProcess.command = ["hyprctl", "eval", "hl.dispatch(hl.dsp.focus({workspace = " + id + "}))"];
-        dispatchProcess.running = true;
+        dispatchWithoutWarp("hl.dsp.focus({workspace = " + id + "})");
     }
 
     // Used by the overview's drag-and-drop: dropping a window's thumbnail
     // onto another slot moves that window there without following it.
     function moveWindowToWorkspace(address, id) {
         var addr = address.indexOf("0x") === 0 ? address : "0x" + address;
-        dispatchProcess.command = ["hyprctl", "eval", "hl.dispatch(hl.dsp.window.move({workspace = " + id + ", window = \"address:" + addr + "\"}))"];
-        dispatchProcess.running = true;
+        dispatchWithoutWarp("hl.dsp.window.move({workspace = " + id + ", window = \"address:" + addr + "\"})");
     }
 
     Process {

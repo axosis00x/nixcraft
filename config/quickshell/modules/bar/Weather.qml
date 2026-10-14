@@ -128,6 +128,7 @@ Item {
         Text {
             text: root.iconGlyph
             font.family: root.iconFontFamily
+            font.weight: Palette.Theme.iconWeight
             font.pixelSize: Palette.Theme.fontSizeBody
             color: Palette.Theme.textPrimary
             opacity: root.isStale ? 0.55 : 1.0

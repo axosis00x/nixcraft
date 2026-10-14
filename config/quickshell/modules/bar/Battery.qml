@@ -28,12 +28,12 @@ Item {
         if (percent <= 15)
             return "battery_alert";
         if (percent <= 30)
-            return "battery_30";
+            return "battery_1_bar";
         if (percent <= 60)
-            return "battery_60";
+            return "battery_3_bar";
         if (percent <= 90)
-            return "battery_90";
-        return "battery_std";
+            return "battery_5_bar";
+        return "battery_full";
     }
 
     readonly property color iconColor: {
@@ -62,6 +62,7 @@ Item {
         Text {
             text: root.iconGlyph
             font.family: root.iconFontFamily
+            font.weight: Palette.Theme.iconWeight
             font.pixelSize: Palette.Theme.fontSizeBody
             color: root.iconColor
             verticalAlignment: Text.AlignVCenter

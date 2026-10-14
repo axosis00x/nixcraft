@@ -106,6 +106,7 @@ Item {
         text: root.icon
         color: onActive ? Palette.Theme.accentText : Palette.Theme.textMuted
         font.family: Palette.Theme.fontIcons
+        font.weight: Palette.Theme.iconWeight
         font.pixelSize: Math.min(Palette.Theme.iconSize, root.trackHeight - 4)
 
         Behavior on color {

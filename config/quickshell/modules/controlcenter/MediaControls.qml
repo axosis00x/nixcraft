@@ -60,6 +60,7 @@ Row {
             text: root.playing ? "pause" : "play_arrow"
             color: Palette.Theme.accentText
             font.family: Palette.Theme.fontIcons
+            font.weight: Palette.Theme.iconWeight
             font.pixelSize: root.compact ? Palette.Theme.iconSizeLarge : Palette.Theme.iconSizeLarge * 1.3
         }
 

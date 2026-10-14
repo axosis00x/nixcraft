@@ -355,6 +355,7 @@ Item {
             text: root.lockScreen.authFailed ? "lock_reset" : "lock"
             color: root.lockScreen.authFailed ? Palette.Theme.errorColor : (root.hasText ? Palette.Theme.accent : Qt.rgba(1, 1, 1, 0.45))
             font.family: Palette.Theme.fontIcons
+            font.weight: Palette.Theme.iconWeight
             font.pixelSize: Palette.Theme.iconSize
 
             Behavior on color {
@@ -372,6 +373,7 @@ Item {
             text: "progress_activity"
             color: Qt.rgba(1, 1, 1, 0.45)
             font.family: Palette.Theme.fontIcons
+            font.weight: Palette.Theme.iconWeight
             font.pixelSize: Palette.Theme.iconSize
 
             RotationAnimation on rotation {
@@ -410,6 +412,7 @@ Item {
                 text: root.reveal ? "visibility_off" : "visibility"
                 color: root.reveal ? Palette.Theme.accent : Qt.rgba(1, 1, 1, 0.55)
                 font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
                 font.pixelSize: Palette.Theme.iconSize
 
                 Behavior on color {

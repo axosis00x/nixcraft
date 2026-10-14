@@ -193,6 +193,7 @@ Item {
                         text: modelData.icon
                         color: recording || index === root.selectedIndex ? Palette.Theme.accentText : Palette.Theme.textPrimary
                         font.family: Palette.Theme.fontIcons
+                        font.weight: Palette.Theme.iconWeight
                         font.pixelSize: Palette.Theme.iconSize
                     }
 

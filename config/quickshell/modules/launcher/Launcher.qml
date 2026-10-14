@@ -588,6 +588,7 @@ Item {
                 anchors.centerIn: parent
                 text: parent.parent.glyph !== "" ? parent.parent.glyph : "apps"
                 font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
                 font.pixelSize: Palette.Theme.iconSize
                 color: parent.parent.active ? Palette.Theme.accentText : Palette.Theme.textSecondary
             }
@@ -720,6 +721,7 @@ Item {
                     visible: commandRow.isCommand
                     text: "keyboard_tab"
                     font.family: Palette.Theme.fontIcons
+                    font.weight: Palette.Theme.iconWeight
                     font.pixelSize: Palette.Theme.iconSizeSmall
                     color: Palette.Theme.textMuted
                     opacity: commandRow.index === root.selected ? 1 : 0
@@ -819,6 +821,7 @@ Item {
                     text: "search_off"
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontIcons
+                    font.weight: Palette.Theme.iconWeight
                     font.pixelSize: Palette.Theme.iconSizeLarge
                 }
 
@@ -964,6 +967,7 @@ Item {
                 Text {
                     text: root.mode === "apps" ? "search" : (root.matchedCommand ? root.matchedCommand.icon : "keyboard_command_key")
                     font.family: Palette.Theme.fontIcons
+                    font.weight: Palette.Theme.iconWeight
                     font.pixelSize: Palette.Theme.iconSize
                     color: root.mode === "apps" ? Palette.Theme.textMuted : Palette.Theme.accent
                     Layout.alignment: Qt.AlignVCenter

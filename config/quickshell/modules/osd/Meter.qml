@@ -39,6 +39,7 @@ Item {
                 text: root.iconGlyph
                 color: Palette.Theme.textPrimary
                 font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
                 font.pixelSize: Palette.Theme.iconSize
             }
         }

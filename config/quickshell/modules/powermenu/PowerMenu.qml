@@ -219,6 +219,7 @@ Item {
                             ? (modelData.dangerous ? Palette.Theme.surfaceSolid : Palette.Theme.accentText)
                             : (modelData.dangerous ? Palette.Theme.errorColor : Palette.Theme.textPrimary)
                         font.family: Palette.Theme.fontIcons
+                        font.weight: Palette.Theme.iconWeight
                         font.pixelSize: Palette.Theme.iconSize
                     }
 
@@ -267,6 +268,7 @@ Item {
                             text: "\ue5ca"
                             color: root.confirmChoiceSelected ? Palette.Theme.accentText : Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontIcons
+                            font.weight: Palette.Theme.iconWeight
                             font.pixelSize: Palette.Theme.iconSizeSmall
                         }
                         Text {
@@ -315,6 +317,7 @@ Item {
                             text: "\ue5cd"
                             color: !root.confirmChoiceSelected ? Palette.Theme.accentText : Palette.Theme.textPrimary
                             font.family: Palette.Theme.fontIcons
+                            font.weight: Palette.Theme.iconWeight
                             font.pixelSize: Palette.Theme.iconSizeSmall
                         }
                         Text {

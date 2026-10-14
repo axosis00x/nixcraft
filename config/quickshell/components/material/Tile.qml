@@ -100,6 +100,7 @@ Item {
         text: root.icon
         color: root.active ? root.onTint : Palette.Theme.textSecondary
         font.family: Palette.Theme.fontIcons
+        font.weight: Palette.Theme.iconWeight
         font.pixelSize: Palette.Theme.iconSizeLarge
 
         Behavior on color {
@@ -144,6 +145,7 @@ Item {
                 text: root.icon
                 color: root.active ? root.onTint : Palette.Theme.textSecondary
                 font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
                 font.pixelSize: Palette.Theme.iconSize
 
                 Behavior on color {

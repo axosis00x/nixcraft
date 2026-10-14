@@ -32,6 +32,7 @@ Item {
             text: root.icon
             color: root.selected ? Palette.Theme.accent : Palette.Theme.textMuted
             font.family: Palette.Theme.fontIcons
+            font.weight: Palette.Theme.iconWeight
             font.pixelSize: Palette.Theme.iconSize
 
             Behavior on color {

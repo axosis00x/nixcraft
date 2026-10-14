@@ -56,6 +56,7 @@ Item {
             text: "check"
             color: root.accentColor
             font.family: Palette.Theme.fontIcons
+            font.weight: Palette.Theme.iconWeight
             font.pixelSize: parent.width * 0.75
             opacity: root.checked ? 1 : 0
 

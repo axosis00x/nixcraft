@@ -266,6 +266,7 @@ Item {
                     text: "music_off"
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontIcons
+                    font.weight: Palette.Theme.iconWeight
                     font.pixelSize: Palette.Theme.iconSize
                 }
 

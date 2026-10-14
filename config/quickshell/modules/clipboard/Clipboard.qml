@@ -214,6 +214,7 @@ Item {
                     text: root.query === "" ? "content_paste_off" : "search_off"
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontIcons
+                    font.weight: Palette.Theme.iconWeight
                     font.pixelSize: Palette.Theme.iconSizeLarge
                 }
                 Text {
@@ -346,6 +347,7 @@ Item {
                                 text: root.kindIcon(row.modelData)
                                 color: row.index === root.selected ? Palette.Theme.accentText : Palette.Theme.textSecondary
                                 font.family: Palette.Theme.fontIcons
+                                font.weight: Palette.Theme.iconWeight
                                 font.pixelSize: Palette.Theme.iconSizeSmall
                             }
                         }
@@ -377,7 +379,7 @@ Item {
                         }
 
                         IconButton {
-                            icon: "delete"
+                            icon: "delete_outline"
                             implicitWidth: 30
                             implicitHeight: 30
                             Layout.alignment: Qt.AlignVCenter
@@ -431,6 +433,7 @@ Item {
                     text: "content_paste_search"
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontIcons
+                    font.weight: Palette.Theme.iconWeight
                     font.pixelSize: Palette.Theme.iconSize
                     Layout.alignment: Qt.AlignVCenter
                 }
@@ -474,7 +477,7 @@ Item {
                 }
 
                 IconButton {
-                    icon: search.text !== "" ? "close" : "delete_sweep"
+                    icon: search.text !== "" ? "close" : "delete_outline"
                     Layout.alignment: Qt.AlignVCenter
                     onClicked: {
                         if (search.text !== "")

@@ -314,6 +314,7 @@ Item {
                 visible: artImg.status !== Image.Ready
                 text: "music_note"
                 font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
                 font.pixelSize: 34
                 color: Palette.Theme.textMuted
             }
@@ -439,6 +440,7 @@ Item {
                                 text: "unfold_more"
                                 color: Palette.Theme.textMuted
                                 font.family: Palette.Theme.fontIcons
+                                font.weight: Palette.Theme.iconWeight
                                 font.pixelSize: 13
                             }
                         }
@@ -695,6 +697,7 @@ Item {
                             text: playButton.playing ? "pause" : "play_arrow"
                             color: Palette.Theme.accentText
                             font.family: Palette.Theme.fontIcons
+                            font.weight: Palette.Theme.iconWeight
                             font.pixelSize: Palette.Theme.iconSizeLarge
                             // Pops when it switches between play and pause.
                             onTextChanged: iconPop.restart()
@@ -829,6 +832,7 @@ Item {
             text: skip.icon
             color: Palette.Theme.textPrimary
             font.family: Palette.Theme.fontIcons
+            font.weight: Palette.Theme.iconWeight
             font.pixelSize: Palette.Theme.iconSize
 
             transform: Translate {
@@ -909,6 +913,7 @@ Item {
             text: toggle.icon
             color: toggle.on ? Palette.Theme.accent : Palette.Theme.textSecondary
             font.family: Palette.Theme.fontIcons
+            font.weight: Palette.Theme.iconWeight
             font.pixelSize: Palette.Theme.iconSizeSmall
 
             Behavior on color {

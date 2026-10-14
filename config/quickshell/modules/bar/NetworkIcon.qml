@@ -50,6 +50,7 @@ Text {
     }
     color: connected ? Palette.Theme.textPrimary : Palette.Theme.textMuted
     font.family: Palette.Theme.fontIcons
+    font.weight: Palette.Theme.iconWeight
     font.pixelSize: Palette.Theme.iconSizeSmall
 
     Behavior on color {

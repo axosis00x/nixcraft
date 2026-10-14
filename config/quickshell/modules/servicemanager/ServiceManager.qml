@@ -160,6 +160,7 @@ Item {
                     text: "\ue8b6"
                     color: search.activeFocus ? Palette.Theme.accent : Palette.Theme.textMuted
                     font.family: Palette.Theme.fontIcons
+                    font.weight: Palette.Theme.iconWeight
                     font.pixelSize: Palette.Theme.iconSizeSmall
                 }
                 TextInput {

@@ -52,6 +52,7 @@ Item {
                 text: root.iconGlyph
                 color: root.active ? Palette.Theme.accent : Palette.Theme.textSecondary
                 font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
                 font.pixelSize: Palette.Theme.iconSize
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter

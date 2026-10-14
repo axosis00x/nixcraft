@@ -51,6 +51,7 @@ Item {
                 color: Palette.Theme.textPrimary
                 opacity: root.enabled ? 1 : 0.35
                 font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
                 font.pixelSize: Palette.Theme.iconSizeSmall
             }
         }

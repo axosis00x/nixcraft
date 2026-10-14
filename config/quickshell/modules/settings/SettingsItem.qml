@@ -108,6 +108,7 @@ Item {
             text: root.icon
             color: Palette.Theme.textMuted
             font.family: Palette.Theme.fontIcons
+            font.weight: Palette.Theme.iconWeight
             font.pixelSize: Palette.Theme.iconSize
         }
 
@@ -141,6 +142,7 @@ Item {
             text: "chevron_right"
             color: Palette.Theme.textMuted
             font.family: Palette.Theme.fontIcons
+            font.weight: Palette.Theme.iconWeight
             font.pixelSize: Palette.Theme.iconSize
             // Nudges toward the pointer on hover.
             Layout.rightMargin: mouse.containsMouse ? -3 : 0

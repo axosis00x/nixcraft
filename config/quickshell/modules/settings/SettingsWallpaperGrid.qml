@@ -133,6 +133,7 @@ Item {
                         text: "check"
                         color: Palette.Theme.accentText
                         font.family: Palette.Theme.fontIcons
+                        font.weight: Palette.Theme.iconWeight
                         font.pixelSize: 16
                     }
                 }

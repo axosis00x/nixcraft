@@ -594,6 +594,7 @@ PanelWindow {
                 text: "\ue8ac"
                 color: Palette.Theme.textPrimary
                 font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
                 font.pixelSize: Palette.Theme.iconSize
             }
 
@@ -764,6 +765,7 @@ PanelWindow {
                 text: "desktop_windows"
                 color: Palette.Theme.textMuted
                 font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
                 font.pixelSize: 14
                 Layout.alignment: Qt.AlignVCenter
             }

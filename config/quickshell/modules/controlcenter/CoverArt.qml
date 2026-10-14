@@ -19,6 +19,7 @@ ClippingRectangle {
         text: "music_note"
         color: Palette.Theme.textMuted
         font.family: Palette.Theme.fontIcons
+        font.weight: Palette.Theme.iconWeight
         font.pixelSize: Math.round(root.height * 0.4)
     }
 

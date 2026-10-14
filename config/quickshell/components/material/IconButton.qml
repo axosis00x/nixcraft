@@ -40,6 +40,7 @@ Item {
         text: root.icon
         color: hover.containsMouse ? Palette.Theme.textPrimary : root.iconColor
         font.family: Palette.Theme.fontIcons
+        font.weight: Palette.Theme.iconWeight
         font.pixelSize: root.iconSize
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter

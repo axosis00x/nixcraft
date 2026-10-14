@@ -713,6 +713,7 @@ FloatingWindow {
                                 text: "edit"
                                 color: "white"
                                 font.family: Palette.Theme.fontIcons
+                                font.weight: Palette.Theme.iconWeight
                                 font.pixelSize: Palette.Theme.iconSizeSmall
                             }
                         }
@@ -773,6 +774,7 @@ FloatingWindow {
                         text: "search"
                         color: Palette.Theme.textMuted
                         font.family: Palette.Theme.fontIcons
+                        font.weight: Palette.Theme.iconWeight
                         font.pixelSize: Palette.Theme.iconSizeSmall
                     }
 

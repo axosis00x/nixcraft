@@ -168,6 +168,7 @@ Item {
                     text: "desktop_windows"
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontIcons
+                    font.weight: Palette.Theme.iconWeight
                     font.pixelSize: Palette.Theme.iconSize
                 }
             }
@@ -302,6 +303,7 @@ Item {
                     text: "schedule"
                     color: Palette.Theme.accent
                     font.family: Palette.Theme.fontIcons
+                    font.weight: Palette.Theme.iconWeight
                     font.pixelSize: Palette.Theme.iconSizeSmall
                 }
 
@@ -334,6 +336,7 @@ Item {
                 text: "settings"
                 color: Palette.Theme.textSecondary
                 font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
                 font.pixelSize: Palette.Theme.iconSize
             }
         }
@@ -350,6 +353,7 @@ Item {
                 text: "power_settings_new"
                 color: Palette.Theme.errorColor
                 font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
                 font.pixelSize: Palette.Theme.iconSize
             }
         }
@@ -402,6 +406,7 @@ Item {
         Layout.alignment: Qt.AlignHCenter
         color: dim ? Palette.Theme.textMuted : Palette.Theme.textPrimary
         font.family: Palette.Theme.fontIcons
+        font.weight: Palette.Theme.iconWeight
         font.pixelSize: Palette.Theme.iconSizeSmall
 
         Behavior on color {

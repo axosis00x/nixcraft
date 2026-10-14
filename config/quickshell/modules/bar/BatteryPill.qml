@@ -53,10 +53,11 @@ Item {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: root.charging
-                text: "bolt"
+                text: "electric_bolt"
                 color: label.color
                 font.family: Palette.Theme.fontIcons
-                font.pixelSize: 9
+                font.weight: Palette.Theme.iconWeight
+                font.pixelSize: 10
             }
 
             Text {

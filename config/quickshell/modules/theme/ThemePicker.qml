@@ -353,6 +353,7 @@ Item {
                     text: "palette"
                     color: Palette.Theme.accent
                     font.family: Palette.Theme.fontIcons
+                    font.weight: Palette.Theme.iconWeight
                     font.pixelSize: Palette.Theme.iconSize
                     Layout.alignment: Qt.AlignVCenter
                 }

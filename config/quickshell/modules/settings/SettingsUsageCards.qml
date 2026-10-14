@@ -85,6 +85,7 @@ RowLayout {
                         text: card.modelData.icon
                         color: card.tone
                         font.family: Palette.Theme.fontIcons
+                        font.weight: Palette.Theme.iconWeight
                         font.pixelSize: Palette.Theme.iconSizeLarge
 
                         Behavior on color {

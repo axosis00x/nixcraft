@@ -15,6 +15,7 @@ Column {
         text: root.icon
         color: Palette.Theme.textMuted
         font.family: Palette.Theme.fontIcons
+        font.weight: Palette.Theme.iconWeight
         font.pixelSize: Palette.Theme.iconSizeLarge * 1.4
     }
 

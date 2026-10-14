@@ -178,6 +178,7 @@ Item {
                         visible: row.isActive
                         text: ""
                         font.family: Palette.Theme.fontIcons
+                        font.weight: Palette.Theme.iconWeight
                         font.pixelSize: Palette.Theme.iconSizeSmall
                         color: Palette.Theme.accent
                         Layout.alignment: Qt.AlignVCenter

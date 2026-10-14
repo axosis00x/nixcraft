@@ -69,7 +69,7 @@ Item {
             }
 
             IconButton {
-                icon: "delete_sweep"
+                icon: "delete_outline"
                 implicitWidth: 32
                 implicitHeight: 32
                 iconSize: Palette.Theme.iconSizeSmall

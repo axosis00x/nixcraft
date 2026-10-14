@@ -41,6 +41,8 @@ QtObject {
     readonly property string fontMono: "SF Mono "
     readonly property string fontSans: "Inter"
     readonly property string fontIcons: "Material Symbols Rounded "
+    // One weight for every icon glyph (Material Symbols is variable).
+    readonly property int iconWeight: Font.Medium
 
     // ── Design tokens ────────────────────────────────────────────────
     // Every surface in the shell is built from these, so the bar, panels,
@@ -102,6 +104,14 @@ QtObject {
     readonly property color outlineColor: outlineVariant
     readonly property color outlineSoft: Qt.rgba(outlineColor.r, outlineColor.g, outlineColor.b, outlineColor.a * 0.35)
     readonly property color surfaceSolid: Qt.alpha(bg, 1)
+    // Desktop widgets sit on arbitrary wallpapers, so they're built from the
+    // theme background (which the text colours are designed against), made
+    // opaque and lightly lifted, then given a fixed glass alpha. Themes whose
+    // container colours are white washes (transparent) stay readable too.
+    readonly property color widgetSurface: Qt.alpha(Qt.tint(surfaceSolid, Qt.alpha(textPrimary, 0.05)), 0.85)
+    // Chips and wells inside a widget: a wash of the text colour, so they
+    // read as one step up in every theme.
+    readonly property color widgetChip: Qt.alpha(textPrimary, 0.08)
 
     function apply(values) {
         var paletteKeys = ["bg", "surface", "surfaceContainerLow", "surfaceContainer", "surfaceContainerHigh", "surfaceContainerHighest", "surfaceTint", "outlineVariant", "border", "accent", "accentText", "info", "warning", "success", "errorColor", "accentLight", "primaryContainer", "primaryText", "secondaryContainer", "secondaryContainerHover", "secondaryText", "wsInactive", "textPrimary", "textTitle", "textSecondary", "textMuted", "textDisabled"];

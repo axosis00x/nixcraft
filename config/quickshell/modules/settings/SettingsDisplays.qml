@@ -35,6 +35,7 @@ ColumnLayout {
                 text: "timer"
                 color: Palette.Theme.accent
                 font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
                 font.pixelSize: Palette.Theme.iconSize
             }
 
@@ -101,6 +102,7 @@ ColumnLayout {
                             text: card.builtIn ? "laptop" : "desktop_windows"
                             color: Palette.Theme.accent
                             font.family: Palette.Theme.fontIcons
+                            font.weight: Palette.Theme.iconWeight
                             font.pixelSize: Palette.Theme.iconSizeLarge
                         }
                     }

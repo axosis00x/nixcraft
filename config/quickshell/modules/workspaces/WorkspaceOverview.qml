@@ -68,8 +68,10 @@ PanelWindow {
 
     Rectangle {
         anchors.fill: parent
-        color: "#000000"
-        opacity: root.active ? 0.75 : 0
+        // Nearly opaque theme background, so busy wallpapers and desktop
+        // widgets don't compete with the cards.
+        color: Palette.Theme.bg
+        opacity: root.active ? 0.9 : 0
         Behavior on opacity {
             EffectMotion {}
         }
@@ -152,7 +154,7 @@ PanelWindow {
                                     root.service.selectIndex(cell.index);
                                     root.service.confirm();
                                 }
-                                onHoveredEmpty: root.service.selectIndex(cell.index)
+                                onHoverSelected: root.service.selectIndex(cell.index)
                             }
 
                             DropArea {
@@ -221,14 +223,6 @@ PanelWindow {
                 }
             }
         }
-
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: "1–9 / 0 workspace  ·  ← → ↑ ↓ move  ·  drag windows between cards  ·  Enter go  ·  Esc close"
-            color: Palette.Theme.textMuted
-            font.family: Palette.Theme.fontSans
-            font.pixelSize: Palette.Theme.fontSizeXs
-        }
     }
 
     // ── pieces ─────────────────────────────────────────────────────
@@ -251,7 +245,7 @@ PanelWindow {
                 width: Math.max(18, badgeText.implicitWidth + 8)
                 height: 18
                 radius: 5
-                color: label.current ? Palette.Theme.accent : Palette.Theme.surfaceSolid
+                color: label.current ? Palette.Theme.accent : Palette.Theme.surfaceContainerHighest
 
                 Text {
                     id: badgeText
@@ -267,7 +261,7 @@ PanelWindow {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: label.text
-                color: Palette.Theme.textSecondary
+                color: Palette.Theme.textPrimary
                 font.family: Palette.Theme.fontSans
                 font.pixelSize: Palette.Theme.fontSizeXs
             }
@@ -295,7 +289,7 @@ PanelWindow {
         property bool focused: false
         property bool draggable: false
         signal activated
-        signal hoveredEmpty
+        signal hoverSelected
 
         readonly property bool hasWindows: tiles.count > 0
 
@@ -303,7 +297,7 @@ PanelWindow {
         // Opaque, so translucent themes don't show the desktop through it.
         color: Palette.Theme.surfaceSolid
         border.width: focused ? 2 : 1
-        border.color: focused ? Palette.Theme.accent : Palette.Theme.outlineSoft
+        border.color: focused ? Palette.Theme.accent : Palette.Theme.outlineVariant
         scale: focused ? 1 : 0.97
 
         Behavior on scale {
@@ -328,7 +322,7 @@ PanelWindow {
             visible: !card.hasWindows
             text: card.label
             color: Palette.Theme.textMuted
-            opacity: 0.35
+            opacity: 0.7
             font.family: Palette.Theme.fontSans
             font.pixelSize: Palette.Theme.fontSizeHeadline
             font.weight: Font.Bold
@@ -339,8 +333,16 @@ PanelWindow {
             visible: !card.hasWindows
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onEntered: card.hoveredEmpty()
             onClicked: card.activated()
+        }
+
+        // Hovering anywhere on the card selects it (accent border), even over
+        // the window tiles, whose own mouse areas handle clicks and drags.
+        HoverHandler {
+            onHoveredChanged: {
+                if (hovered)
+                    card.hoverSelected();
+            }
         }
 
         // Plain Item (not a positioner) so a dragged tile owns its x/y.
@@ -384,8 +386,10 @@ PanelWindow {
                             paintCursor: false
                         }
 
+                        // Not parent.radius: a ClippingRectangle's children
+                        // live in a content item that has no radius.
                         StateLayer {
-                            radius: parent.radius
+                            radius: Palette.Theme.radiusXs
                             hovered: tileMouse.containsMouse && !tileMouse.drag.active
                         }
 

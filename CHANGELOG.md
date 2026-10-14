@@ -5,6 +5,22 @@ All notable changes to nixcraft are recorded here. Versions follow
 `scripts/release.sh` from the [Conventional Commits](https://www.conventionalcommits.org)
 since the previous release.
 
+## [0.1.0-pre-alpha.6] - 2026-10-14
+
+### Features
+
+- **polkit:** own polkit agent in the central notch, drop polkit-gnome (63f878f)
+- **widgets:** more reactive audio visualizer (49e9f4a)
+
+### Fixes
+
+- **quickshell:** reload render loop, double notification dismiss, shared weather (438a70f)
+- **workspaces:** moving a window no longer warps the pointer (551f9f6)
+
+### Refactors
+
+- **quickshell:** move layout constants from Ui.js into Theme tokens (5425d14)
+
 ## [0.1.0-pre-alpha.5] - 2026-10-14
 
 ### Features

@@ -27,8 +27,8 @@ Item {
     // Set when polkit rejects a password, until the next keystroke.
     property bool wrong: false
 
-    implicitWidth: Math.min(maxWidth - 24, 400)
-    implicitHeight: content.implicitHeight + 32
+    implicitWidth: Math.min(maxWidth - 24, 380)
+    implicitHeight: content.implicitHeight + 40
 
     signal aboutToOpen
     signal aboutToClose
@@ -123,70 +123,66 @@ Item {
         id: content
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        anchors.topMargin: 16
-        width: parent.width - 32
-        spacing: 12
+        anchors.topMargin: 20
+        width: parent.width - 40
+        spacing: 0
 
-        // Lock badge, title and the asking app's message.
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 12
+        // Header, centred: lock badge, title, the asking app's message.
+        Rectangle {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: 52
+            Layout.preferredHeight: 52
+            radius: Palette.Theme.radiusSmall
+            color: root.wrong ? Qt.alpha(Palette.Theme.errorColor, 0.18) : Palette.Theme.accentTonal
 
-            Rectangle {
-                Layout.alignment: Qt.AlignTop
-                Layout.preferredWidth: 44
-                Layout.preferredHeight: 44
-                radius: width / 2
-                color: root.wrong ? Qt.alpha(Palette.Theme.errorColor, 0.18) : Palette.Theme.accentTonal
-
-                Behavior on color {
-                    ColorMotion {}
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: root.wrong ? "lock_reset" : "shield_lock"
-                    color: root.wrong ? Palette.Theme.errorColor : Palette.Theme.accent
-                    font.family: Palette.Theme.fontIcons
-                    font.weight: Palette.Theme.iconWeight
-                    font.pixelSize: Palette.Theme.iconSizeLarge
-                }
+            Behavior on color {
+                ColorMotion {}
             }
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 2
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "Authentication required"
-                    color: Palette.Theme.textPrimary
-                    font.family: Palette.Theme.fontSans
-                    font.pixelSize: Palette.Theme.fontSizeTitle
-                    font.weight: Font.DemiBold
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: root.flow ? root.flow.message : ""
-                    color: Palette.Theme.textSecondary
-                    font.family: Palette.Theme.fontSans
-                    font.pixelSize: Palette.Theme.fontSizeSmall
-                    wrapMode: Text.WordWrap
-                    maximumLineCount: 4
-                    elide: Text.ElideRight
-                    visible: text !== ""
-                }
+            Text {
+                anchors.centerIn: parent
+                text: root.wrong ? "lock_reset" : "shield_lock"
+                color: root.wrong ? Palette.Theme.errorColor : Palette.Theme.accent
+                font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
+                font.pixelSize: Palette.Theme.iconSizeLarge + 4
             }
         }
 
-        // Who's authenticating. With several admin identities, click to
-        // switch between them.
-        Rectangle {
-            id: identityChip
+        Text {
+            Layout.fillWidth: true
+            Layout.topMargin: 14
+            horizontalAlignment: Text.AlignHCenter
+            text: "Authentication required"
+            color: Palette.Theme.textPrimary
+            font.family: Palette.Theme.fontSans
+            font.pixelSize: Palette.Theme.fontSizeHeadline
+            font.weight: Font.DemiBold
+        }
+
+        Text {
+            Layout.fillWidth: true
+            Layout.topMargin: 4
+            horizontalAlignment: Text.AlignHCenter
+            text: root.flow ? root.flow.message : ""
+            color: Palette.Theme.textSecondary
+            font.family: Palette.Theme.fontSans
+            font.pixelSize: Palette.Theme.fontSizeSmall
+            lineHeight: 1.15
+            wrapMode: Text.WordWrap
+            maximumLineCount: 4
+            elide: Text.ElideRight
+            visible: text !== ""
+        }
+
+        // Who's authenticating. With several admin identities, click the
+        // name to switch between them.
+        Row {
+            id: identityRow
 
             readonly property var identities: root.flow ? root.flow.identities : []
             readonly property var current: root.flow ? root.flow.selectedIdentity : null
+            readonly property bool switchable: identities.length > 1 && !root.busy
 
             function label(identity) {
                 if (!identity)
@@ -194,64 +190,39 @@ Item {
                 return identity.displayName || identity.string || String(identity);
             }
 
-            Layout.alignment: Qt.AlignLeft
-            Layout.leftMargin: 56
+            Layout.alignment: Qt.AlignHCenter
+            Layout.topMargin: 10
             visible: current !== null && current !== undefined
-            implicitWidth: chipRow.implicitWidth + 20
-            implicitHeight: 28
-            radius: height / 2
-            color: Palette.Theme.surfaceContainerHigh
+            spacing: 4
 
-            StateLayer {
-                radius: parent.radius
-                hovered: chipMouse.containsMouse && identityChip.identities.length > 1
-                pressed: chipMouse.pressed && identityChip.identities.length > 1
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Signing in as"
+                color: Palette.Theme.textMuted
+                font.family: Palette.Theme.fontSans
+                font.pixelSize: Palette.Theme.fontSizeXs
             }
 
-            Row {
-                id: chipRow
-                anchors.centerIn: parent
-                spacing: 6
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: identityRow.label(identityRow.current) + (identityRow.switchable ? "  ▾" : "")
+                color: identityMouse.containsMouse && identityRow.switchable ? Palette.Theme.accent : Palette.Theme.textPrimary
+                font.family: Palette.Theme.fontSans
+                font.pixelSize: Palette.Theme.fontSizeXs
+                font.weight: Font.DemiBold
 
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "person"
-                    color: Palette.Theme.accent
-                    font.family: Palette.Theme.fontIcons
-                    font.weight: Palette.Theme.iconWeight
-                    font.pixelSize: Palette.Theme.iconSizeSmall
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: identityChip.label(identityChip.current)
-                    color: Palette.Theme.textPrimary
-                    font.family: Palette.Theme.fontSans
-                    font.pixelSize: Palette.Theme.fontSizeSmall
-                    font.weight: Font.Medium
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: identityChip.identities.length > 1
-                    text: "unfold_more"
-                    color: Palette.Theme.textMuted
-                    font.family: Palette.Theme.fontIcons
-                    font.weight: Palette.Theme.iconWeight
-                    font.pixelSize: Palette.Theme.iconSizeSmall
-                }
-            }
-
-            MouseArea {
-                id: chipMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                enabled: identityChip.identities.length > 1 && !root.busy
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    var list = identityChip.identities;
-                    var i = list.indexOf(identityChip.current);
-                    root.flow.selectedIdentity = list[(i + 1) % list.length];
+                MouseArea {
+                    id: identityMouse
+                    anchors.fill: parent
+                    anchors.margins: -4
+                    hoverEnabled: true
+                    enabled: identityRow.switchable
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        var list = identityRow.identities;
+                        var i = list.indexOf(identityRow.current);
+                        root.flow.selectedIdentity = list[(i + 1) % list.length];
+                    }
                 }
             }
         }
@@ -259,11 +230,12 @@ Item {
         // The password (or whatever polkit's prompt asks for).
         Rectangle {
             Layout.fillWidth: true
+            Layout.topMargin: 18
             implicitHeight: 46
-            radius: height / 2
+            radius: Palette.Theme.radiusSmall
             color: Palette.Theme.surfaceContainerHigh
-            border.width: field.activeFocus || root.wrong ? 2 : 0
-            border.color: root.wrong ? Palette.Theme.errorColor : Palette.Theme.accent
+            border.width: field.activeFocus || root.wrong ? 2 : 1
+            border.color: root.wrong ? Palette.Theme.errorColor : (field.activeFocus ? Palette.Theme.accent : Palette.Theme.outlineSoft)
 
             Behavior on border.color {
                 ColorMotion {}
@@ -271,9 +243,21 @@ Item {
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 18
+                anchors.leftMargin: 14
                 anchors.rightMargin: 6
-                spacing: 6
+                spacing: 10
+
+                Text {
+                    text: "key"
+                    color: field.activeFocus ? Palette.Theme.accent : Palette.Theme.textMuted
+                    font.family: Palette.Theme.fontIcons
+                    font.weight: Palette.Theme.iconWeight
+                    font.pixelSize: Palette.Theme.iconSize
+
+                    Behavior on color {
+                        ColorMotion {}
+                    }
+                }
 
                 Item {
                     Layout.fillWidth: true
@@ -319,6 +303,7 @@ Item {
                     icon: on ? "visibility_off" : "visibility"
                     implicitWidth: 34
                     implicitHeight: 34
+                    stateRadius: Palette.Theme.radiusXs
                     iconSize: Palette.Theme.iconSizeSmall
                     onClicked: {
                         on = !on;
@@ -328,11 +313,11 @@ Item {
             }
         }
 
-        // polkit's own notes ("Authentication failure" and the like), or
-        // ours when the password was wrong.
+        // polkit's own notes, or ours when the password was wrong.
         Text {
             Layout.fillWidth: true
-            Layout.leftMargin: 18
+            Layout.topMargin: 8
+            Layout.leftMargin: 4
             readonly property string note: root.flow ? root.flow.supplementaryMessage : ""
             visible: text !== ""
             text: root.wrong ? "Wrong password, try again" : note
@@ -342,33 +327,88 @@ Item {
             wrapMode: Text.WordWrap
         }
 
+        // Two equal buttons: cancel (tonal) and authenticate (filled).
         RowLayout {
             Layout.fillWidth: true
-            Layout.topMargin: 2
-            spacing: 8
+            Layout.topMargin: 16
+            spacing: 10
 
-            Text {
+            DialogButton {
                 Layout.fillWidth: true
-                Layout.leftMargin: 4
-                text: root.flow ? root.flow.actionId : ""
-                color: Palette.Theme.textMuted
-                font.family: Palette.Theme.fontMono
-                font.pixelSize: Palette.Theme.fontSizeXs
-                elide: Text.ElideMiddle
-            }
-
-            ActionChip {
                 label: "Cancel"
                 onClicked: root.close()
             }
 
-            ActionChip {
+            DialogButton {
+                Layout.fillWidth: true
                 label: root.busy ? "Checking…" : "Authenticate"
-                active: true
+                filled: true
                 enabled: !root.busy && field.text !== ""
-                opacity: enabled ? 1 : 0.5
                 onClicked: root.submit()
             }
+        }
+
+        // Which polkit action this is, for the curious.
+        Text {
+            Layout.fillWidth: true
+            Layout.topMargin: 12
+            horizontalAlignment: Text.AlignHCenter
+            text: root.flow ? root.flow.actionId : ""
+            color: Palette.Theme.textMuted
+            opacity: 0.8
+            font.family: Palette.Theme.fontMono
+            font.pixelSize: Palette.Theme.fontSizeXs - 1
+            elide: Text.ElideMiddle
+        }
+    }
+
+    // A dialog button: same height and corners as the field above.
+    component DialogButton: Rectangle {
+        id: button
+
+        property string label: ""
+        property bool filled: false
+        signal clicked
+
+        implicitHeight: 40
+        radius: Palette.Theme.radiusSmall
+        color: filled ? Palette.Theme.accent : Palette.Theme.surfaceContainerHigh
+        opacity: enabled ? 1 : 0.45
+        scale: buttonMouse.pressed ? 0.96 : 1
+
+        Behavior on scale {
+            SpatialMotion {
+                fast: true
+                bouncy: true
+            }
+        }
+        Behavior on opacity {
+            EffectMotion {}
+        }
+
+        StateLayer {
+            radius: button.radius
+            tone: button.filled ? Palette.Theme.accentText : Palette.Theme.textPrimary
+            hovered: buttonMouse.containsMouse
+            pressed: buttonMouse.pressed
+        }
+
+        Text {
+            anchors.centerIn: parent
+            text: button.label
+            color: button.filled ? Palette.Theme.accentText : Palette.Theme.textPrimary
+            font.family: Palette.Theme.fontSans
+            font.pixelSize: Palette.Theme.fontSizeBody
+            font.weight: Font.DemiBold
+        }
+
+        MouseArea {
+            id: buttonMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            enabled: button.enabled
+            cursorShape: Qt.PointingHandCursor
+            onClicked: button.clicked()
         }
     }
 }

@@ -5,6 +5,27 @@ All notable changes to nixcraft are recorded here. Versions follow
 `scripts/release.sh` from the [Conventional Commits](https://www.conventionalcommits.org)
 since the previous release.
 
+## [0.1.0-pre-alpha.5] - 2026-10-14
+
+### Features
+
+- **controlcenter:** interactive glyph matrix and connection cards (36f18cc)
+- **quickshell:** polish tabs and recording indicator (9b9e0d6)
+
+### Fixes
+
+- **workspaces:** solid overview, hover on occupied cards, no hint line (30d2b3e)
+
+### Style
+
+- **notification:** cleaner notification cards (d791cd0)
+- **widgets:** redesign clock and weather, readable in every theme (ee793c2)
+- **quickshell:** one shared icon weight across the shell (de80ece)
+
+### Chores
+
+- nvim update and zed themes (7eae3d0)
+
 ## [0.1.0-pre-alpha.4] - 2026-10-13
 
 ### Features

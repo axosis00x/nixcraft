@@ -25,8 +25,14 @@ PanelWindow {
     readonly property int currentId: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : 1
     readonly property var specials: Hyprland.workspaces.values.filter(w => w.id < 0)
 
-    readonly property real cardW: 196
-    readonly property real cardH: 110
+    // Cards as wide as fit across the screen (five, plus the special
+    // column when there is one), within 150–256 px, in 16:9.
+    readonly property real cardW: {
+        var across = 5 + (specials.length > 0 ? 1 : 0);
+        var gaps = 4 * 14 + (specials.length > 0 ? 2 * 28 + 1 : 0);
+        return Math.max(150, Math.min(256, Math.floor((width - 96 - gaps) / across)));
+    }
+    readonly property real cardH: Math.round(cardW * 9 / 16)
 
     visible: active
 

@@ -17,7 +17,7 @@ done
 
 # ...then give a crash-handler restart a moment to appear.
 for _ in $(seq 8); do
-    qs list 2>/dev/null | grep -q . && exit 0
+    qs list 2>/dev/null | grep -q "^Instance" && exit 0
     sleep 0.25
 done
 

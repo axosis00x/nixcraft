@@ -30,7 +30,9 @@ Item {
             depthRead.exec([depthScript, wallpaperPath]);
     }
 
-    readonly property bool isLocked: sessionLock.locked
+    // Locked means the compositor confirmed it (`secure`): a requested
+    // lock that never took effect mustn't block reloads or later locks.
+    readonly property bool isLocked: sessionLock.locked && sessionLock.secure
 
     signal unlocked
     signal engaged
@@ -101,6 +103,15 @@ Item {
             root.authFailed = true;
             root.passwordBuffer = "";
         }
+    }
+
+    // A lock the compositor hasn't confirmed within a few seconds failed
+    // (e.g. it was refused). Clear it, or lock() would keep returning early
+    // and idle/suspend locking would silently stop working.
+    Timer {
+        interval: 3000
+        running: sessionLock.locked && !sessionLock.secure
+        onTriggered: sessionLock.locked = false
     }
 
     WlSessionLock {

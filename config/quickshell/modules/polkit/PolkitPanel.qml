@@ -230,8 +230,8 @@ Item {
         // The password (or whatever polkit's prompt asks for).
         Rectangle {
             Layout.fillWidth: true
-            Layout.topMargin: 18
-            implicitHeight: 46
+            Layout.topMargin: 16
+            implicitHeight: 38
             radius: Palette.Theme.radiusSmall
             color: Palette.Theme.surfaceContainerHigh
             border.width: field.activeFocus || root.wrong ? 2 : 1
@@ -243,7 +243,7 @@ Item {
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 14
+                anchors.leftMargin: 12
                 anchors.rightMargin: 6
                 spacing: 10
 
@@ -252,7 +252,7 @@ Item {
                     color: field.activeFocus ? Palette.Theme.accent : Palette.Theme.textMuted
                     font.family: Palette.Theme.fontIcons
                     font.weight: Palette.Theme.iconWeight
-                    font.pixelSize: Palette.Theme.iconSize
+                    font.pixelSize: Palette.Theme.iconSizeSmall
 
                     Behavior on color {
                         ColorMotion {}
@@ -301,8 +301,8 @@ Item {
                     property bool on: false
                     visible: !(root.flow && root.flow.responseVisible)
                     icon: on ? "visibility_off" : "visibility"
-                    implicitWidth: 34
-                    implicitHeight: 34
+                    implicitWidth: 28
+                    implicitHeight: 28
                     stateRadius: Palette.Theme.radiusXs
                     iconSize: Palette.Theme.iconSizeSmall
                     onClicked: {
@@ -330,7 +330,7 @@ Item {
         // Two equal buttons: cancel (tonal) and authenticate (filled).
         RowLayout {
             Layout.fillWidth: true
-            Layout.topMargin: 16
+            Layout.topMargin: 12
             spacing: 10
 
             DialogButton {
@@ -370,7 +370,7 @@ Item {
         property bool filled: false
         signal clicked
 
-        implicitHeight: 40
+        implicitHeight: 34
         radius: Palette.Theme.radiusSmall
         color: filled ? Palette.Theme.accent : Palette.Theme.surfaceContainerHigh
         opacity: enabled ? 1 : 0.45
@@ -398,7 +398,7 @@ Item {
             text: button.label
             color: button.filled ? Palette.Theme.accentText : Palette.Theme.textPrimary
             font.family: Palette.Theme.fontSans
-            font.pixelSize: Palette.Theme.fontSizeBody
+            font.pixelSize: Palette.Theme.fontSizeSmall
             font.weight: Font.DemiBold
         }
 

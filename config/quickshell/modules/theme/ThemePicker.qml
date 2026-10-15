@@ -329,15 +329,16 @@ Item {
         Item {
             id: searchRow
             Layout.fillWidth: true
-            Layout.preferredHeight: 64
+            Layout.preferredHeight: 58
 
             Rectangle {
                 id: searchField
                 anchors.fill: parent
+                // One even gap on the sides and bottom.
                 anchors.leftMargin: 6
                 anchors.rightMargin: 6
                 anchors.topMargin: 6
-                anchors.bottomMargin: 12
+                anchors.bottomMargin: 6
                 radius: Palette.Theme.radiusMedium
                 color: Palette.Theme.surfaceContainerHigh
             }

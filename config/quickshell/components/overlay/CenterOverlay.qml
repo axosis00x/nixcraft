@@ -283,32 +283,64 @@ PanelWindow {
         island: root.island
         islandGap: bar ? bar.islandGap : 4
         wingSize: root.stageWing
-        slabRadius: 20
+        // Full panels get roomy corners; at rest and as the slim live
+        // activity pill it keeps the bar notch's own radius, so the pill
+        // doesn't look rounded at the bottom and closing hands back
+        // seamlessly.
+        slabRadius: sized === null || sized === liveActivity ? (root.bar ? root.bar.capsuleRadius : Palette.Theme.radiusSmall) : 20
         color: root.stageColor
         tintOpacity: root.stageTint
 
+        Behavior on slabRadius {
+            SpatialMotion {
+                easing.type: topStage.shrinking ? Easing.OutCubic : Easing.OutBack
+            }
+        }
         Behavior on color {
             ColorMotion {}
         }
 
         readonly property var panel: root.activeTopPanel || root.peekPanel
 
-        slabWidth: panel ? panel.implicitWidth : root.barSlabWidth
-        slabHeight: panel ? panel.implicitHeight : root.barSlabHeight
-        opacity: panel ? 1 : 0
+        // The slab follows `sized`, set in onPanelChanged after `shrinking`,
+        // so the size animation always knows whether it's a close.
+        property var sized: null
+        property bool shrinking: false
+        // A close is going back to rest: nothing, or a notification / live
+        // activity pill after a real panel.
+        onPanelChanged: {
+            shrinking = panel === null || (panel === root.peekPanel && sized !== null && sized !== root.peekPanel && sized !== notificationPeek && sized !== liveActivity);
+            sized = panel;
+        }
+        Component.onCompleted: sized = panel
+
+        slabWidth: sized ? sized.implicitWidth : root.barSlabWidth
+        slabHeight: sized ? sized.implicitHeight : root.barSlabHeight
+        // Closing, the slab springs back down to the bar's notch while it
+        // stays opaque, so the panel shrinks into the notch (as bottom
+        // panels shrink into the dock) instead of fading where it stood.
+        // Only once it's back at the notch's size does it fade away.
+        readonly property bool settling: !panel && (Math.abs(slabWidth - root.barSlabWidth) > 1 || Math.abs(slabHeight - root.barSlabHeight) > 1)
+        opacity: panel || settling ? 1 : 0
 
         // barSlabHeight/barSlabWidth are seeded from barLayout.vertical, which
         // briefly holds its declared default before the persisted bar-layout
         // file finishes loading on shell startup/reload. Without this guard,
         // that transient flip plays the OutBack overshoot below — visible as
         // the idle notch "wobbling" as the bar's real edge resolves.
+        // Opening springs; closing eases in without overshoot, so it
+        // doesn't shrink past the notch and bounce back.
         Behavior on slabWidth {
             enabled: !root.barLayout || root.barLayout.loaded
-            SpatialMotion {}
+            SpatialMotion {
+                easing.type: topStage.shrinking ? Easing.OutCubic : Easing.OutBack
+            }
         }
         Behavior on slabHeight {
             enabled: !root.barLayout || root.barLayout.loaded
-            SpatialMotion {}
+            SpatialMotion {
+                easing.type: topStage.shrinking ? Easing.OutCubic : Easing.OutBack
+            }
         }
         Behavior on opacity {
             EffectMotion {}
@@ -380,15 +412,32 @@ PanelWindow {
 
         readonly property var panel: root.activeBottomPanel ? root.activeBottomPanel : (root.dockShown ? dockItem : null)
 
-        slabWidth: panel ? panel.implicitWidth : 120
-        slabHeight: panel ? panel.implicitHeight : 0
-        opacity: panel ? 1 : 0
+        // As on the top stage: `shrinking` is set before the size changes.
+        // Going back to rest (the dock, or nothing) is a close.
+        property var sized: null
+        property bool shrinking: false
+        onPanelChanged: {
+            shrinking = panel === null || panel === dockItem;
+            sized = panel;
+        }
+        Component.onCompleted: sized = panel
+
+        slabWidth: sized ? sized.implicitWidth : 120
+        slabHeight: sized ? sized.implicitHeight : 0
+        // As on the top stage: with the dock tucked away, a closing panel
+        // collapses into the bottom edge before the slab fades.
+        readonly property bool settling: !panel && slabHeight > 1
+        opacity: panel || settling ? 1 : 0
 
         Behavior on slabWidth {
-            SpatialMotion {}
+            SpatialMotion {
+                easing.type: bottomStage.shrinking ? Easing.OutCubic : Easing.OutBack
+            }
         }
         Behavior on slabHeight {
-            SpatialMotion {}
+            SpatialMotion {
+                easing.type: bottomStage.shrinking ? Easing.OutCubic : Easing.OutBack
+            }
         }
         Behavior on opacity {
             EffectMotion {}

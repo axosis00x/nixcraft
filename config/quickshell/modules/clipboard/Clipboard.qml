@@ -11,7 +11,8 @@ import "../../theme" as Palette
 // Clipboard history, laid out like the launcher: a pill search field on the
 // bottom edge with entries stacked above it, newest nearest the field. A
 // ScriptModel animates filtering, images show a thumbnail, links and colors
-// get their own icon, and single entries can be deleted.
+// get their own icon, and single entries can be deleted. Pinned entries
+// (pin button or Ctrl+P) sit first and never age out (ClipboardService).
 Item {
     id: root
     visible: false
@@ -25,19 +26,34 @@ Item {
     property string query: ""
     property int selected: 0
 
-    readonly property int itemH: 60
-    readonly property int maxVisible: 6
+    readonly property int itemH: 56
+    // Five rows in view, like the launcher; the rest scroll.
+    readonly property int maxVisible: 5
 
-    // Newest first; while searching, matches that start with the query (or
-    // a word of it) come before ones that merely contain it.
-    readonly property var entries: {
+    // Pinned items first (newest pin first), then history newest first,
+    // without the history copies of anything pinned.
+    readonly property var allEntries: {
         if (!service)
             return [];
+        var pinned = service.pins.map(p => ({
+                    id: "pin:" + p.pid,
+                    pid: p.pid,
+                    text: p.text,
+                    pinned: true
+                }));
+        var texts = {};
+        pinned.forEach(p => texts[p.text] = true);
+        return pinned.concat(service.entries.filter(e => !texts[e.text]));
+    }
+
+    // While searching, matches that start with the query (or a word of it)
+    // come before ones that merely contain it.
+    readonly property var entries: {
         var q = query.trim().toLowerCase();
         if (q === "")
-            return service.entries;
+            return allEntries;
         var hits = [];
-        service.entries.forEach((e, i) => {
+        allEntries.forEach((e, i) => {
             var t = e.text.toLowerCase();
             var at = t.indexOf(q);
             if (at === -1)
@@ -94,14 +110,24 @@ Item {
     }
     function copy(index) {
         if (index >= 0 && index < entries.length) {
-            service.copy(entries[index].id);
+            var e = entries[index];
+            e.pinned ? service.copyPin(e.pid) : service.copy(e.id);
             close();
         }
     }
     function remove(index) {
         if (index >= 0 && index < entries.length) {
-            service.remove(entries[index].id);
+            var e = entries[index];
+            e.pinned ? service.unpin(e.pid) : service.remove(e.id);
             selected = Math.max(0, Math.min(selected, entries.length - 2));
+        }
+    }
+    // Pinning moves the item to the front; unpinning leaves its history
+    // copy (if cliphist still has it) in place.
+    function togglePin(index) {
+        if (index >= 0 && index < entries.length) {
+            var e = entries[index];
+            e.pinned ? service.unpin(e.pid) : service.pin(e);
         }
     }
     function move(delta) {
@@ -175,6 +201,9 @@ Item {
         } else if (event.key === Qt.Key_Delete) {
             remove(selected);
             event.accepted = true;
+        } else if (event.key === Qt.Key_P && (event.modifiers & Qt.ControlModifier)) {
+            togglePin(selected);
+            event.accepted = true;
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             copy(selected);
             event.accepted = true;
@@ -231,6 +260,7 @@ Item {
                 verticalLayoutDirection: ListView.BottomToTop
                 model: ScriptModel {
                     values: root.entries
+                    objectProp: "id"
                 }
                 currentIndex: root.selected
                 highlightFollowsCurrentItem: false
@@ -333,7 +363,7 @@ Item {
                                 visible: row.image && status === Image.Ready
                                 // previewsReady re-triggers the load once the
                                 // service has decoded the file.
-                                source: row.image ? "file://" + root.service.previewPath(row.modelData.id) + "?" + root.service.previewsReady : ""
+                                source: !row.image ? "" : "file://" + (row.modelData.pinned ? root.service.pinPath(row.modelData.pid) : root.service.previewPath(row.modelData.id)) + "?" + root.service.previewsReady
                                 sourceSize.width: 112
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
@@ -369,11 +399,28 @@ Item {
 
                             Text {
                                 Layout.fillWidth: true
-                                text: root.isLink(row.modelData) ? "Link" : (row.swatch !== "" ? "Color" : (root.isBinary(row.modelData) ? "Image" : row.modelData.text.length + " characters" + (/\n/.test(row.modelData.text) ? "  ·  " + row.modelData.text.split("\n").length + " lines" : "")))
-                                color: Palette.Theme.textMuted
+                                text: (row.modelData.pinned ? "Pinned  ·  " : "") + (root.isLink(row.modelData) ? "Link" : (row.swatch !== "" ? "Color" : (root.isBinary(row.modelData) ? "Image" : row.modelData.text.length + " characters" + (/\n/.test(row.modelData.text) ? "  ·  " + row.modelData.text.split("\n").length + " lines" : ""))))
+                                color: row.modelData.pinned ? Palette.Theme.accent : Palette.Theme.textMuted
                                 font.family: Palette.Theme.fontSans
                                 font.pixelSize: Palette.Theme.fontSizeXs
                                 elide: Text.ElideRight
+                            }
+                        }
+
+                        // Pin: always shown (in accent) on pinned items,
+                        // otherwise only on the selected row.
+                        IconButton {
+                            icon: "push_pin"
+                            implicitWidth: 30
+                            implicitHeight: 30
+                            Layout.alignment: Qt.AlignVCenter
+                            iconColor: row.modelData.pinned ? Palette.Theme.accent : Palette.Theme.textSecondary
+                            opacity: row.modelData.pinned || row.index === root.selected ? 1 : 0
+                            visible: opacity > 0.01
+                            onClicked: root.togglePin(row.index)
+
+                            Behavior on opacity {
+                                EffectMotion {}
                             }
                         }
 
@@ -395,7 +442,7 @@ Item {
                     MouseArea {
                         id: rowMouse
                         anchors.fill: parent
-                        anchors.rightMargin: 44
+                        anchors.rightMargin: 80
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onPositionChanged: mouse => root.hoverSelect(rowMouse, mouse, row.index)

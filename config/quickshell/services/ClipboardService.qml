@@ -8,6 +8,62 @@ Item {
 
     property var entries: []
 
+    // ── pins ─────────────────────────────────────────────────────────
+    // A pinned item's full content (text or image bytes) is saved to its
+    // own file, so it survives cliphist ageing it out or a wipe. The JSON
+    // index keeps only the one-line preview cliphist showed for it.
+    readonly property string pinDir: Quickshell.cachePath("clipboard-pins")
+    readonly property var pins: pinIndex.items
+
+    function pinPath(pid) {
+        return pinDir + "/" + pid;
+    }
+
+    function isPinned(text) {
+        return pins.some(p => p.text === text);
+    }
+
+    function pin(entry) {
+        if (!entry || !/^[0-9]+$/.test(entry.id) || isPinned(entry.text))
+            return;
+        var pid = String(Date.now());
+        pinIndex.items = [{
+                pid: pid,
+                text: entry.text
+            }].concat(pins);
+        pinProc.exec(["sh", "-c", "mkdir -p \"$(dirname \"$2\")\" && cliphist decode \"$1\" > \"$2\"", "cliphist-pin", entry.id, pinPath(pid)]);
+    }
+
+    function unpin(pid) {
+        pinIndex.items = pins.filter(p => p.pid !== pid);
+        pinProc.exec(["rm", "-f", pinPath(pid)]);
+    }
+
+    function copyPin(pid) {
+        if (!/^[0-9]+$/.test(pid))
+            return;
+        decode.exec(["sh", "-c", "wl-copy < \"$1\"", "clipboard-pin", pinPath(pid)]);
+    }
+
+    FileView {
+        path: Quickshell.cachePath("clipboard-pins.json")
+        watchChanges: false
+        onAdapterUpdated: writeAdapter()
+        onLoadFailed: error => {
+            if (error === FileViewError.FileNotFound)
+                writeAdapter();
+        }
+
+        JsonAdapter {
+            id: pinIndex
+            property var items: []
+        }
+    }
+
+    Process {
+        id: pinProc
+    }
+
     function refresh() {
         history.running = true;
     }

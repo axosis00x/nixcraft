@@ -37,6 +37,13 @@ QtObject {
     property var textMuted: "#6c8494"
     property var textDisabled: "#2c3a46"
 
+    // Short-lived system OSDs use the same near-black shell surface across
+    // every theme, with high-contrast text and a neutral meter track.
+    readonly property color osdBackground: "#050608"
+    readonly property color osdTrack: "#292b30"
+    readonly property color osdText: "#f5f5f2"
+    readonly property color osdMuted: "#a8abb2"
+
     // Decorative hues, from each theme's own palette (quickshell.js): for
     // deliberate color beyond the accent, e.g. one hue per gauge, icon or
     // category. Not for state: errorColor and warning still mean errors and

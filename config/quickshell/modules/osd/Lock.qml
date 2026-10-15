@@ -27,7 +27,7 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 radius: width / 2
-                color: Palette.Theme.surfaceContainer
+                color: Palette.Theme.osdTrack
             }
 
             Image {
@@ -48,8 +48,8 @@ Item {
                 anchors.centerIn: parent
                 visible: root.iconSource === "" && root.iconGlyph !== ""
                 text: root.iconGlyph
-                color: Palette.Theme.textPrimary
-                opacity: root.enabled ? 1 : 0.35
+                color: Palette.Theme.osdText
+                opacity: root.enabled ? 1 : 0.65
                 font.family: Palette.Theme.fontIcons
                 font.weight: Palette.Theme.iconWeight
                 font.pixelSize: Palette.Theme.iconSizeSmall
@@ -58,7 +58,7 @@ Item {
 
             Text {
                 text: root.title
-                color: Palette.Theme.textPrimary
+                color: Palette.Theme.osdText
                 font.family: Palette.Theme.fontMono
                 font.pixelSize: Palette.Theme.fontSizeSmall
                 font.weight: Font.DemiBold
@@ -68,7 +68,7 @@ Item {
 
             Text {
                 text: root.enabled ? "ON" : "OFF"
-                color: root.enabled ? Palette.Theme.accent : Palette.Theme.textMuted
+                color: root.enabled ? Palette.Theme.accent : Palette.Theme.osdMuted
                 font.family: Palette.Theme.fontMono
                 font.pixelSize: Palette.Theme.fontSizeXs
                 font.weight: Font.Black

@@ -20,6 +20,7 @@ Item {
     property bool showValue: true
     property int trackHeight: 16
     property color accent: Palette.Theme.accent
+    property color trackColor: Palette.Theme.surfaceContainerHighest
     signal moved(real value)
 
     // True only once the first drag position is known, so the slider never
@@ -79,7 +80,7 @@ Item {
         bottomRightRadius: height / 2
         topLeftRadius: root.interactive ? root.innerRadius : 0
         bottomLeftRadius: topLeftRadius
-        color: Palette.Theme.surfaceContainerHighest
+        color: root.trackColor
         visible: width > 0.5
 
         // Stop indicator.

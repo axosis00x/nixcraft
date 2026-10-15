@@ -10,6 +10,7 @@ Item {
     property string iconGlyph: ""
     property real value: 0
     property color accent: Palette.Theme.accent
+    property color trackColor: Palette.Theme.surfaceContainerHighest
     property string label: "0%"
 
     implicitWidth: 208
@@ -38,7 +39,7 @@ Item {
                 anchors.centerIn: parent
                 visible: root.iconSource === "" && root.iconGlyph !== ""
                 text: root.iconGlyph
-                color: Palette.Theme.textPrimary
+                color: Palette.Theme.osdText
                 font.family: Palette.Theme.fontIcons
                 font.weight: Palette.Theme.iconWeight
                 font.pixelSize: Palette.Theme.iconSize
@@ -51,14 +52,16 @@ Item {
             interactive: false
             trackHeight: 8
             accent: root.accent
+            trackColor: root.trackColor
             value: root.value
         }
 
         Text {
             text: root.label
-            color: Palette.Theme.textPrimary
+            color: Palette.Theme.osdText
             font.family: Palette.Theme.fontMono
             font.pixelSize: Palette.Theme.fontSizeSmall
+            font.weight: Font.DemiBold
             horizontalAlignment: Text.AlignRight
             Layout.preferredWidth: 34
             Layout.alignment: Qt.AlignVCenter

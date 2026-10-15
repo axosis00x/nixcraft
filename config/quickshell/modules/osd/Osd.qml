@@ -63,7 +63,8 @@ PanelWindow {
         width: root.isMeter ? 272 : lockContent.implicitWidth + 28
         height: 42
         radius: Palette.Theme.radiusSmall
-        color: Palette.Theme.surfaceContainer
+        color: Palette.Theme.osdBackground
+        outlineColor: Palette.Theme.osdTrack
         outlineWidth: 1
         opacity: root.presented ? 1 : 0
         scale: root.presented ? 1 : 0.96
@@ -88,6 +89,7 @@ PanelWindow {
             value: root.value
             // Volume blue, brightness yellow, as in the control center.
             accent: root.kind === "brightness" ? Palette.Theme.yellow : Palette.Theme.blue
+            trackColor: Palette.Theme.osdTrack
             label: root.label
             iconGlyph: root.kind === "brightness"
                 ? (root.value < 0.5 ? "\ue1ab" : "\ue1ac")

@@ -5,9 +5,7 @@
 hl.on("hyprland.start", function()
     hl.exec_cmd("awww-daemon &")
     hl.exec_cmd("nm-applet &")
-    -- A soft 5000 K daylight at login (neutral reads cold); the control
-    -- center's Night toggle switches to warm and back.
-    hl.exec_cmd("hyprsunset --temperature 5000")
+    hl.exec_cmd("hyprsunset --temperature 4500 --gamma 90")
     -- Basic (main-thread) render loop: Qt's threaded loop crashes in Intel's
     -- iris Mesa driver (iris_fence_flush) when album art changes.
     hl.exec_cmd("QSG_RENDER_LOOP=basic qs & disown")

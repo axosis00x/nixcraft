@@ -76,10 +76,18 @@ Item {
     // directly) so it can't fall out of sync with what's on disk — the
     // same pattern services/BarLayoutService.qml uses for `vertical`.
     readonly property bool hyprsunsetEnabled: toggleState.hyprsunset
-    // Screen color temperature (K): a soft daylight when the Night toggle is
-    // off (neutral ~6500 K reads cold and harsh), warm when it's on.
-    readonly property int dayTemperature: 5000
+    // Screen color temperature (K) and gamma (%): a soft, slightly dimmed
+    // daylight when the Night toggle is off (neutral ~6500 K at full gamma
+    // reads cold and harsh), warm and dimmer when it's on. The day values
+    // match hypr/modules/autostarts.lua.
+    readonly property int dayTemperature: 3500
+    readonly property int dayGamma: 90
     readonly property int nightTemperature: 2800
+    readonly property int nightGamma: 85
+
+    function applyScreenTone(night) {
+        hyprsunsetSet.exec(["sh", "-c", "hyprctl hyprsunset temperature \"$1\" && hyprctl hyprsunset gamma \"$2\"", "hyprsunset", String(night ? nightTemperature : dayTemperature), String(night ? nightGamma : dayGamma)]);
+    }
     property string powerProfilePending: ""
     // Owned and persisted by IdleService, which is what actually enforces it.
     readonly property bool keepAwake: idleService ? idleService.keepAwake : false
@@ -160,9 +168,8 @@ Item {
                 root.notificationCenter.setDnd(true);
             setExternalDnd(true);
         }
-        if (toggleState.hyprsunset) {
-            hyprsunsetSet.exec(["hyprctl", "hyprsunset", "temperature", String(root.nightTemperature)]);
-        }
+        // Day or night tone, whichever the toggle was left on.
+        root.applyScreenTone(toggleState.hyprsunset);
     }
 
     function clampLevel(value) {
@@ -712,14 +719,14 @@ Item {
         toggleState.hyprsunset = !toggleState.hyprsunset;
         toggleStateFile.writeAdapter();
         if (hyprsunsetEnabled) {
-            hyprsunsetSet.exec(["hyprctl", "hyprsunset", "temperature", String(root.nightTemperature)]);
+            root.applyScreenTone(true);
         } else {
             // Back to the soft daylight default, in place. hyprsunset runs
             // without a schedule (hypr/modules/autostarts.lua starts it at
             // the same default), so off simply means off. Not restarting the
             // daemon also avoids a gamma flash: Wayland allows one gamma
             // client at a time.
-            hyprsunsetSet.exec(["hyprctl", "hyprsunset", "temperature", String(root.dayTemperature)]);
+            root.applyScreenTone(false);
         }
     }
 

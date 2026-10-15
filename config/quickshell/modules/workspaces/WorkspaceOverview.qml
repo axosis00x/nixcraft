@@ -378,12 +378,17 @@ PanelWindow {
                         radius: Palette.Theme.radiusXs
                         color: Palette.Theme.surfaceContainerHighest
 
-                        ScreencopyView {
+                        // Only exists while the overview is open: each
+                        // capture holds GPU buffers, and tearing them down
+                        // at shell exit has crashed in libwayland.
+                        Loader {
                             anchors.fill: parent
-                            visible: !tile.overflow
-                            captureSource: tile.modelData.wayland
-                            live: root.active
-                            paintCursor: false
+                            active: root.active && !tile.overflow
+                            sourceComponent: ScreencopyView {
+                                captureSource: tile.modelData.wayland
+                                live: true
+                                paintCursor: false
+                            }
                         }
 
                         // Not parent.radius: a ClippingRectangle's children

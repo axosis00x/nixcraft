@@ -43,6 +43,7 @@ hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("quickshell ipc call controlcenter to
 hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("quickshell ipc call theme toggle"))
 hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("quickshell ipc call settings toggle"))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("~/.config/quickshell/scripts/reload.sh"))
+hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("~/.config/quickshell/scripts/restart.sh"))
 hl.bind("ALT + V", hl.dsp.exec_cmd("sg input -c $HOME/.config/wayclick/scripts/wayclick.sh"))
 
 hl.bind("ALT + E", hl.dsp.exec_cmd("eww open activate-linux"))

@@ -25,3 +25,12 @@ const textTitle = "#ffffff"
 const textSecondary = "#c4cad6"
 const textMuted = "#8a93a3"
 const textDisabled = "#566070"
+
+// Decorative hues from the theme's own palette, for deliberate color
+// accents beyond the main accent (charts, icons, categories).
+const blue = "#9ecbff"
+const green = "#8ff0b4"
+const yellow = "#ffd08a"
+const purple = "#d0b3ff"
+const aqua = "#8fe8e8"
+const orange = "#ffb38a"

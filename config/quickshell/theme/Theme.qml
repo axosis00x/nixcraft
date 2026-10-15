@@ -37,6 +37,17 @@ QtObject {
     property var textMuted: "#6c8494"
     property var textDisabled: "#2c3a46"
 
+    // Decorative hues, from each theme's own palette (quickshell.js): for
+    // deliberate color beyond the accent, e.g. one hue per gauge, icon or
+    // category. Not for state: errorColor and warning still mean errors and
+    // warnings, and "on"/selected is still the accent.
+    property var blue: "#83a598"
+    property var green: "#b8bb26"
+    property var yellow: "#fabd2f"
+    property var purple: "#d3869b"
+    property var aqua: "#8ec07c"
+    property var orange: "#fe8019"
+
     readonly property real surfaceTintOpacity: 0.015
     readonly property string fontMono: "SF Mono "
     readonly property string fontSans: "Inter"
@@ -127,8 +138,19 @@ QtObject {
     // read as one step up in every theme.
     readonly property color widgetChip: Qt.alpha(textPrimary, 0.08)
 
+    // A stable decorative hue for a name (an app, a category), so the same
+    // thing always gets the same color.
+    function hueFor(name) {
+        var hues = [blue, green, yellow, purple, aqua, orange];
+        var h = 0;
+        var s = String(name || "");
+        for (var i = 0; i < s.length; i++)
+            h = (h * 31 + s.charCodeAt(i)) | 0;
+        return hues[Math.abs(h) % hues.length];
+    }
+
     function apply(values) {
-        var paletteKeys = ["bg", "surface", "surfaceContainerLow", "surfaceContainer", "surfaceContainerHigh", "surfaceContainerHighest", "surfaceTint", "outlineVariant", "border", "accent", "accentText", "info", "warning", "success", "errorColor", "accentLight", "primaryContainer", "primaryText", "secondaryContainer", "secondaryContainerHover", "secondaryText", "wsInactive", "textPrimary", "textTitle", "textSecondary", "textMuted", "textDisabled"];
+        var paletteKeys = ["bg", "surface", "surfaceContainerLow", "surfaceContainer", "surfaceContainerHigh", "surfaceContainerHighest", "surfaceTint", "outlineVariant", "border", "accent", "accentText", "info", "warning", "success", "errorColor", "accentLight", "primaryContainer", "primaryText", "secondaryContainer", "secondaryContainerHover", "secondaryText", "wsInactive", "textPrimary", "textTitle", "textSecondary", "textMuted", "textDisabled", "blue", "green", "yellow", "purple", "aqua", "orange"];
         for (var key in values) {
             if (paletteKeys.indexOf(key) !== -1)
                 root[key] = values[key];

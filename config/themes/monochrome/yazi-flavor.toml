@@ -36,7 +36,7 @@ sep_inner = { open = "", close = "" }
 sep_outer = { open = "", close = "" }
 
 [mode]
-normal_main = { bg = "#b0b0b0", bold = true }
+normal_main = { fg = "#232323", bg = "#b0b0b0", bold = true }
 normal_alt  = { fg = "#b0b0b0", bg = "#2f2f2f" }
 
 select_main = { bg = "#9a9a9a", bold = true }
@@ -52,7 +52,7 @@ preview = { underline = true }
 padding = { open = "", close = "" }
 
 [status]
-overall   = {}
+overall   = { fg = "#d6d6d6", bg = "#232323" }
 sep_left  = { open = "", close = "" }
 sep_right = { open = "", close = "" }
 

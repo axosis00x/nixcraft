@@ -36,7 +36,7 @@ sep_inner = { open = "", close = "" }
 sep_outer = { open = "", close = "" }
 
 [mode]
-normal_main = { bg = "{{colors.primary.default.hex}}", bold = true }
+normal_main = { fg = "{{colors.surface.default.hex}}", bg = "{{colors.primary.default.hex}}", bold = true }
 normal_alt  = { fg = "{{colors.primary.default.hex}}", bg = "{{colors.outline_variant.default.hex}}" }
 
 select_main = { bg = "{{colors.error.default.hex}}", bold = true }
@@ -52,7 +52,7 @@ preview = { underline = true }
 padding = { open = "", close = "" }
 
 [status]
-overall   = {}
+overall   = { fg = "{{colors.on_surface.default.hex}}", bg = "{{colors.surface.default.hex}}" }
 sep_left  = { open = "", close = "" }
 sep_right = { open = "", close = "" }
 

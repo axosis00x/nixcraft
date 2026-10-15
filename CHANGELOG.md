@@ -5,6 +5,23 @@ All notable changes to nixcraft are recorded here. Versions follow
 `scripts/release.sh` from the [Conventional Commits](https://www.conventionalcommits.org)
 since the previous release.
 
+## [0.1.0-pre-alpha.7] - 2026-10-15
+
+### Features
+
+- **overlay:** notifications and live activities morph out of the notch (57b1050)
+- **clipboard:** pinned entries that never age out (9d31fad)
+- **settings:** power & performance page with disk and temperature cards (9a9ab6e)
+- **barlayout:** theme-picker style bar selector with layout previews (f1f9a16)
+
+### Fixes
+
+- **workspaces:** create window previews only while the overview is open (968f065)
+
+### Style
+
+- **polkit:** Caelestia-style dialog with squarer corners (618b8fe)
+
 ## [0.1.0-pre-alpha.6] - 2026-10-14
 
 ### Features

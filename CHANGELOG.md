@@ -5,6 +5,22 @@ All notable changes to nixcraft are recorded here. Versions follow
 `scripts/release.sh` from the [Conventional Commits](https://www.conventionalcommits.org)
 since the previous release.
 
+## [0.1.0-pre-alpha.9] - 2026-10-15
+
+### Features
+
+- **colors:** blend the tmux bg with kitty's bg (aba99cf)
+- **colors:** dark bg for the osds (c2049cc)
+- **settings:** adjustable night light warmth and gamma (c8cf47b)
+
+### Fixes
+
+- **quickshell:** refine activity pill and center cycling (1eb5554)
+- **controlcenter:** restore night light and DND after the saved state loads (05cc2dd)
+- original power menu, night light toggle with soft default, cava link safeguard (a27aff0)
+- original power menu, night light toggle with soft 5000K default, cava link safeguard (512e8be)
+- **cava:** remove the old folder link before linking files (709efb4)
+
 ## [0.1.0-pre-alpha.8] - 2026-10-15
 
 ### Features

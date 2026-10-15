@@ -21,6 +21,8 @@ hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("quickshell ipc call launcher tog
 
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
+-- Swap the two windows of the current split (left <-> right, or top <-> bottom).
+hl.bind(mainMod .. " + H", hl.dsp.layout("swapsplit"))
 hl.bind(mainMod .. " + C", app(guiEditor))
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("quickshell ipc call powermenu toggle"))
 hl.bind(mainMod .. " + D", app("vesktop"))

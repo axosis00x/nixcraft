@@ -29,16 +29,19 @@ Item {
     readonly property var actions: [
         {
             name: "Lock",
+            hue: Palette.Theme.blue,
             icon: "\ue897",
             command: ["qs", "ipc", "call", "lockscreen", "lock"]
         },
         {
             name: "Sleep",
+            hue: Palette.Theme.purple,
             icon: "\ue51c",
             command: ["systemctl", "suspend"]
         },
         {
             name: "Logout",
+            hue: Palette.Theme.yellow,
             icon: "\ue9ba",
             command: ["uwsm", "stop"]
         },
@@ -194,11 +197,10 @@ Item {
                         }
                     }
 
-                    color: {
-                        if (index === root.selectedIndex)
-                            return modelData.dangerous ? Palette.Theme.errorColor : Palette.Theme.accent;
-                        return modelData.dangerous ? Qt.alpha(Palette.Theme.errorColor, Palette.Theme.stateSelected) : Palette.Theme.surfaceContainerHigh;
-                    }
+                    // Each action in its own hue (dangerous ones in the error
+                    // color): a soft tint at rest, filled when selected.
+                    readonly property color hue: modelData.dangerous ? Palette.Theme.errorColor : modelData.hue
+                    color: index === root.selectedIndex ? hue : Qt.alpha(hue, Palette.Theme.stateSelected)
                     border.width: 0
 
                     Behavior on color {
@@ -207,7 +209,7 @@ Item {
 
                     StateLayer {
                         radius: parent.radius
-                        tone: index === root.selectedIndex ? Palette.Theme.accentText : Palette.Theme.textPrimary
+                        tone: index === root.selectedIndex ? Palette.Theme.surfaceSolid : Palette.Theme.textPrimary
                         hovered: actionMouse.containsMouse
                         pressed: actionMouse.pressed
                     }
@@ -215,9 +217,7 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         text: modelData.icon
-                        color: index === root.selectedIndex
-                            ? (modelData.dangerous ? Palette.Theme.surfaceSolid : Palette.Theme.accentText)
-                            : (modelData.dangerous ? Palette.Theme.errorColor : Palette.Theme.textPrimary)
+                        color: index === root.selectedIndex ? Palette.Theme.surfaceSolid : parent.hue
                         font.family: Palette.Theme.fontIcons
                         font.weight: Palette.Theme.iconWeight
                         font.pixelSize: Palette.Theme.iconSize

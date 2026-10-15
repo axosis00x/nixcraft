@@ -87,11 +87,13 @@ Item {
 
                 Text {
                     required property string modelData
+                    required property int index
                     Layout.fillWidth: true
                     Layout.preferredHeight: 18
                     horizontalAlignment: Text.AlignHCenter
                     text: modelData
-                    color: Palette.Theme.textMuted
+                    // Weekends (the last two columns) in the theme's purple.
+                    color: index >= 5 ? Palette.Theme.purple : Palette.Theme.textMuted
                     font.family: Palette.Theme.fontSans
                     font.pixelSize: Palette.Theme.fontSizeXs
                     font.weight: Font.DemiBold
@@ -104,6 +106,8 @@ Item {
                 Item {
                     id: cell
                     required property int modelData
+                    required property int index
+                    readonly property bool weekend: index % 7 >= 5
                     readonly property bool isToday: modelData === root.today.getDate() && root.month === root.today.getMonth() && root.year === root.today.getFullYear()
 
                     Layout.fillWidth: true
@@ -121,7 +125,7 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         text: cell.modelData > 0 ? cell.modelData : ""
-                        color: cell.isToday ? Palette.Theme.accentText : Palette.Theme.textSecondary
+                        color: cell.isToday ? Palette.Theme.accentText : (cell.weekend ? Palette.Theme.purple : Palette.Theme.textSecondary)
                         font.family: Palette.Theme.fontSans
                         font.pixelSize: Palette.Theme.fontSizeXs
                         font.weight: cell.isToday ? Font.DemiBold : Font.Normal

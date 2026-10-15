@@ -272,8 +272,10 @@ PanelWindow {
     Behavior on frameInset {
         EffectMotion {}
     }
-    readonly property color stageColor: framed ? Palette.Theme.bg : Palette.Theme.surfaceContainer
-    readonly property real stageTint: framed ? 0 : Palette.Theme.surfaceTintOpacity
+    // One background for the central panels, the bar's notch and its
+    // capsules, framed or island.
+    readonly property color stageColor: Palette.Theme.bg
+    readonly property real stageTint: 0
     readonly property real stageWing: framed ? Palette.Theme.screenFrameRadius : 9
 
     // ── TOP STAGE (Control Center, Power Menu, Tool Menu, Media Panel) ───

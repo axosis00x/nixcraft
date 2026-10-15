@@ -9,6 +9,8 @@ Item {
 
     property string iconGlyph: ""
     property real value: 0
+    // Fill color; each control center slider has its own theme hue.
+    property color accent: Palette.Theme.accent
 
     signal iconClicked
     signal iconRightClicked
@@ -18,6 +20,7 @@ Item {
     implicitHeight: 40
 
     Slider {
+        accent: root.accent
         id: slider
         anchors.left: parent.left
         anchors.right: parent.right

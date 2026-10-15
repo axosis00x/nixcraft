@@ -28,6 +28,8 @@ Item {
     readonly property real dotSize: Math.max(2, Math.round(pitch * 0.62))
 
     readonly property var modeNames: ["Ripple", "Radar", "Rain", "Heart", "Clock"]
+    // Each pattern glows in its own hue from the theme.
+    readonly property color hue: [Palette.Theme.accent, Palette.Theme.aqua, Palette.Theme.blue, Palette.Theme.purple, Palette.Theme.yellow][mode]
 
     // `tick` always runs (so touches answer even while paused); `phase`
     // drives the pattern and stops while paused.
@@ -221,7 +223,11 @@ Item {
                 width: root.dotSize
                 height: width
                 radius: width / 2
-                color: Palette.Theme.accent
+                color: root.hue
+
+                Behavior on color {
+                    ColorMotion {}
+                }
                 opacity: 0.08 + 0.92 * Math.max(root.level(col, row, root.phase, root.mode), root.touch(index, col, row, root.tick))
 
                 Behavior on opacity {

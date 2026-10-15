@@ -130,7 +130,7 @@ Item {
 
     // ── pill ────────────────────────────────────────────────────────
     readonly property string icon: kind === "record" ? "radio_button_checked" : kind === "timer" ? "timer" : kind === "download" ? "download" : ""
-    readonly property color tone: kind === "record" ? Palette.Theme.errorColor : Palette.Theme.accent
+    readonly property color tone: kind === "record" ? Palette.Theme.errorColor : kind === "timer" ? Palette.Theme.yellow : Palette.Theme.blue
     readonly property string label: kind === "record" ? "Recording" : kind === "timer" ? "Timer" : kind === "download" ? downloads[0].name : ""
     readonly property string value: kind === "record" ? clock(now - recordStart) : kind === "timer" ? clock(timerEnd - now) : kind === "download" ? size(downloads[0].size) : ""
     // 0–1 for the timer, -1 (indeterminate) for downloads, none otherwise.

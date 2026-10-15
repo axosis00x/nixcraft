@@ -11,6 +11,8 @@ Item {
     property string icon: ""
     property string label: ""
     property bool selected: false
+    // The category's own hue for its icon.
+    property color hue: Palette.Theme.accent
     signal clicked
 
     implicitHeight: 40
@@ -30,7 +32,7 @@ Item {
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: root.icon
-            color: root.selected ? Palette.Theme.accent : Palette.Theme.textMuted
+            color: root.hue
             font.family: Palette.Theme.fontIcons
             font.weight: Palette.Theme.iconWeight
             font.pixelSize: Palette.Theme.iconSize

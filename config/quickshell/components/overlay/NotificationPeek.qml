@@ -73,7 +73,7 @@ Item {
                 implicitWidth: 36
                 implicitHeight: 36
                 radius: icon.status === Image.Ready ? Palette.Theme.radiusXs : width / 2
-                color: icon.status === Image.Ready ? "transparent" : (root.critical ? Qt.alpha(Palette.Theme.errorColor, 0.18) : Palette.Theme.accentTonal)
+                color: icon.status === Image.Ready ? "transparent" : Qt.alpha(root.critical ? Palette.Theme.errorColor : Palette.Theme.hueFor(root.notification ? root.notification.appName : ""), Palette.Theme.stateSelected)
 
                 Image {
                     id: icon
@@ -90,7 +90,8 @@ Item {
                     anchors.centerIn: parent
                     visible: icon.status !== Image.Ready
                     text: root.critical ? "priority_high" : "notifications"
-                    color: root.critical ? Palette.Theme.errorColor : Palette.Theme.accent
+                    // Each app gets its own stable hue.
+                    color: root.critical ? Palette.Theme.errorColor : Palette.Theme.hueFor(root.notification ? root.notification.appName : "")
                     font.family: Palette.Theme.fontIcons
                     font.weight: Palette.Theme.iconWeight
                     font.pixelSize: Palette.Theme.iconSizeSmall

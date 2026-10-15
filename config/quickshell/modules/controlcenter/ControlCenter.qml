@@ -1094,6 +1094,7 @@ Item {
                                 ControlSlider {
                                     Layout.fillWidth: true
                                     iconGlyph: root.volumeIcon()
+                                    accent: Palette.Theme.blue
                                     value: root.volumeValue
                                     onIconClicked: root.toggleMute()
                                     onIconRightClicked: root.openWiremix()
@@ -1103,6 +1104,7 @@ Item {
                                 ControlSlider {
                                     Layout.fillWidth: true
                                     iconGlyph: root.brightnessIcon()
+                                    accent: Palette.Theme.yellow
                                     value: root.brightnessValue
                                     onValueRequested: value => root.setBrightness(value)
                                 }
@@ -1110,6 +1112,7 @@ Item {
                                 ControlSlider {
                                     Layout.fillWidth: true
                                     iconGlyph: root.micIcon()
+                                    accent: Palette.Theme.purple
                                     value: root.micValue
                                     onIconClicked: root.toggleMicMute()
                                     onValueRequested: value => root.setMic(value)
@@ -1137,7 +1140,7 @@ Item {
                                     iconOnly: true
                                     icon: root.hyprsunsetIcon()
                                     title: "Night"
-                                    tint: Palette.Theme.secondaryText
+                                    tint: Palette.Theme.purple
                                     active: root.hyprsunsetEnabled
                                     onClicked: root.toggleHyprsunset()
                                 }
@@ -1148,7 +1151,7 @@ Item {
                                     iconOnly: true
                                     icon: root.gameModeIcon()
                                     title: "Game Mode"
-                                    tint: Palette.Theme.info
+                                    tint: Palette.Theme.blue
                                     active: root.dndEnabled
                                     onClicked: root.toggleDnd()
                                 }
@@ -1159,7 +1162,7 @@ Item {
                                     iconOnly: true
                                     icon: root.keepAwakeIcon()
                                     title: "Keep Awake"
-                                    tint: Palette.Theme.success
+                                    tint: Palette.Theme.green
                                     active: root.keepAwake
                                     onClicked: root.toggleKeepAwake()
                                 }
@@ -1170,7 +1173,7 @@ Item {
                                     iconOnly: true
                                     icon: root.powerIcon()
                                     title: "Power"
-                                    tint: Palette.Theme.warning
+                                    tint: Palette.Theme.orange
                                     active: root.powerProfileLoaded
                                     shapeRadius: root.powerProfileShapeRadius()
                                     pulseKey: root.powerProfile

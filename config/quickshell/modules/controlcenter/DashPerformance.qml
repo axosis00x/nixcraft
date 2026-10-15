@@ -24,6 +24,7 @@ Item {
                 thickness: 6
                 value: root.stats ? root.stats.cpu : 0
                 label: "CPU"
+                accent: Palette.Theme.blue
                 caption: "processor load"
             }
 
@@ -32,6 +33,7 @@ Item {
                 thickness: 6
                 value: root.stats ? root.stats.memory : 0
                 label: "Memory"
+                accent: Palette.Theme.purple
                 caption: root.stats ? root.stats.gib(root.stats.memoryUsed) + " / " + root.stats.gib(root.stats.memoryTotal) + " GiB" : ""
             }
 
@@ -40,6 +42,7 @@ Item {
                 thickness: 6
                 value: root.stats ? root.stats.disk : 0
                 label: "Disk"
+                accent: Palette.Theme.green
                 caption: root.stats ? root.stats.gib(root.stats.diskUsed) + " / " + root.stats.gib(root.stats.diskTotal) + " GiB" : ""
             }
 
@@ -49,7 +52,7 @@ Item {
                 value: root.stats ? root.stats.temperatureFraction : 0
                 text: root.stats ? Math.round(root.stats.temperature) + "°C" : "--"
                 // Warm colours only when it actually runs hot.
-                accent: root.stats && root.stats.temperature >= 85 ? Palette.Theme.errorColor : root.stats && root.stats.temperature >= 70 ? Palette.Theme.warning : Palette.Theme.accent
+                accent: root.stats && root.stats.temperature >= 85 ? Palette.Theme.errorColor : root.stats && root.stats.temperature >= 70 ? Palette.Theme.warning : Palette.Theme.aqua
                 label: "Temperature"
                 caption: "CPU package"
             }

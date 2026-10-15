@@ -642,7 +642,7 @@ PanelWindow {
         // the panels do, in its color, from its inner edge, curving into it.
         anchors.topMargin: bar.island ? 0 : Palette.Theme.screenFrameBorder
         wingSize: bar.island ? 9 : Palette.Theme.screenFrameRadius
-        color: bar.island ? Palette.Theme.surfaceContainer : Palette.Theme.bg
+        color: Palette.Theme.bg
         tintOpacity: bar.island ? Palette.Theme.surfaceTintOpacity : 0
 
         Behavior on color {

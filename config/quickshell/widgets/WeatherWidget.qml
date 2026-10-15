@@ -64,12 +64,12 @@ Item {
                 Layout.preferredWidth: 48
                 Layout.preferredHeight: 48
                 radius: width / 2
-                color: Palette.Theme.accentTonal
+                color: Qt.alpha(Palette.Theme.yellow, 0.18)
 
                 Text {
                     anchors.centerIn: parent
                     text: root.glyph
-                    color: Palette.Theme.accent
+                    color: Palette.Theme.yellow
                     font.family: Palette.Theme.fontIcons
                     font.weight: Palette.Theme.iconWeight
                     font.pixelSize: Palette.Theme.iconSizeLarge + 4
@@ -132,14 +132,17 @@ Item {
 
             Detail {
                 icon: "thermostat"
+                hue: Palette.Theme.orange
                 text: root.service && root.service.feelsLikeC !== "" ? root.service.feelsLikeC + "°" : "--"
             }
             Detail {
                 icon: "humidity_percentage"
+                hue: Palette.Theme.blue
                 text: root.service && root.service.humidity !== "" ? root.service.humidity + "%" : "--"
             }
             Detail {
                 icon: "air"
+                hue: Palette.Theme.aqua
                 text: root.service && root.service.windKmph !== "" ? root.service.windKmph + " km/h" : "--"
             }
         }
@@ -148,6 +151,7 @@ Item {
     component Detail: Rectangle {
         property string icon: ""
         property string text: ""
+        property color hue: Palette.Theme.accent
 
         Layout.fillWidth: true
         Layout.preferredHeight: 28
@@ -161,7 +165,7 @@ Item {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: parent.parent.icon
-                color: Palette.Theme.accent
+                color: parent.parent.hue
                 font.family: Palette.Theme.fontIcons
                 font.weight: Palette.Theme.iconWeight
                 font.pixelSize: Palette.Theme.iconSizeSmall

@@ -867,6 +867,16 @@ FloatingWindow {
                                 icon: modelData.icon
                                 label: modelData.title
                                 selected: root.activePage === modelData.id
+                                hue: ({
+                                        overview: Palette.Theme.accent,
+                                        appearance: Palette.Theme.purple,
+                                        network: Palette.Theme.blue,
+                                        display: Palette.Theme.aqua,
+                                        sound: Palette.Theme.orange,
+                                        notifications: Palette.Theme.yellow,
+                                        power: Palette.Theme.green,
+                                        about: Palette.Theme.textSecondary
+                                    })[modelData.id] || Palette.Theme.accent
                                 onClicked: {
                                     searchInput.text = "";
                                     root.page = modelData.id;

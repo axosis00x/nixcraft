@@ -234,7 +234,7 @@ Scope {
 
     Timer {
         id: toastTimer
-        interval: root.toastNotification && root.toastNotification.urgency === NotificationUrgency.Critical ? 7000 : 3500
+        interval: root.toastNotification && root.toastNotification.urgency === NotificationUrgency.Critical ? 6000 : 2500
         onTriggered: root.toastVisible = false
     }
 }

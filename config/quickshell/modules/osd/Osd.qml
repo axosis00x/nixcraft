@@ -86,6 +86,8 @@ PanelWindow {
             anchors.bottomMargin: 8
             visible: root.isMeter
             value: root.value
+            // Volume blue, brightness yellow, as in the control center.
+            accent: root.kind === "brightness" ? Palette.Theme.yellow : Palette.Theme.blue
             label: root.label
             iconGlyph: root.kind === "brightness"
                 ? (root.value < 0.5 ? "\ue1ab" : "\ue1ac")

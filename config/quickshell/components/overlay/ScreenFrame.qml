@@ -49,7 +49,10 @@ Variants {
             color: "transparent"
             mask: Region {}
 
-            WlrLayershell.layer: WlrLayer.Bottom
+            // Above windows (Top), so a floating window dragged to the edge
+            // goes under the frame instead of covering it; fullscreen apps
+            // still cover it, as Hyprland draws them above this layer.
+            WlrLayershell.layer: WlrLayer.Top
             WlrLayershell.namespace: "quickshell-screen-frame"
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 

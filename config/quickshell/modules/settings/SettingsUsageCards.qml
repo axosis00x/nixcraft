@@ -41,10 +41,18 @@ GridLayout {
                     return root.stats.temperatureFraction;
                 return root.panel.level(modelData.key);
             }
+            // Each resource its own hue (as on the dashboard); warning and
+            // error only when it's actually maxed or hot.
+            readonly property color hue: ({
+                    cpu: Palette.Theme.blue,
+                    ram: Palette.Theme.purple,
+                    disk: Palette.Theme.green,
+                    temp: Palette.Theme.aqua
+                })[modelData.key]
             readonly property color tone: {
                 if (isTemp)
-                    return root.stats.temperature >= 85 ? Palette.Theme.errorColor : root.stats.temperature >= 70 ? Palette.Theme.warning : Palette.Theme.accent;
-                return usage >= 0.9 ? Palette.Theme.warning : Palette.Theme.accent;
+                    return root.stats.temperature >= 85 ? Palette.Theme.errorColor : root.stats.temperature >= 70 ? Palette.Theme.warning : hue;
+                return usage >= 0.9 ? Palette.Theme.warning : hue;
             }
             readonly property string figure: isTemp ? Math.round(root.stats.temperature) + "°C" : Math.round(usage * 100) + "%"
             readonly property string detail: {

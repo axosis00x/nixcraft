@@ -179,18 +179,21 @@ Item {
                         thickness: 4
                         value: root.stats ? root.stats.cpu : 0
                         label: "CPU"
+                        accent: Palette.Theme.blue
                     }
                     StatRing {
                         size: 44
                         thickness: 4
                         value: root.stats ? root.stats.memory : 0
                         label: "RAM"
+                        accent: Palette.Theme.purple
                     }
                     StatRing {
                         size: 44
                         thickness: 4
                         value: root.stats ? root.stats.disk : 0
                         label: "Disk"
+                        accent: Palette.Theme.green
                     }
                     StatRing {
                         size: 44
@@ -198,6 +201,7 @@ Item {
                         value: root.stats ? root.stats.temperatureFraction : 0
                         text: root.stats ? Math.round(root.stats.temperature) + "°" : "--"
                         label: "Temp"
+                        accent: root.stats && root.stats.temperature >= 85 ? Palette.Theme.errorColor : root.stats && root.stats.temperature >= 70 ? Palette.Theme.warning : Palette.Theme.aqua
                     }
                 }
             }

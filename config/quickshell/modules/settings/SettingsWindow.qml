@@ -6,6 +6,7 @@ import QtQuick
 import QtQuick.Layouts
 import "../../components/material"
 import "../../services"
+import "../controlcenter"
 import "../../theme" as Palette
 
 // System settings as an ordinary floating window (a real toplevel, so it
@@ -319,6 +320,14 @@ FloatingWindow {
         }
     }
 
+    // Live CPU, memory, disk and temperature for the gauges on the power
+    // page; polls only while that page is on screen.
+    SystemStats {
+        id: systemStats
+        running: root.shown && root.page === "power"
+    }
+    property alias stats: systemStats
+
     // ── system usage ────────────────────────────────────────────────
     // CPU is the busy share of jiffies between two /proc/stat samples; RAM
     // is MemTotal minus MemAvailable. Sampled only while the window is open.
@@ -412,7 +421,7 @@ FloatingWindow {
         { id: "display", icon: "", title: "Display", sub: "display" },
         { id: "sound", icon: "", title: "Sound", sub: "sound" },
         { id: "notifications", icon: "", title: "Notifications", sub: "notifications" },
-        { id: "power", icon: "", title: "Battery & power", sub: "power" },
+        { id: "power", icon: "", title: "Power & performance", sub: "power" },
         { id: "about", icon: "", title: "About device", sub: "about" }
     ]
 
@@ -422,7 +431,7 @@ FloatingWindow {
             "display": "Display",
             "sound": "Sound",
             "notifications": "Notifications",
-            "power": "Battery & power",
+            "power": "Power & performance",
             "appearance": "Appearance",
             "about": "About device",
             "search": "Search results"
@@ -553,7 +562,9 @@ FloatingWindow {
                     layout: "usage",
                     rows: [
                         { kind: "nav", page: "power", icon: "memory", title: "CPU usage" },
-                        { kind: "nav", page: "power", icon: "memory_alt", title: "Memory usage" }
+                        { kind: "nav", page: "power", icon: "memory_alt", title: "Memory usage" },
+                        { kind: "nav", page: "power", icon: "hard_drive", title: "Disk usage" },
+                        { kind: "nav", page: "power", icon: "thermostat", title: "Temperature" }
                     ]
                 }
             ],

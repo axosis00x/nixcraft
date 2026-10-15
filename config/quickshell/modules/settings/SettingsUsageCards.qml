@@ -5,20 +5,27 @@ import QtQuick.Layouts
 import "../../components/material"
 import "../../theme" as Palette
 
-// CPU and memory side by side, each as a card with a ring gauge around its
-// icon and the current figure. The ring turns to the warning color when the
-// resource is nearly maxed.
-RowLayout {
+// CPU, memory, disk and temperature in a 2×2 grid, each as a card with a
+// ring gauge around its icon and the current figure. The ring turns to the
+// warning color when the resource is nearly maxed (temperature: warning
+// from 70 °C, error from 85 °C). Disk and temperature come from the
+// window's SystemStats, which polls only while this page is open.
+GridLayout {
     id: root
 
     required property var panel
+    readonly property var stats: panel.stats
 
-    spacing: Palette.Theme.spacingSmall
+    columns: 2
+    columnSpacing: Palette.Theme.spacingSmall
+    rowSpacing: Palette.Theme.spacingSmall
 
     Repeater {
         model: [
             { key: "cpu", icon: "memory", title: "CPU" },
-            { key: "ram", icon: "memory_alt", title: "Memory" }
+            { key: "ram", icon: "memory_alt", title: "Memory" },
+            { key: "disk", icon: "hard_drive", title: "Disk" },
+            { key: "temp", icon: "thermostat", title: "Temperature" }
         ]
 
         delegate: Rectangle {
@@ -26,8 +33,27 @@ RowLayout {
 
             required property var modelData
 
-            readonly property real usage: root.panel.level(modelData.key)
-            readonly property color tone: usage >= 0.9 ? Palette.Theme.warning : Palette.Theme.accent
+            readonly property bool isTemp: modelData.key === "temp"
+            readonly property real usage: {
+                if (modelData.key === "disk")
+                    return root.stats.disk;
+                if (isTemp)
+                    return root.stats.temperatureFraction;
+                return root.panel.level(modelData.key);
+            }
+            readonly property color tone: {
+                if (isTemp)
+                    return root.stats.temperature >= 85 ? Palette.Theme.errorColor : root.stats.temperature >= 70 ? Palette.Theme.warning : Palette.Theme.accent;
+                return usage >= 0.9 ? Palette.Theme.warning : Palette.Theme.accent;
+            }
+            readonly property string figure: isTemp ? Math.round(root.stats.temperature) + "°C" : Math.round(usage * 100) + "%"
+            readonly property string detail: {
+                if (modelData.key === "disk")
+                    return root.stats.gib(root.stats.diskUsed) + " of " + root.stats.gib(root.stats.diskTotal) + " GiB";
+                if (isTemp)
+                    return "CPU package";
+                return root.panel.infoFor(modelData.key);
+            }
 
             Layout.fillWidth: true
             Layout.preferredHeight: 88
@@ -110,7 +136,7 @@ RowLayout {
                     }
 
                     Text {
-                        text: Math.round(card.usage * 100) + "%"
+                        text: card.figure
                         color: Palette.Theme.textPrimary
                         font.family: Palette.Theme.fontSans
                         font.pixelSize: Palette.Theme.fontSizeDisplay
@@ -119,7 +145,7 @@ RowLayout {
 
                     Text {
                         Layout.fillWidth: true
-                        text: root.panel.infoFor(card.modelData.key)
+                        text: card.detail
                         color: Palette.Theme.textSecondary
                         font.family: Palette.Theme.fontSans
                         font.pixelSize: Palette.Theme.fontSizeXs

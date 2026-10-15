@@ -41,7 +41,7 @@ Item {
     }
     readonly property string kind: activities.length > 0 ? activities[0] : ""
     // CenterOverlay shows this on the stage while true.
-    readonly property bool wanted: kind !== ""
+    readonly property bool wanted: kind !== "" && !(bar && bar.centerActivitySuppressed)
 
     // A 1 s clock for elapsed/remaining times; runs only while needed.
     property double now: Date.now()
@@ -135,18 +135,20 @@ Item {
     readonly property string value: kind === "record" ? clock(now - recordStart) : kind === "timer" ? clock(timerEnd - now) : kind === "download" ? size(downloads[0].size) : ""
     // 0–1 for the timer, -1 (indeterminate) for downloads, none otherwise.
     readonly property real progress: kind === "timer" ? Math.min(1, 1 - (timerEnd - now) / timerTotal) : kind === "download" ? -1 : 0
+    readonly property real contentWidth: iconText.implicitWidth + labelText.implicitWidth + valueText.implicitWidth + 16 + 24 + (activities.length > 1 ? more.implicitWidth + 18 : 0)
 
-    implicitWidth: 300
+    implicitWidth: Math.min(260, Math.max(160, contentWidth))
     implicitHeight: Math.max(baseHeight, 34)
     enabled: wanted
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
+        anchors.leftMargin: 12
+        anchors.rightMargin: 12
         spacing: 8
 
         Text {
+            id: iconText
             text: root.icon
             color: root.tone
             font.family: Palette.Theme.fontIcons
@@ -173,6 +175,7 @@ Item {
         }
 
         Text {
+            id: labelText
             Layout.fillWidth: true
             text: root.label
             color: Palette.Theme.textPrimary
@@ -183,6 +186,7 @@ Item {
         }
 
         Text {
+            id: valueText
             text: root.value
             color: root.tone
             font.family: Palette.Theme.fontMono
@@ -266,6 +270,23 @@ Item {
     MouseArea {
         anchors.fill: parent
         cursorShape: root.kind === "record" || root.kind === "download" ? Qt.PointingHandCursor : Qt.ArrowCursor
+        property bool wheelLocked: false
+
+        Timer {
+            id: wheelUnlock
+            interval: 260
+            onTriggered: parent.wheelLocked = false
+        }
+
+        onWheel: wheel => {
+            wheel.accepted = true;
+            if (wheelLocked || !root.bar || typeof root.bar.scrollCenterModule !== "function")
+                return;
+            root.bar.scrollCenterModule(wheel.angleDelta.y);
+            wheelLocked = true;
+            wheelUnlock.restart();
+        }
+
         onClicked: {
             if (root.kind === "record")
                 action.exec(["bash", "-lc", "~/.config/quickshell/scripts/record.sh"]);

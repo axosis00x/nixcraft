@@ -322,7 +322,10 @@ PanelWindow {
         }
         Component.onCompleted: sized = panel
 
-        slabWidth: sized ? sized.implicitWidth : root.barSlabWidth
+        // The live activity can be narrower than the bar notch. Keep its
+        // backing slab wide enough to cover the notch beneath it, otherwise
+        // the center module's icon and title peek out at the sides.
+        slabWidth: sized === liveActivity ? Math.max(liveActivity.implicitWidth, root.barSlabWidth) : (sized ? sized.implicitWidth : root.barSlabWidth)
         slabHeight: sized ? sized.implicitHeight : root.barSlabHeight
         // Closing, the slab stays opaque while it eases back down to the
         // bar's notch, so the panel shrinks into the notch (as bottom panels
@@ -407,6 +410,13 @@ PanelWindow {
             bar: root.bar
             baseHeight: root.barSlabHeight
         }
+    }
+
+    Binding {
+        target: root.bar
+        property: "centerActivityVisible"
+        value: root.peekPanel === liveActivity
+        when: root.bar !== null
     }
 
     // ── BOTTOM STAGE (Launcher, Wallpapers, Themes, Clipboard, etc.) ──

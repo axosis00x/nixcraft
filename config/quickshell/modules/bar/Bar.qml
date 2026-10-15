@@ -67,14 +67,25 @@ PanelWindow {
     color: "transparent"
 
     property string centerMode: "normal"
+    property bool centerActivitySuppressed: false
+    property bool centerActivityVisible: false
+    Timer {
+        id: centerActivityResume
+        interval: 1200
+        onTriggered: bar.centerActivitySuppressed = false
+    }
+
     // Scroll-cycled content shown in the center notch. "apps" (active
     // window name) is the default; scrolling the notch steps through
-    // the rest.
+    // the rest. Compact mode keeps its status view as the first item.
     property var centerModules: ["apps", "clock", "cava"]
     property int centerModuleIndex: 0
+    property var compactCenterModules: ["compact", "apps", "clock", "cava"]
+    property int compactCenterModuleIndex: 0
     // Remembers what was showing before playback auto-switched to cava,
     // so stopping playback restores it instead of always falling back to apps.
     property int previousCenterModuleIndex: 0
+    property int previousCompactCenterModuleIndex: 0
     property bool isRecording: false
     property var launcher: null
     property var controlCenter: null
@@ -95,6 +106,26 @@ PanelWindow {
     readonly property real centerCapsuleSlabWidth: centerCapsule ? centerCapsule.slabWidth : 120
 
     readonly property real minLevel: 0.05
+
+    function scrollCenterModule(deltaY) {
+        if (centerMode !== "normal" || deltaY === 0)
+            return;
+        centerActivitySuppressed = true;
+        centerActivityResume.restart();
+        if (compact) {
+            var compactLength = compactCenterModules.length;
+            if (compactLength < 1)
+                return;
+            var compactDirection = deltaY > 0 ? 1 : -1;
+            compactCenterModuleIndex = (compactCenterModuleIndex + compactDirection + compactLength) % compactLength;
+            return;
+        }
+        var len = centerModules.length;
+        if (len < 1)
+            return;
+        var dir = deltaY > 0 ? 1 : -1;
+        centerModuleIndex = (centerModuleIndex + dir + len) % len;
+    }
 
     property real currentVolume: 0.5
     property real currentBrightness: 0.5
@@ -127,6 +158,21 @@ PanelWindow {
     // Auto-switch the notch to the cava visualizer when playback starts,
     // and restore whatever module was showing before once it stops.
     onMediaPlayingChanged: {
+        if (compact) {
+            var compactCavaIdx = compactCenterModules.indexOf("cava");
+            if (compactCavaIdx < 0)
+                return;
+            if (mediaPlaying) {
+                if (compactCenterModuleIndex !== compactCavaIdx) {
+                    previousCompactCenterModuleIndex = compactCenterModuleIndex;
+                    compactCenterModuleIndex = compactCavaIdx;
+                }
+            } else if (compactCenterModuleIndex === compactCavaIdx) {
+                compactCenterModuleIndex = previousCompactCenterModuleIndex;
+            }
+            return;
+        }
+
         var cavaIdx = centerModules.indexOf("cava");
         if (cavaIdx < 0)
             return;
@@ -649,7 +695,7 @@ PanelWindow {
             ColorMotion {}
         }
 
-        readonly property string activeCenterModule: bar.compact ? "compact" : bar.centerModules[bar.centerModuleIndex]
+        readonly property string activeCenterModule: bar.compact ? bar.compactCenterModules[bar.compactCenterModuleIndex] : bar.centerModules[bar.centerModuleIndex]
 
         // "Desktop" and the clock share this width so the notch doesn't resize
         // when cycling between them — cava sizes itself independently, and
@@ -721,8 +767,8 @@ PanelWindow {
             spacing: 7
             // Only mounted once there's an actual app — no hidden icon
             // sitting in the layout reserving space for the desktop case.
-            visible: centerCapsule.activeCenterModule === "apps" && bar.appClass !== ""
-            opacity: bar.centerMode === "normal" && centerCapsule.activeCenterModule === "apps" && bar.appClass !== "" ? 1 : 0
+            visible: centerCapsule.activeCenterModule === "apps" && bar.appClass !== "" && !bar.centerActivityVisible
+            opacity: bar.centerMode === "normal" && centerCapsule.activeCenterModule === "apps" && bar.appClass !== "" && !bar.centerActivityVisible ? 1 : 0
             Behavior on opacity {
                 EffectMotion {}
             }
@@ -754,8 +800,8 @@ PanelWindow {
             id: desktopContent
             anchors.centerIn: parent
             spacing: 7
-            visible: centerCapsule.activeCenterModule === "apps" && bar.appClass === ""
-            opacity: bar.centerMode === "normal" && centerCapsule.activeCenterModule === "apps" && bar.appClass === "" ? 1 : 0
+            visible: centerCapsule.activeCenterModule === "apps" && bar.appClass === "" && !bar.centerActivityVisible
+            opacity: bar.centerMode === "normal" && centerCapsule.activeCenterModule === "apps" && bar.appClass === "" && !bar.centerActivityVisible ? 1 : 0
             Behavior on opacity {
                 EffectMotion {}
             }
@@ -784,8 +830,8 @@ PanelWindow {
             anchors.centerIn: parent
             implicitWidth: bar.mediaPlaying ? cavaVisualizer.implicitWidth : silenceText.implicitWidth
             implicitHeight: Math.max(cavaVisualizer.implicitHeight, silenceText.implicitHeight)
-            visible: centerCapsule.activeCenterModule === "cava"
-            opacity: bar.centerMode === "normal" && centerCapsule.activeCenterModule === "cava" ? 1 : 0
+            visible: centerCapsule.activeCenterModule === "cava" && !bar.centerActivityVisible
+            opacity: bar.centerMode === "normal" && centerCapsule.activeCenterModule === "cava" && !bar.centerActivityVisible ? 1 : 0
             Behavior on opacity {
                 EffectMotion {}
             }
@@ -827,7 +873,7 @@ PanelWindow {
             id: compactContent
             anchors.centerIn: parent
             spacing: 12
-            visible: centerCapsule.activeCenterModule === "compact"
+            visible: centerCapsule.activeCenterModule === "compact" && !bar.centerActivityVisible
             opacity: visible ? 1 : 0
             Behavior on opacity {
                 EffectMotion {}
@@ -872,8 +918,8 @@ PanelWindow {
             id: clockContent
             anchors.centerIn: parent
             spacing: 8
-            visible: centerCapsule.activeCenterModule === "clock"
-            opacity: bar.centerMode === "normal" && centerCapsule.activeCenterModule === "clock" ? 1 : 0
+            visible: centerCapsule.activeCenterModule === "clock" && !bar.centerActivityVisible
+            opacity: bar.centerMode === "normal" && centerCapsule.activeCenterModule === "clock" && !bar.centerActivityVisible ? 1 : 0
             Behavior on opacity {
                 EffectMotion {}
             }
@@ -901,20 +947,9 @@ PanelWindow {
 
             onWheel: wheel => {
                 wheel.accepted = true;
-                if (bar.centerMode !== "normal" || wheelLocked)
+                if (wheelLocked)
                     return;
-                // Compact has no modules to cycle; scrolling switches
-                // workspaces instead.
-                if (bar.compact) {
-                    if (bar.workspacesService)
-                        bar.workspacesService.step(wheel.angleDelta.y > 0 ? -1 : 1);
-                    wheelLocked = true;
-                    wheelUnlock.restart();
-                    return;
-                }
-                var len = bar.centerModules.length;
-                var dir = wheel.angleDelta.y > 0 ? 1 : -1;
-                bar.centerModuleIndex = (bar.centerModuleIndex + dir + len) % len;
+                bar.scrollCenterModule(wheel.angleDelta.y);
                 wheelLocked = true;
                 wheelUnlock.restart();
             }
@@ -926,8 +961,10 @@ PanelWindow {
                     return;
                 }
 
-                // Compact: clicks on the workspace dots open the overview.
-                if (bar.compact) {
+                // In the compact status view, clicks on the workspace dots
+                // open the overview. Other compact center modules behave like
+                // the normal notch.
+                if (bar.compact && centerCapsule.activeCenterModule === "compact") {
                     var p = mapToItem(compactWorkspaces, mouse.x, mouse.y);
                     if (p.x >= -6 && p.x <= compactWorkspaces.width + 6) {
                         compactWorkspaces.openAtPosition(p.x, p.y);
@@ -968,47 +1005,4 @@ PanelWindow {
         }
     }
 
-    // Recording badge — pinned just outside the notch's right edge (not
-    // inside it) so it can never overlap centered content, no matter how
-    // narrow the current module's width is.
-    Rectangle {
-        id: recordingDot
-        visible: bar.isRecording && !bar.vertical
-        anchors.left: centerCapsule.right
-        anchors.leftMargin: 6
-        anchors.verticalCenter: centerCapsule.verticalCenter
-        width: 7
-        height: 7
-        radius: 3.5
-        color: Palette.Theme.errorColor
-
-        SequentialAnimation on opacity {
-            running: bar.isRecording
-            loops: Animation.Infinite
-            NumberAnimation {
-                to: 0.15
-                duration: 650
-                easing.type: Easing.InOutSine
-            }
-            NumberAnimation {
-                to: 1
-                duration: 650
-                easing.type: Easing.InOutSine
-            }
-        }
-
-        Process {
-            id: stopRecording
-            onExited: bar.checkRecording()
-        }
-
-        MouseArea {
-            // The dot itself is only 7px — pad the hit target so it's
-            // actually clickable.
-            anchors.fill: parent
-            anchors.margins: -6
-            cursorShape: Qt.PointingHandCursor
-            onClicked: stopRecording.exec(["bash", "-lc", "~/.config/quickshell/scripts/record.sh"])
-        }
-    }
 }

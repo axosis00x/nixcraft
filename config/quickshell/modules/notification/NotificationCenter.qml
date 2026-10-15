@@ -63,8 +63,20 @@ Scope {
     function notificationIcon(notification) {
         if (!notification)
             return "";
-        if (notification.image)
+        // History records (they have a historyId) hold the image URL from
+        // when they arrived. Quickshell's image://qsimage handles die with
+        // the notification (or a reload), so take the live one's current
+        // handle if it's still around, and otherwise fall back to the icon
+        // instead of re-requesting a dead handle on every redraw.
+        if (notification.historyId !== undefined) {
+            var live = liveNotification(notification);
+            if (live && live.image)
+                return live.image;
+            if (notification.image && String(notification.image).indexOf("image://qsimage") !== 0)
+                return notification.image;
+        } else if (notification.image) {
             return notification.image;
+        }
         if (notification.appIcon)
             return Quickshell.iconPath(notification.appIcon, true);
         return "";
@@ -130,7 +142,7 @@ Scope {
 
     function clearAll() {
         toastTimer.stop();
-        toast.visible = false;
+        toastVisible = false;
         toastNotification = null;
         notificationHistory = [];
 
@@ -141,14 +153,14 @@ Scope {
 
     function hideToast() {
         toastTimer.stop();
-        toast.visible = false;
+        toastVisible = false;
         toastNotification = null;
     }
 
     // A destroyed notification object reads back as null — never show an
     // empty popup for it.
     onToastNotificationChanged: if (!toastNotification)
-        toast.visible = false
+        toastVisible = false
 
     function toggleDnd() {
         root.doNotDisturb = !root.doNotDisturb;
@@ -156,12 +168,12 @@ Scope {
 
     onDoNotDisturbChanged: {
         if (doNotDisturb)
-            toast.visible = false;
+            toastVisible = false;
     }
 
     function setDnd(enabled) {
         root.doNotDisturb = enabled;
-        toast.visible = false;
+        toastVisible = false;
     }
 
     NotificationServer {
@@ -189,8 +201,7 @@ Scope {
             });
 
             if (!root.doNotDisturb) {
-                toast.visible = true;
-                toastAnim.restart();
+                root.toastVisible = true;
                 toastTimer.restart();
             }
         }
@@ -209,51 +220,21 @@ Scope {
         }
     }
 
-    PanelWindow {
-        id: toast
+    // The popup itself is drawn by the central notch (NotificationPeek in
+    // components/overlay); this only decides when it's up. Hovering it
+    // holds it open.
+    property bool toastVisible: false
 
-        anchors {
-            top: true
-            right: true
-        }
-        margins {
-            top: 48
-            right: 12
-        }
-        implicitWidth: 360
-        implicitHeight: toastCard.implicitHeight
-        exclusiveZone: -1
-        color: "transparent"
-        visible: false
+    function holdToast(held) {
+        if (held)
+            toastTimer.stop();
+        else if (toastVisible)
+            toastTimer.restart();
+    }
 
-        WlrLayershell.layer: WlrLayer.Overlay
-
-        Timer {
-            id: toastTimer
-            interval: root.toastNotification && root.toastNotification.urgency === NotificationUrgency.Critical ? 9000 : 4800
-            onTriggered: toast.visible = false
-        }
-
-        NumberAnimation {
-            id: toastAnim
-            target: toastCard
-            property: "opacity"
-            from: 0
-            to: 1
-            duration: 160
-            easing.type: Easing.OutCubic
-        }
-
-        NotificationCard {
-            id: toastCard
-            width: parent.width
-            notification: root.toastNotification
-            iconSource: root.notificationIcon(root.toastNotification)
-            bodyText: root.toastNotification ? root.scrub(root.toastNotification.body) : ""
-            compact: true
-            opacity: 0
-            onDismissed: toast.visible = false
-            onActivated: toast.visible = false
-        }
+    Timer {
+        id: toastTimer
+        interval: root.toastNotification && root.toastNotification.urgency === NotificationUrgency.Critical ? 9000 : 4800
+        onTriggered: root.toastVisible = false
     }
 }

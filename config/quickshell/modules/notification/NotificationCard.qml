@@ -116,9 +116,9 @@ Surface {
         // The app's image, or a bell on a tonal circle when there is none.
         ClippingRectangle {
             Layout.alignment: Qt.AlignTop
-            implicitWidth: 40
-            implicitHeight: 40
-            radius: icon.status === Image.Ready ? Palette.Theme.radiusSmall : width / 2
+            implicitWidth: 36
+            implicitHeight: 36
+            radius: icon.status === Image.Ready ? Palette.Theme.radiusXs + 2 : width / 2
             color: icon.status === Image.Ready ? "transparent" : (card.critical ? Qt.alpha(Palette.Theme.errorColor, 0.18) : Palette.Theme.accentTonal)
 
             Image {
@@ -154,7 +154,7 @@ Surface {
             Layout.fillWidth: true
             spacing: 2
 
-            // app · time  [count]  ............  ✕
+            // Title · app ..........  time  [count]  ✕
             RowLayout {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 22
@@ -162,18 +162,31 @@ Surface {
 
                 Text {
                     Layout.fillWidth: true
-                    text: (card.notification ? (card.notification.appName || "Application") : "") + (timeAgoText.text !== "" ? "  ·  " + timeAgoText.text : "")
+                    Layout.maximumWidth: implicitWidth
+                    text: card.notification ? (card.notification.summary || "Notification") : ""
+                    color: Palette.Theme.textPrimary
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: Palette.Theme.fontSizeBody
+                    font.weight: Font.DemiBold
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: card.notification ? "·  " + (card.notification.appName || "Application") : ""
                     color: Palette.Theme.textMuted
                     font.family: Palette.Theme.fontSans
                     font.pixelSize: Palette.Theme.fontSizeXs
                     elide: Text.ElideRight
                 }
 
-                // Only a source for the label above; never drawn itself.
                 Text {
                     id: timeAgoText
-                    visible: false
+                    visible: text !== ""
                     text: card.notification ? card.timeAgo(card.notification.receivedAt) : ""
+                    color: Palette.Theme.textMuted
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: Palette.Theme.fontSizeXs
                 }
 
                 Rectangle {
@@ -199,24 +212,14 @@ Surface {
                     implicitWidth: 22
                     implicitHeight: 22
                     iconSize: Palette.Theme.iconSizeSmall
-                    opacity: cardHover.hovered ? 1 : 0.45
+                    // Faded, not hidden, so the time doesn't shift on hover.
+                    opacity: cardHover.hovered ? 1 : 0
                     onClicked: card.dismissNotification()
 
                     Behavior on opacity {
                         EffectMotion {}
                     }
                 }
-            }
-
-            Text {
-                text: card.notification ? (card.notification.summary || "Notification") : ""
-                color: Palette.Theme.textPrimary
-                font.family: Palette.Theme.fontSans
-                font.pixelSize: Palette.Theme.fontSizeBody
-                font.weight: Font.DemiBold
-                elide: Text.ElideRight
-                Layout.fillWidth: true
-                Layout.rightMargin: 4
             }
 
             Text {
@@ -246,11 +249,17 @@ Surface {
                         chipHeight: 24
                         fontPixelSize: Palette.Theme.fontSizeXs
                         horizontalPadding: 14
+                        // The action goes first (an app expects it before
+                        // the close), and it may destroy this chip by closing
+                        // the notification, so only plain references are
+                        // used after it.
                         onClicked: {
+                            var c = card;
+                            var dismiss = c.canDismiss && c.actionTarget && !c.actionTarget.resident;
                             modelData.invoke();
-                            card.activated();
-                            if (card.canDismiss && card.actionTarget && !card.actionTarget.resident)
-                                card.dismissNotification();
+                            c.activated();
+                            if (dismiss)
+                                c.dismissNotification();
                         }
                     }
                 }

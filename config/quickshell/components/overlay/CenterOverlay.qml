@@ -48,6 +48,12 @@ PanelWindow {
             item: dockPopups.menuVisible ? dockPopups.menuRect : null
             intersection: Intersection.Combine
         }
+        // A notification or live activity on the idle top notch takes
+        // clicks only where it is (no keyboard focus, see `active`).
+        Region {
+            item: root.peekPanel ? topStage : null
+            intersection: Intersection.Combine
+        }
     }
 
     WlrLayershell.layer: WlrLayer.Overlay
@@ -62,6 +68,13 @@ PanelWindow {
     property var settingsWindow: null
     readonly property bool verticalBar: barLayout ? barLayout.vertical : false
     readonly property bool active: (activeTopPanel !== null) || (activeBottomPanel !== null)
+
+    // What the idle top notch grows into when no top panel is open: a new
+    // notification first, else a live activity (recording, timer,
+    // download). These don't count towards `active`.
+    // A live activity steps aside while a fullscreen app (video, game) is
+    // focused; notifications still come through.
+    readonly property var peekPanel: activeTopPanel !== null ? null : (notificationPeek.wanted ? notificationPeek : (liveActivity.wanted && !fullscreenActive ? liveActivity : null))
 
     // Central modules origin edge:
     // Top origin: Control Center, Power Menu, Tool Menu, Media Panel, Polkit.
@@ -278,7 +291,7 @@ PanelWindow {
             ColorMotion {}
         }
 
-        readonly property var panel: root.activeTopPanel
+        readonly property var panel: root.activeTopPanel || root.peekPanel
 
         slabWidth: panel ? panel.implicitWidth : root.barSlabWidth
         slabHeight: panel ? panel.implicitHeight : root.barSlabHeight
@@ -333,6 +346,17 @@ PanelWindow {
         PolkitPanel {
             id: polkitItem
             maxWidth: root.width
+        }
+
+        NotificationPeek {
+            id: notificationPeek
+            center: root.notificationCenter
+        }
+
+        LiveActivity {
+            id: liveActivity
+            bar: root.bar
+            baseHeight: root.barSlabHeight
         }
     }
 
@@ -420,6 +444,7 @@ PanelWindow {
 
         BarLayoutPicker {
             id: barLayoutPickerItem
+            maxWidth: root.width
             service: root.barLayout
             launcher: launcherItem
             controlCenter: controlCenterItem
@@ -443,6 +468,8 @@ PanelWindow {
     StageSlot { panel: toolMenuItem; stage: topStage }
     StageSlot { panel: mediaPanelItem; stage: topStage }
     StageSlot { panel: polkitItem; stage: topStage }
+    StageSlot { panel: notificationPeek; stage: topStage }
+    StageSlot { panel: liveActivity; stage: topStage }
     StageSlot { id: dockSlot; panel: dockItem; stage: bottomStage; fromBottom: true }
     StageSlot { panel: launcherItem; stage: bottomStage; fromBottom: true }
     StageSlot { panel: themePickerItem; stage: bottomStage; fromBottom: true }

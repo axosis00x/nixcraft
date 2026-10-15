@@ -17,15 +17,19 @@ nixcraft_palette() {
         return
     fi
 
-    local fg accent muted surface low outline alert
+    local fg accent secondary tertiary success info warning alert muted surface low outline
     fg="$(get_tmux_option "@thm_fg" "#cdd6f4")"
     accent="$(get_tmux_option "@thm_primary" "$fg")"
+    secondary="$(get_tmux_option "@thm_secondary" "$accent")"
+    tertiary="$(get_tmux_option "@thm_tertiary" "$secondary")"
+    success="$(get_tmux_option "@thm_success" "$secondary")"
+    info="$(get_tmux_option "@thm_info" "$accent")"
+    warning="$(get_tmux_option "@thm_warning" "$tertiary")"
+    alert="$(get_tmux_option "@thm_alert" "$tertiary")"
     muted="$(get_tmux_option "@thm_text_variant" "$fg")"
     surface="$(get_tmux_option "@thm_surface_variant" "$bg")"
     low="$(get_tmux_option "@thm_surface_low" "$bg")"
     outline="$(get_tmux_option "@thm_outline" "$muted")"
-    # The session pill while the prefix key is held.
-    alert="$(get_tmux_option "@thm_alert" "$fg")"
 
     # Lowercase: the plugin can't take capital letters in hex colors.
     printf 'thm_%s="%s"\n' \
@@ -34,12 +38,12 @@ nixcraft_palette() {
         gray "${surface,,}" \
         black "${low,,}" \
         black4 "${outline,,}" \
-        blue "${muted,,}" \
+        blue "${info,,}" \
         orange "${accent,,}" \
-        pink "${accent,,}" \
-        green "${accent,,}" \
-        cyan "${accent,,}" \
-        magenta "${accent,,}" \
-        yellow "${accent,,}" \
+        pink "${secondary,,}" \
+        green "${success,,}" \
+        cyan "${info,,}" \
+        magenta "${tertiary,,}" \
+        yellow "${warning,,}" \
         red "${alert,,}"
 }

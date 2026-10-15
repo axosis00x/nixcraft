@@ -25,10 +25,14 @@
     btop.source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/btop";
     # Keep CAVA's config files linked individually so apply-theme.sh can
     # switch the writable `themes/current` link without modifying the repo.
-    "cava/config".source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/cava/config";
-    "cava/shaders".source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/cava/shaders";
-    "cava/themes/solarized_dark".source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/cava/themes/solarized_dark";
-    "cava/themes/tricolor".source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/cava/themes/tricolor";
+    "cava/config".source =
+      config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/cava/config";
+    "cava/shaders".source =
+      config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/cava/shaders";
+    "cava/themes/solarized_dark".source =
+      config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/cava/themes/solarized_dark";
+    "cava/themes/tricolor".source =
+      config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/cava/themes/tricolor";
     eww.source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/eww";
     fastfetch.source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/fastfetch";
     hypr.source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/hypr";
@@ -41,6 +45,17 @@
     yazi.source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/yazi";
     zed.source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/zed";
   };
+
+  # ~/.config/cava used to be one link to the repo folder; it's now a real
+  # folder of per-file links (so apply-theme.sh can write themes/current).
+  # Home Manager doesn't remove that old out-of-store link, and would create
+  # the new links through it, inside the repo, as self-referencing loops. Drop
+  # the old link first.
+  home.activation.cavaFolderLink = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+    if [ -L "$HOME/.config/cava" ]; then
+      run rm "$HOME/.config/cava"
+    fi
+  '';
 
   # Machine-local state that git doesn't track (see .gitignore): on a fresh
   # install, point every app at the default theme and give HyprMod an empty

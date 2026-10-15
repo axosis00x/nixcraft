@@ -172,6 +172,9 @@ Item {
         path: Quickshell.cachePath("control-center-toggles.json")
         watchChanges: false
         blockLoading: true
+        onLoaded: root.restoreToggles()
+        // First run (no file yet): the defaults are the state.
+        onLoadFailed: root.restoreToggles()
 
         JsonAdapter {
             id: toggleState
@@ -183,8 +186,16 @@ Item {
         }
     }
 
-    Component.onCompleted: {
-        readPowerProfile();
+    Component.onCompleted: readPowerProfile()
+
+    // Re-applies the saved toggles once the file has actually been read:
+    // at Component.onCompleted the adapter still holds its defaults, which
+    // turned the night light off on every reload while the toggle showed on.
+    property bool togglesRestored: false
+    function restoreToggles() {
+        if (togglesRestored)
+            return;
+        togglesRestored = true;
         if (toggleState.dnd) {
             if (root.notificationCenter)
                 root.notificationCenter.setDnd(true);

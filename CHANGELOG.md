@@ -5,6 +5,34 @@ All notable changes to nixcraft are recorded here. Versions follow
 `scripts/release.sh` from the [Conventional Commits](https://www.conventionalcommits.org)
 since the previous release.
 
+## [0.1.0-pre-alpha.8] - 2026-10-15
+
+### Features
+
+- **quickshell:** theme hues across the shell, one bar background, frame above windows (d5cbf16)
+- **themes:** official palettes, decorative hues, colorful GTK and Qt (df984f2)
+- **cava:** follow the active theme with colorful gradients (eedf06c)
+- **colors:** better variable colors for tmux (7a69375)
+- gamma configs for hyprsunset and nvim lock update (e35457d)
+
+### Fixes
+
+- **quickshell:** larger overview cards, unconfirmed locks no longer stick, restart.sh start check (69aadc6)
+- **overlay:** faster closing, no idle slab over the notch title (4e80bf6)
+- **overlay:** gentler close fade, shorter notification time (7023939)
+- **overlay:** live activity pill uses the notch's corner radius (5136748)
+
+### Style
+
+- **themes:** align application palettes (720f0d4)
+- **quickshell:** even search-field padding in bottom panels (f0a3e1e)
+- **polkit:** slimmer field and buttons; fix(quickshell): duplicate-safe restart script (197db63)
+
+### Chores
+
+- yazi theme and zed settings (37b5e0d)
+- new keybind for quikshell restart (3d49c54)
+
 ## [0.1.0-pre-alpha.7] - 2026-10-15
 
 ### Features

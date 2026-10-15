@@ -105,13 +105,13 @@ Item {
 
                 Behavior on Layout.preferredWidth {
                     NumberAnimation {
-                        duration: 600
+                        duration: Palette.Theme.motionDefault
                         easing.type: Easing.OutCubic
                     }
                 }
                 Behavior on Layout.preferredHeight {
                     NumberAnimation {
-                        duration: 600
+                        duration: Palette.Theme.motionDefault
                         easing.type: Easing.OutCubic
                     }
                 }

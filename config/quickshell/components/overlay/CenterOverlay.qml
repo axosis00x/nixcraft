@@ -68,6 +68,9 @@ PanelWindow {
     property var settingsWindow: null
     readonly property bool verticalBar: barLayout ? barLayout.vertical : false
     readonly property bool active: (activeTopPanel !== null) || (activeBottomPanel !== null)
+    // How long a panel takes to shrink back to rest when it closes: a bit
+    // quicker than opening, between the theme's fast and default motion.
+    readonly property int closeDuration: (Palette.Theme.motionFast + Palette.Theme.motionDefault) / 2
 
     // What the idle top notch grows into when no top panel is open: a new
     // notification first, else a live activity (recording, timer,
@@ -294,6 +297,7 @@ PanelWindow {
         Behavior on slabRadius {
             SpatialMotion {
                 easing.type: topStage.shrinking ? Easing.OutCubic : Easing.OutBack
+                duration: topStage.shrinking ? root.closeDuration : Palette.Theme.motionDefault
             }
         }
         Behavior on color {
@@ -310,18 +314,27 @@ PanelWindow {
         // activity pill after a real panel.
         onPanelChanged: {
             shrinking = panel === null || (panel === root.peekPanel && sized !== null && sized !== root.peekPanel && sized !== notificationPeek && sized !== liveActivity);
+            settling = panel === null && sized !== null;
+            settling ? settleTimer.restart() : settleTimer.stop();
             sized = panel;
         }
         Component.onCompleted: sized = panel
 
         slabWidth: sized ? sized.implicitWidth : root.barSlabWidth
         slabHeight: sized ? sized.implicitHeight : root.barSlabHeight
-        // Closing, the slab springs back down to the bar's notch while it
-        // stays opaque, so the panel shrinks into the notch (as bottom
-        // panels shrink into the dock) instead of fading where it stood.
-        // Only once it's back at the notch's size does it fade away.
-        readonly property bool settling: !panel && (Math.abs(slabWidth - root.barSlabWidth) > 1 || Math.abs(slabHeight - root.barSlabHeight) > 1)
+        // Closing, the slab stays opaque while it eases back down to the
+        // bar's notch, so the panel shrinks into the notch (as bottom panels
+        // shrink into the dock) instead of fading where it stood; then it
+        // fades. Only after a real close: the idle notch's width follows
+        // the window title, and that must never show the empty slab.
+        property bool settling: false
         opacity: panel || settling ? 1 : 0
+
+        Timer {
+            id: settleTimer
+            interval: root.closeDuration
+            onTriggered: topStage.settling = false
+        }
 
         // barSlabHeight/barSlabWidth are seeded from barLayout.vertical, which
         // briefly holds its declared default before the persisted bar-layout
@@ -334,12 +347,14 @@ PanelWindow {
             enabled: !root.barLayout || root.barLayout.loaded
             SpatialMotion {
                 easing.type: topStage.shrinking ? Easing.OutCubic : Easing.OutBack
+                duration: topStage.shrinking ? root.closeDuration : Palette.Theme.motionDefault
             }
         }
         Behavior on slabHeight {
             enabled: !root.barLayout || root.barLayout.loaded
             SpatialMotion {
                 easing.type: topStage.shrinking ? Easing.OutCubic : Easing.OutBack
+                duration: topStage.shrinking ? root.closeDuration : Palette.Theme.motionDefault
             }
         }
         Behavior on opacity {
@@ -418,6 +433,8 @@ PanelWindow {
         property bool shrinking: false
         onPanelChanged: {
             shrinking = panel === null || panel === dockItem;
+            settling = panel === null && sized !== null;
+            settling ? bottomSettleTimer.restart() : bottomSettleTimer.stop();
             sized = panel;
         }
         Component.onCompleted: sized = panel
@@ -426,17 +443,25 @@ PanelWindow {
         slabHeight: sized ? sized.implicitHeight : 0
         // As on the top stage: with the dock tucked away, a closing panel
         // collapses into the bottom edge before the slab fades.
-        readonly property bool settling: !panel && slabHeight > 1
+        property bool settling: false
         opacity: panel || settling ? 1 : 0
+
+        Timer {
+            id: bottomSettleTimer
+            interval: root.closeDuration
+            onTriggered: bottomStage.settling = false
+        }
 
         Behavior on slabWidth {
             SpatialMotion {
                 easing.type: bottomStage.shrinking ? Easing.OutCubic : Easing.OutBack
+                duration: bottomStage.shrinking ? root.closeDuration : Palette.Theme.motionDefault
             }
         }
         Behavior on slabHeight {
             SpatialMotion {
                 easing.type: bottomStage.shrinking ? Easing.OutCubic : Easing.OutBack
+                duration: bottomStage.shrinking ? root.closeDuration : Palette.Theme.motionDefault
             }
         }
         Behavior on opacity {

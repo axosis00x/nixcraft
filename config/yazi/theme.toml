@@ -1,13 +1,9 @@
-# If the user's terminal is in dark mode, Yazi will load `theme-dark.toml` on startup; otherwise, `theme-light.toml`.
-# You can override any parts of them that are not related to the dark/light mode in your own `theme.toml`.
-
-# If you want to dynamically override their content based on dark/light mode, you can specify two different flavors
-# for dark and light modes under `[flavor]`, and do so in those flavors instead.
+# Yazi flavor colors are provided by the active theme. This file keeps the
+# flavor selection and the custom filetype/icon rules without overriding the
+# flavor's component colors.
 
 #:schema https://yazi-rs.github.io/schemas/theme.json
 # vim:fileencoding=utf-8:foldmethod=marker
-
-# : Flavor {{{
 
 [flavor]
 dark  = "nixcraft"
@@ -15,227 +11,17 @@ light = ""
 
 # : }}}
 
-
-# : App {{{
-
-[app]
-overall = {}
-
-# : }}}
-
-
-# : Manager {{{
-
-[mgr]
-cwd = { fg = "cyan" }
-
-# Find
-find_keyword  = { fg = "yellow", bold = true, italic = true, underline = true }
-find_position = { fg = "magenta", bg = "reset", bold = true, italic = true }
-
-# Symlink
-symlink_target = { italic = true }
-
-# Marker
-marker_copied   = { fg = "lightgreen",  bg = "lightgreen" }
-marker_cut      = { fg = "lightred",    bg = "lightred" }
-marker_marked   = { fg = "lightcyan",   bg = "lightcyan" }
-marker_selected = { fg = "lightyellow", bg = "lightyellow" }
-marker_symbol   = "│"
-
-# Count
-count_copied   = { fg = "white", bg = "green" }
-count_cut      = { fg = "white", bg = "red" }
-count_selected = { fg = "black", bg = "yellow" }
-
-# Border
-border_symbol = "│"
-border_style  = { fg = "gray" }
-
-# Highlighting
-syntect_theme = ""
-
-# : }}}
-
-
-# : Tabs {{{
-
+# Keep the original rounded separator shapes while colors come from the flavor.
 [tabs]
-active   = { bg = "blue", bold = true }
-inactive = { fg = "blue", bg = "gray" }
-
-# Separator
 sep_inner = { open = "", close = "" }
 sep_outer = { open = "", close = "" }
 
-# : }}}
-
-
-# : Mode {{{
-
-[mode]
-normal_main = { bg = "blue", bold = true }
-normal_alt  = { fg = "blue", bg = "gray" }
-
-# Select mode
-select_main = { bg = "red", bold = true }
-select_alt  = { fg = "red", bg = "gray" }
-
-# Unset mode
-unset_main = { bg = "red", bold = true }
-unset_alt  = { fg = "red", bg = "gray" }
-
-# : }}}
-
-
-# : Indicator of hovered file {{{
-
 [indicator]
-parent  = { reversed = true }
-current = { reversed = true }
-preview = { underline = true }
 padding = { open = "", close = "" }
 
-# : }}}
-
-
-# : Status bar {{{
-
 [status]
-overall   = {}
 sep_left  = { open = "", close = "" }
 sep_right = { open = "", close = "" }
-
-# Permissions
-perm_sep   = { fg = "darkgray" }
-perm_type  = { fg = "green" }
-perm_read  = { fg = "yellow" }
-perm_write = { fg = "red" }
-perm_exec  = { fg = "cyan" }
-
-# Progress
-progress_label  = { bold = true }
-progress_normal = { fg = "green", bg = "black" }
-progress_error  = { fg = "yellow", bg = "red" }
-
-# : }}}
-
-
-# : Which {{{
-
-[which]
-cols            = 3
-mask            = { bg = "black" }
-cand            = { fg = "lightcyan" }
-rest            = { fg = "darkgray" }
-desc            = { fg = "lightmagenta" }
-separator       = "  "
-separator_style = { fg = "darkgray" }
-
-# : }}}
-
-
-# : Confirmation {{{
-
-[confirm]
-border     = { fg = "blue" }
-title      = { fg = "blue" }
-body       = {}
-list       = {}
-btn_yes    = { reversed = true }
-btn_no     = {}
-btn_labels = [ "  [Y]es  ", "  (N)o  " ]
-
-# : }}}
-
-
-# : Spotter {{{
-
-[spot]
-border = { fg = "blue" }
-title  = { fg = "blue" }
-
-# Table
-tbl_col  = { fg = "blue" }
-tbl_cell = { fg = "yellow", reversed = true }
-
-# : }}}
-
-
-# : Notification {{{
-
-[notify]
-title_info  = { fg = "green" }
-title_warn  = { fg = "yellow" }
-title_error = { fg = "red" }
-
-# Icons
-icon_info  = ""
-icon_warn  = ""
-icon_error = ""
-
-# : }}}
-
-
-# : Picker {{{
-
-[pick]
-border   = { fg = "blue" }
-active   = { fg = "magenta", bold = true }
-inactive = {}
-
-# : }}}
-
-
-# : Input {{{
-
-[input]
-border   = { fg = "blue" }
-title    = {}
-value    = {}
-selected = { reversed = true }
-
-# : }}}
-
-
-# : Completion {{{
-
-[cmp]
-border   = { fg = "blue" }
-active   = { reversed = true }
-inactive = {}
-
-# Icons
-icon_file    = ""
-icon_folder  = ""
-icon_command = ""
-
-# : }}}
-
-
-# : Task manager {{{
-
-[tasks]
-border  = { fg = "blue" }
-title   = {}
-hovered = { fg = "magenta", bold = true }
-
-# : }}}
-
-
-# : Help menu {{{
-
-[help]
-on      = { fg = "cyan" }
-run     = { fg = "magenta" }
-desc    = {}
-hovered = { reversed = true, bold = true }
-footer  = { fg = "black", bg = "white" }
-
-# : }}}
-
-
-# : File-specific styles {{{
 
 [filetype]
 rules = [

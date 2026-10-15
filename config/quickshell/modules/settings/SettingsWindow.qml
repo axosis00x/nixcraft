@@ -226,9 +226,24 @@ FloatingWindow {
             return cpuUsage;
         case "ram":
             return memUsage;
+        case "nightwarmth":
+            // 4500 K (barely warm) .. 1900 K (very warm), warmer to the right.
+            return (4500 - c.nightTemperature) / 2600;
+        case "nightgamma":
+            return (c.nightGamma - 50) / 50;
         default:
             return 0;
         }
+    }
+
+    // A slider's label when a percentage of its track isn't the real value.
+    function levelText(key) {
+        var c = controlCenter;
+        if (key === "nightwarmth" && c)
+            return c.nightTemperature + " K";
+        if (key === "nightgamma" && c)
+            return c.nightGamma + "%";
+        return "";
     }
 
     function setLevel(key, value) {
@@ -244,6 +259,12 @@ FloatingWindow {
             break;
         case "mic":
             c.setMic(value);
+            break;
+        case "nightwarmth":
+            c.setNightTone(4500 - value * 2600, c.nightGamma);
+            break;
+        case "nightgamma":
+            c.setNightTone(c.nightTemperature, 50 + value * 50);
             break;
         }
     }
@@ -487,7 +508,9 @@ FloatingWindow {
                     title: "Brightness",
                     rows: [
                         { kind: "slider", key: "brightness", icon: "", title: "Brightness level" },
-                        { kind: "switch", key: "nightlight", icon: "", title: "Night light", subtitle: "Warmer colors at night" }
+                        { kind: "switch", key: "nightlight", icon: "", title: "Night light", subtitle: "Warmer colors at night" },
+                        { kind: "slider", key: "nightwarmth", icon: "thermostat", title: "Night light warmth" },
+                        { kind: "slider", key: "nightgamma", icon: "contrast", title: "Night light gamma" }
                     ]
                 },
                 {

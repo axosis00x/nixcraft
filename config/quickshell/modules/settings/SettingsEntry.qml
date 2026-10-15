@@ -18,6 +18,7 @@ SettingsItem {
     last: isLast
     checked: spec.kind === "switch" ? panel.flag(spec.key) : false
     value: spec.kind === "slider" ? panel.level(spec.key) : 0
+    valueText: spec.kind === "slider" ? panel.levelText(spec.key) : ""
     options: spec.options || []
     current: spec.kind === "segment" ? panel.choice(spec.key) : ""
     infoText: spec.kind === "info" ? panel.infoFor(spec.key) : ""

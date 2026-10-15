@@ -82,8 +82,28 @@ Item {
     // match hypr/modules/autostarts.lua.
     readonly property int dayTemperature: 3500
     readonly property int dayGamma: 90
-    readonly property int nightTemperature: 2800
-    readonly property int nightGamma: 85
+    // Night values are adjustable (Settings → Display) and saved with the
+    // toggles; the Night toggle applies whatever they're set to.
+    readonly property int nightTemperature: toggleState.nightTemperature
+    readonly property int nightGamma: toggleState.nightGamma
+
+    function setNightTone(temperature, gamma) {
+        toggleState.nightTemperature = Math.round(Math.max(1900, Math.min(4500, temperature)) / 50) * 50;
+        toggleState.nightGamma = Math.round(Math.max(50, Math.min(100, gamma)));
+        // Drags change these many times a second: apply and save once
+        // they settle.
+        nightToneApply.restart();
+    }
+
+    Timer {
+        id: nightToneApply
+        interval: 150
+        onTriggered: {
+            if (root.hyprsunsetEnabled)
+                root.applyScreenTone(true);
+            toggleStateFile.writeAdapter();
+        }
+    }
 
     function applyScreenTone(night) {
         hyprsunsetSet.exec(["sh", "-c", "hyprctl hyprsunset temperature \"$1\" && hyprctl hyprsunset gamma \"$2\"", "hyprsunset", String(night ? nightTemperature : dayTemperature), String(night ? nightGamma : dayGamma)]);
@@ -156,6 +176,8 @@ Item {
         JsonAdapter {
             id: toggleState
             property bool hyprsunset: false
+            property int nightTemperature: 2800
+            property int nightGamma: 85
             property bool keepAwake: false
             property bool dnd: false
         }

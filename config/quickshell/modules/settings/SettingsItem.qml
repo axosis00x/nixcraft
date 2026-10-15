@@ -12,6 +12,8 @@ Item {
 
     // nav | switch | slider | segment | info
     property string kind: "nav"
+    // Slider label; empty shows the value as a percentage.
+    property string valueText: ""
     property string icon: ""
     property string title: ""
     property string subtitle: ""
@@ -194,7 +196,7 @@ Item {
 
             Text {
                 visible: root.kind === "slider"
-                text: Math.round(root.value * 100) + "%"
+                text: root.valueText !== "" ? root.valueText : Math.round(root.value * 100) + "%"
                 color: Palette.Theme.textMuted
                 font.family: Palette.Theme.fontMono
                 font.pixelSize: Palette.Theme.fontSizeXs

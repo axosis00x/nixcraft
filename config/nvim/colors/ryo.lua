@@ -22,15 +22,15 @@ local p = {
   comment = "#566678",
   disabled = "#2c3a46",
 
-  blue = "#8bd5ff",
+  blue = "#29c4d9",
   blue2 = "#7aa2f7",
-  cyan = "#7dcfff",
-  teal = "#8ff0c7",
-  green = "#9ece6a",
-  purple = "#bb9af7",
+  cyan = "#29c4d9",
+  teal = "#2ecc76",
+  green = "#2ecc76",
+  purple = "#c9a8dc",
   magenta = "#d6bcfa",
-  red = "#f7768e",
-  orange = "#e0af68",
+  red = "#dd3f66",
+  orange = "#d99a2b",
   yellow = "#f5c97f",
 
   none = "NONE",
@@ -257,18 +257,18 @@ hl("NoiceCmdlinePopupBorder", { fg = p.border, bg = p.bg_float })
 
 -- Terminal colors (match kitty's ryo palette)
 vim.g.terminal_color_0 = "#0b0d10"
-vim.g.terminal_color_1 = "#f7768e"
-vim.g.terminal_color_2 = "#9ece6a"
-vim.g.terminal_color_3 = "#e0af68"
-vim.g.terminal_color_4 = "#7aa2f7"
-vim.g.terminal_color_5 = "#bb9af7"
-vim.g.terminal_color_6 = "#7dcfff"
+vim.g.terminal_color_1 = "#dd3f66"
+vim.g.terminal_color_2 = "#2ecc76"
+vim.g.terminal_color_3 = "#d99a2b"
+vim.g.terminal_color_4 = "#29c4d9"
+vim.g.terminal_color_5 = "#c9a8dc"
+vim.g.terminal_color_6 = "#8ff0c7"
 vim.g.terminal_color_7 = "#c9d1d9"
 vim.g.terminal_color_8 = "#4b5563"
-vim.g.terminal_color_9 = "#ff9db0"
-vim.g.terminal_color_10 = "#b9f27c"
-vim.g.terminal_color_11 = "#f5c97f"
-vim.g.terminal_color_12 = "#9cc6ff"
+vim.g.terminal_color_9 = "#ff91a7"
+vim.g.terminal_color_10 = "#6ee89b"
+vim.g.terminal_color_11 = "#f0be62"
+vim.g.terminal_color_12 = "#71dbe8"
 vim.g.terminal_color_13 = "#d6bcfa"
-vim.g.terminal_color_14 = "#9be7ff"
+vim.g.terminal_color_14 = "#b1f5d9"
 vim.g.terminal_color_15 = "#ffffff"

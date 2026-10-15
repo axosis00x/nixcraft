@@ -34,7 +34,9 @@ Item {
                 duration: slot.shown ? Palette.Theme.effectFast / 2 : 0
             }
             NumberAnimation {
-                duration: slot.shown ? Palette.Theme.effectDefault : Palette.Theme.effectFast
+                // Closing fades as gently as opening, in step with the slab
+                // easing back to rest.
+                duration: Palette.Theme.effectDefault
                 easing.type: Easing.OutCubic
             }
         }

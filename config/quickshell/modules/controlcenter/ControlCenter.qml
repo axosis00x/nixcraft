@@ -76,6 +76,10 @@ Item {
     // directly) so it can't fall out of sync with what's on disk — the
     // same pattern services/BarLayoutService.qml uses for `vertical`.
     readonly property bool hyprsunsetEnabled: toggleState.hyprsunset
+    // Screen color temperature (K): a soft daylight when the Night toggle is
+    // off (neutral ~6500 K reads cold and harsh), warm when it's on.
+    readonly property int dayTemperature: 5000
+    readonly property int nightTemperature: 2800
     property string powerProfilePending: ""
     // Owned and persisted by IdleService, which is what actually enforces it.
     readonly property bool keepAwake: idleService ? idleService.keepAwake : false
@@ -157,7 +161,7 @@ Item {
             setExternalDnd(true);
         }
         if (toggleState.hyprsunset) {
-            hyprsunsetSet.exec(["hyprctl", "hyprsunset", "temperature", "2800"]);
+            hyprsunsetSet.exec(["hyprctl", "hyprsunset", "temperature", String(root.nightTemperature)]);
         }
     }
 
@@ -708,22 +712,14 @@ Item {
         toggleState.hyprsunset = !toggleState.hyprsunset;
         toggleStateFile.writeAdapter();
         if (hyprsunsetEnabled) {
-            hyprsunsetSet.exec(["hyprctl", "hyprsunset", "temperature", "2800"]);
+            hyprsunsetSet.exec(["hyprctl", "hyprsunset", "temperature", String(root.nightTemperature)]);
         } else {
-            // Restarting the daemon (the old approach) is what caused the
-            // flash: Wayland only allows a single gamma-control client, so
-            // killing hyprsunset makes the compositor immediately snap back
-            // to neutral gamma, then hyprsunset has to relaunch and reclaim
-            // control ~0.3s later — a hard flash no matter what value gets
-            // reapplied afterward. Sending a direct hyprctl request instead
-            // (same as the "on" branch) changes the temperature in place,
-            // with no client handoff and no flash. The trade-off: once
-            // manually set this way, the daemon stops auto-advancing through
-            // hyprsunset.conf's remaining profiles for the rest of the
-            // session (resumes on next login/restart) — acceptable, since a
-            // guaranteed flash on every toggle is worse than a schedule that
-            // needs a nudge later.
-            hyprsunsetSet.exec(["sh", "-c", ["conf=\"$HOME/.config/hypr/hyprsunset.conf\"", "now=$(date +%H%M)", "t=$(awk -v now=\"$now\" '/time[[:space:]]*=/{gsub(/[^0-9:]/,\"\");n=split($0,a,\":\");tm=a[1]a[2];next}/temperature[[:space:]]*=/{gsub(/[^0-9]/,\"\");temp=$0;if(first==\"\")first=temp;last=temp;if(tm<=now)best=temp}END{print (best!=\"\"?best:last)}' \"$conf\")", "[ -n \"$t\" ] || t=4000", "hyprctl hyprsunset temperature \"$t\"",].join("; ")]);
+            // Back to the soft daylight default, in place. hyprsunset runs
+            // without a schedule (hypr/modules/autostarts.lua starts it at
+            // the same default), so off simply means off. Not restarting the
+            // daemon also avoids a gamma flash: Wayland allows one gamma
+            // client at a time.
+            hyprsunsetSet.exec(["hyprctl", "hyprsunset", "temperature", String(root.dayTemperature)]);
         }
     }
 

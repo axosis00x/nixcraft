@@ -14,11 +14,7 @@ channels = mono
 mono_option = average
 
 [color]
-gradient = 1
-gradient_color_1 = '#67e8f9'
-gradient_color_2 = '#60a5fa'
-gradient_color_3 = '#a78bfa'
-gradient_color_4 = '#f0abfc'
+theme = 'current'
 
 [smoothing]
 noise_reduction = 65

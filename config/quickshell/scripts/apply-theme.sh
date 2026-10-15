@@ -88,6 +88,11 @@ fi
 
 install_if_present "$theme_dir/tmux.conf" "$HOME/.config/tmux/theme.conf"
 install_if_present "$theme_dir/yazi-flavor.toml" "$HOME/.config/yazi/flavors/nixcraft.yazi/flavor.toml"
+if [ -f "$theme_dir/cava.ini" ]; then
+    mkdir -p "$HOME/.config/cava/themes"
+    ln -sfn "$theme_dir/cava.ini" "$HOME/.config/cava/themes/current"
+    $init || pkill -USR2 -x cava 2>/dev/null || true
+fi
 # $HOME is resolved by Hyprland, so the tracked file works for any user.
 printf 'return dofile(os.getenv("HOME") .. "/.config/themes/%s/hyprland.lua")\n' "$theme_name" >"$HOME/.config/hypr/theme.lua"
 

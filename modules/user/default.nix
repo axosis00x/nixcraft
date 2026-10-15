@@ -23,7 +23,12 @@
 
   xdg.configFile = {
     btop.source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/btop";
-    cava.source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/cava";
+    # Keep CAVA's config files linked individually so apply-theme.sh can
+    # switch the writable `themes/current` link without modifying the repo.
+    "cava/config".source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/cava/config";
+    "cava/shaders".source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/cava/shaders";
+    "cava/themes/solarized_dark".source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/cava/themes/solarized_dark";
+    "cava/themes/tricolor".source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/cava/themes/tricolor";
     eww.source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/eww";
     fastfetch.source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/fastfetch";
     hypr.source = config.lib.file.mkOutOfStoreSymlink "${settings.repoPath}/config/hypr";

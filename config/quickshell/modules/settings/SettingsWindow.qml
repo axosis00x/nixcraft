@@ -183,8 +183,11 @@ FloatingWindow {
     }
 
     // ── confirmations ───────────────────────────────────────────────
-    // Changes apply right away as a preview; a bar at the bottom asks to
-    // Save (keep) or Cancel (revert all unsaved changes).
+    // Layout changes (customization sliders, bar style) apply as a preview
+    // and a bar asks to Save or Cancel. Toggles and system settings (Wi-Fi,
+    // volume, night light...) apply directly, with no prompt.
+    readonly property var confirmLevels: ["roundness", "dockicons", "ccwidth", "clocksize", "weathersize", "cavasize"]
+    readonly property var confirmChoices: ["barstyle"]
     // Switch rows backed by ShellSettings → their keys.
     readonly property var shellFlagKey: ({
             dockautohide: "dockAutoHide",
@@ -281,23 +284,23 @@ FloatingWindow {
     readonly property string noticeText: promptText !== "" ? promptText : (pendingCount === 1 ? describe(Object.keys(pending)[0]) : (pendingCount > 1 ? pendingCount + " unsaved changes" : noteText))
 
     function setFlag(key, on) {
-        if (flag(key) === on)
-            return;
-        track(key, "flag", flag(key));
-        applyFlag(key, on);
+        if (flag(key) !== on)
+            applyFlag(key, on);
     }
 
     function setChoice(key, id) {
         if (choice(key) === id)
             return;
-        track(key, "choice", choice(key));
+        if (confirmChoices.indexOf(key) !== -1)
+            track(key, "choice", choice(key));
         applyChoice(key, id);
     }
 
     function setLevel(key, value) {
         if (Math.abs(level(key) - value) < 0.001)
             return;
-        track(key, "level", level(key));
+        if (confirmLevels.indexOf(key) !== -1)
+            track(key, "level", level(key));
         applyLevel(key, value);
     }
 

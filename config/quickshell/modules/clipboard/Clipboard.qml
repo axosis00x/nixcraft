@@ -291,6 +291,7 @@ Item {
                 add: Transition {
                     EffectMotion {
                         property: "opacity"
+                        alwaysRunToEnd: true
                         from: 0
                         to: 1
                         fast: false
@@ -299,6 +300,7 @@ Item {
                 remove: Transition {
                     EffectMotion {
                         property: "opacity"
+                        alwaysRunToEnd: true
                         to: 0
                     }
                 }
@@ -308,6 +310,7 @@ Item {
                     }
                     EffectMotion {
                         property: "opacity"
+                        alwaysRunToEnd: true
                         to: 1
                     }
                 }

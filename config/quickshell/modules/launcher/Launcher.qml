@@ -79,6 +79,8 @@ Item {
     // in switchList(); changing both at once built "/" command rows with the
     // app template, which showed nothing.
     property string listMode: "apps"
+    // Row add/move animations; off while the list is rebuilt on open.
+    property bool listAnimated: true
 
     readonly property var currentList: {
         switch (listMode) {
@@ -773,11 +775,18 @@ Item {
             return;
         closeTimer.stop();
         aboutToOpen();
+        // Visible first: list changes on a hidden view skip their fade-in
+        // and leave rows invisible until something nudges them.
+        visible = true;
+        // Rebuild without row animations: slides started now (or while the
+        // launcher was hidden) can stall and leave rows in the wrong slots.
+        listAnimated = false;
         searchInput.text = "";
         query = "";
         filterApps();
         selected = 0;
-        visible = true;
+        appList.forceLayout();
+        Qt.callLater(() => root.listAnimated = true);
         searchInput.forceActiveFocus();
     }
 
@@ -888,40 +897,50 @@ Item {
                 keyNavigationEnabled: false
                 cacheBuffer: 240
 
-                add: Transition {
+                // Opacity fades always finish (alwaysRunToEnd): an interrupted
+                // fade left rows invisible until the pointer nudged them.
+                add: root.listAnimated ? addTransition : null
+                property Transition addTransition: Transition {
                     EffectMotion {
                         property: "opacity"
+                        alwaysRunToEnd: true
                         from: 0
                         to: 1
                         fast: false
                     }
                 }
 
-                remove: Transition {
+                remove: root.listAnimated ? removeTransition : null
+                property Transition removeTransition: Transition {
                     EffectMotion {
                         property: "opacity"
+                        alwaysRunToEnd: true
                         to: 0
                     }
                 }
 
                 // Rows sliding into their new rank; also finishes any add
                 // that was interrupted mid-way by the next keystroke.
-                displaced: Transition {
+                displaced: root.listAnimated ? displacedTransition : null
+                property Transition displacedTransition: Transition {
                     SpatialMotion {
                         property: "y"
                     }
                     EffectMotion {
                         property: "opacity"
+                        alwaysRunToEnd: true
                         to: 1
                     }
                 }
 
-                move: Transition {
+                move: root.listAnimated ? moveTransition : null
+                property Transition moveTransition: Transition {
                     SpatialMotion {
                         property: "y"
                     }
                     EffectMotion {
                         property: "opacity"
+                        alwaysRunToEnd: true
                         to: 1
                     }
                 }

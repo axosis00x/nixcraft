@@ -83,11 +83,12 @@ Item {
             controlCenter.closeControlCenter();
         if (powerMenu && powerMenu.visible)
             powerMenu.closePowerMenu();
-        search.text = "";
-        query = "";
         closeTimer.stop();
         aboutToOpen();
+        // Visible first, so the list's fade-ins actually run.
         visible = true;
+        search.text = "";
+        query = "";
         // Start on the active style.
         selected = Math.max(0, options.findIndex(o => service && o.value === service.style));
         search.forceActiveFocus();
@@ -193,6 +194,7 @@ Item {
                 add: Transition {
                     EffectMotion {
                         property: "opacity"
+                        alwaysRunToEnd: true
                         from: 0
                         to: 1
                         fast: false
@@ -201,6 +203,7 @@ Item {
                 remove: Transition {
                     EffectMotion {
                         property: "opacity"
+                        alwaysRunToEnd: true
                         to: 0
                     }
                 }
@@ -210,6 +213,7 @@ Item {
                     }
                     EffectMotion {
                         property: "opacity"
+                        alwaysRunToEnd: true
                         to: 1
                     }
                 }

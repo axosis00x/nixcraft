@@ -89,7 +89,7 @@ fi
 install_if_present "$theme_dir/tmux.conf" "$HOME/.config/tmux/theme.conf"
 install_if_present "$theme_dir/yazi-flavor.toml" "$HOME/.config/yazi/flavors/nixcraft.yazi/flavor.toml"
 # btop: a theme generated from the palette (quickshell.js); btop.conf points
-# at "nixcraft". Running btop instances pick it up on restart.
+# at "nixcraft". Running btop reloads it on SIGUSR2.
 if [ -f "$theme_dir/quickshell.js" ]; then
     pal() { sed -n "s/^const $1 = \"\(.*\)\"$/\1/p" "$theme_dir/quickshell.js" | grep -o '[0-9a-fA-F]\{6\}$' | sed 's/^/#/'; }
     bg=$(pal bg) fg=$(pal textPrimary) muted=$(pal textMuted) sub=$(pal textSecondary)
@@ -141,6 +141,7 @@ theme[process_start]="$aqua"
 theme[process_mid]="$blue"
 theme[process_end]="$purple"
 BTOP
+    $init || pkill -USR2 -x btop 2>/dev/null || true
 fi
 if [ -f "$theme_dir/cava.ini" ]; then
     mkdir -p "$HOME/.config/cava/themes"

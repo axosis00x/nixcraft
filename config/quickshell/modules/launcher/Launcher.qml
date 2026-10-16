@@ -79,8 +79,10 @@ Item {
     // in switchList(); changing both at once built "/" command rows with the
     // app template, which showed nothing.
     property string listMode: "apps"
-    // Row add/move animations; off while the list is rebuilt on open.
-    property bool listAnimated: true
+    // Row animations stay off: with big reorders (each keystroke re-ranks
+    // dozens of apps) they left rows invisible or in the wrong slots.
+    // Results show instantly instead.
+    readonly property bool listAnimated: false
 
     readonly property var currentList: {
         switch (listMode) {
@@ -338,6 +340,20 @@ Item {
         } else {
             selected = 0;
         }
+        Qt.callLater(root.resetList);
+    }
+
+    // Rebuild the rows instead of letting the list apply a burst of moves:
+    // re-ranking reorders dozens of rows per keystroke, which left the
+    // bottom-to-top list scrolled wrong (gaps) until the pointer moved.
+    function resetList() {
+        appList.model = null;
+        appList.model = appModel;
+        appList.currentIndex = selected;
+        if (selected <= 0)
+            appList.positionViewAtBeginning();
+        else
+            appList.positionViewAtIndex(selected, ListView.Contain);
     }
 
     function syncShaderSelection() {
@@ -778,15 +794,12 @@ Item {
         // Visible first: list changes on a hidden view skip their fade-in
         // and leave rows invisible until something nudges them.
         visible = true;
-        // Rebuild without row animations: slides started now (or while the
-        // launcher was hidden) can stall and leave rows in the wrong slots.
-        listAnimated = false;
         searchInput.text = "";
         query = "";
         filterApps();
         selected = 0;
-        appList.forceLayout();
-        Qt.callLater(() => root.listAnimated = true);
+        // Fresh rows every open (rows built while hidden kept stale slots).
+        resetList();
         searchInput.forceActiveFocus();
     }
 
@@ -810,7 +823,9 @@ Item {
     Timer {
         id: closeTimer
         interval: 180
-        onTriggered: root.visible = false
+        onTriggered: {
+            root.visible = false;
+        }
     }
 
     ColumnLayout {
@@ -861,6 +876,7 @@ Item {
                 // A diffing model: filtering inserts, removes and moves rows
                 // (animated below) rather than resetting the whole list.
                 model: ScriptModel {
+                    id: appModel
                     values: root.currentList
                 }
                 currentIndex: root.selected
@@ -919,31 +935,7 @@ Item {
                     }
                 }
 
-                // Rows sliding into their new rank; also finishes any add
-                // that was interrupted mid-way by the next keystroke.
-                displaced: root.listAnimated ? displacedTransition : null
-                property Transition displacedTransition: Transition {
-                    SpatialMotion {
-                        property: "y"
-                    }
-                    EffectMotion {
-                        property: "opacity"
-                        alwaysRunToEnd: true
-                        to: 1
-                    }
-                }
 
-                move: root.listAnimated ? moveTransition : null
-                property Transition moveTransition: Transition {
-                    SpatialMotion {
-                        property: "y"
-                    }
-                    EffectMotion {
-                        property: "opacity"
-                        alwaysRunToEnd: true
-                        to: 1
-                    }
-                }
 
                 ScrollBar.vertical: ScrollBar {
                     policy: ScrollBar.AsNeeded

@@ -26,6 +26,9 @@ Item {
 
     // Don't take clicks while faded out on the stage.
     enabled: wanted
+    // Hidden once faded out: a transparent item still catches hover, which
+    // blocked the power and tool menus beneath it on the top stage.
+    visible: opacity > 0.01
 
     function hide() {
         if (center)

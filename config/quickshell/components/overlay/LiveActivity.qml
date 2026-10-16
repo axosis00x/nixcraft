@@ -137,6 +137,9 @@ Item {
     implicitWidth: Math.min(260, Math.max(160, contentWidth))
     implicitHeight: Math.max(baseHeight, 34)
     enabled: wanted
+    // Hidden once faded out: a transparent item still catches hover, which
+    // blocked the power and tool menus beneath it on the top stage.
+    visible: opacity > 0.01
 
     RowLayout {
         anchors.fill: parent

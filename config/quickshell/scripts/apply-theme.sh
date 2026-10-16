@@ -88,6 +88,60 @@ fi
 
 install_if_present "$theme_dir/tmux.conf" "$HOME/.config/tmux/theme.conf"
 install_if_present "$theme_dir/yazi-flavor.toml" "$HOME/.config/yazi/flavors/nixcraft.yazi/flavor.toml"
+# btop: a theme generated from the palette (quickshell.js); btop.conf points
+# at "nixcraft". Running btop instances pick it up on restart.
+if [ -f "$theme_dir/quickshell.js" ]; then
+    pal() { sed -n "s/^const $1 = \"\(.*\)\"$/\1/p" "$theme_dir/quickshell.js" | grep -o '[0-9a-fA-F]\{6\}$' | sed 's/^/#/'; }
+    bg=$(pal bg) fg=$(pal textPrimary) muted=$(pal textMuted) sub=$(pal textSecondary)
+    accent=$(pal accent) high=$(pal surfaceContainerHigh) line=$(pal outlineVariant)
+    blue=$(pal blue) green=$(pal green) yellow=$(pal yellow) purple=$(pal purple)
+    aqua=$(pal aqua) orange=$(pal orange) red=$(pal error)
+    mkdir -p "$HOME/.config/btop/themes"
+    cat >"$HOME/.config/btop/themes/nixcraft.theme" <<BTOP
+theme[main_bg]="$bg"
+theme[main_fg]="$fg"
+theme[title]="$fg"
+theme[hi_fg]="$accent"
+theme[selected_bg]="$high"
+theme[selected_fg]="$accent"
+theme[inactive_fg]="$muted"
+theme[graph_text]="$sub"
+theme[meter_bg]="$high"
+theme[proc_misc]="$aqua"
+theme[cpu_box]="$blue"
+theme[mem_box]="$green"
+theme[net_box]="$purple"
+theme[proc_box]="$accent"
+theme[div_line]="$line"
+theme[temp_start]="$green"
+theme[temp_mid]="$yellow"
+theme[temp_end]="$red"
+theme[cpu_start]="$aqua"
+theme[cpu_mid]="$blue"
+theme[cpu_end]="$purple"
+theme[free_start]="$green"
+theme[free_mid]="$green"
+theme[free_end]="$aqua"
+theme[cached_start]="$blue"
+theme[cached_mid]="$blue"
+theme[cached_end]="$purple"
+theme[available_start]="$aqua"
+theme[available_mid]="$aqua"
+theme[available_end]="$green"
+theme[used_start]="$yellow"
+theme[used_mid]="$orange"
+theme[used_end]="$red"
+theme[download_start]="$blue"
+theme[download_mid]="$aqua"
+theme[download_end]="$green"
+theme[upload_start]="$purple"
+theme[upload_mid]="$orange"
+theme[upload_end]="$red"
+theme[process_start]="$aqua"
+theme[process_mid]="$blue"
+theme[process_end]="$purple"
+BTOP
+fi
 if [ -f "$theme_dir/cava.ini" ]; then
     mkdir -p "$HOME/.config/cava/themes"
     ln -sfn "$theme_dir/cava.ini" "$HOME/.config/cava/themes/current"

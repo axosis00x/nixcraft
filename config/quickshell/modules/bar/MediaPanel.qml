@@ -248,10 +248,11 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 anchors.margins: backdrop.bleed
-                topLeftRadius: root.island ? 20 : 0
-                topRightRadius: root.island ? 20 : 0
-                bottomLeftRadius: 20
-                bottomRightRadius: 20
+                // Same corners as the panel (they follow the roundness setting).
+                topLeftRadius: root.island ? Palette.Theme.radiusLarge : 0
+                topRightRadius: root.island ? Palette.Theme.radiusLarge : 0
+                bottomLeftRadius: Palette.Theme.radiusLarge
+                bottomRightRadius: Palette.Theme.radiusLarge
                 antialiasing: true
             }
         }
@@ -293,7 +294,7 @@ Item {
             Layout.preferredWidth: column.implicitHeight
             Layout.preferredHeight: column.implicitHeight
             Layout.alignment: Qt.AlignVCenter
-            radius: 4
+            radius: Palette.Theme.radiusXs
             color: Palette.Theme.surfaceContainerHigh
 
             Image {

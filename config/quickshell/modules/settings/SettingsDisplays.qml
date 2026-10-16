@@ -94,7 +94,7 @@ ColumnLayout {
                     Rectangle {
                         Layout.preferredWidth: 40
                         Layout.preferredHeight: 40
-                        radius: 20
+                        radius: Math.min(height / 2, Palette.Theme.radiusLarge)
                         color: Palette.Theme.accentTonal
 
                         Text {

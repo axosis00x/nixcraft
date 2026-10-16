@@ -31,7 +31,7 @@ Item {
         Rectangle {
             implicitWidth: 32
             implicitHeight: 32
-            radius: 16
+            radius: Math.min(width / 2, Palette.Theme.radiusLarge)
             color: root.active ? Palette.Theme.surfaceContainerHighest : Palette.Theme.surfaceContainerHigh
             Layout.alignment: Qt.AlignVCenter
 

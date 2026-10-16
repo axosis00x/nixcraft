@@ -39,10 +39,9 @@ Item {
     readonly property real groupRadius: Palette.Theme.radiusMedium
     readonly property bool morph: mouse.pressed && interactive
 
-    // The non-compact layout has 12px vertical insets, a 28px heading,
-    // 8px spacing, and a 36–38px control. Reserve the full 98px so sliders
-    // and segmented controls don't spill into the next section.
-    implicitHeight: kind === "slider" || kind === "segment" ? 98 : (subtitle !== "" ? 58 : 48)
+    // Sliders need less vertical room than segmented controls: an 8px inset,
+    // one label, a 38px track and a small gap fit comfortably in 82px.
+    implicitHeight: kind === "slider" ? 82 : (kind === "segment" ? 98 : (subtitle !== "" ? 58 : 48))
 
     Rectangle {
         id: shape
@@ -238,9 +237,9 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: Palette.Theme.spacingLarge
         anchors.rightMargin: Palette.Theme.spacingLarge
-        anchors.topMargin: Palette.Theme.spacingMedium
-        anchors.bottomMargin: Palette.Theme.spacingMedium
-        spacing: Palette.Theme.spacingSmall
+        anchors.topMargin: root.kind === "slider" ? Palette.Theme.spacingSmall : Palette.Theme.spacingMedium
+        anchors.bottomMargin: root.kind === "slider" ? Palette.Theme.spacingSmall : Palette.Theme.spacingMedium
+        spacing: root.kind === "slider" ? 6 : Palette.Theme.spacingSmall
         visible: !root.compactRow
 
         RowLayout {

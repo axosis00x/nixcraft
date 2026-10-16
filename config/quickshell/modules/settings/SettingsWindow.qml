@@ -83,12 +83,31 @@ FloatingWindow {
         query = "";
         aboutToOpen();
         shown = true;
+        // This FloatingWindow instance is kept alive while hidden. If the
+        // user tiled it before closing, the map rule will not run again, so
+        // explicitly restore its floating state after Hyprland maps it.
+        restoreFloatingTimer.restart();
         if (controlCenter)
             controlCenter.refreshAll();
         if (themeService)
             themeService.refresh();
         aboutProcess.running = true;
         searchInput.forceActiveFocus();
+    }
+
+    function restoreFloating() {
+        floatWindowProcess.exec(["hyprctl", "eval", "hl.dispatch(hl.dsp.window.float({window = \"title:nixcraft-settings\", action = \"on\"})); hl.dispatch(hl.dsp.window.center({window = \"title:nixcraft-settings\"}))"]);
+    }
+
+    Timer {
+        id: restoreFloatingTimer
+        interval: 100
+        repeat: false
+        onTriggered: root.restoreFloating()
+    }
+
+    Process {
+        id: floatWindowProcess
     }
 
     function openPage(name) {

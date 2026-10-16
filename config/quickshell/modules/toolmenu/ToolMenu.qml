@@ -18,6 +18,7 @@ Item {
     property var controlCenter: null
     property var bar: null
     property int selectedIndex: 0
+    property int hoveredIndex: -1
 
     implicitWidth: Math.min(maxWidth - 24, actions.length * 48 + (actions.length - 1) * 8 + 16)
     implicitHeight: content.implicitHeight + 16
@@ -74,6 +75,7 @@ Item {
         if (visible && !closing)
             return;
         selectedIndex = 0;
+        hoveredIndex = -1;
         closeTimer.stop();
         aboutToOpen();
         visible = true;
@@ -160,30 +162,47 @@ Item {
                     required property int index
                     readonly property bool recordAction: modelData.name === "Record"
                     readonly property bool recording: recordAction && root.bar && root.bar.isRecording
+                    readonly property bool highlighted: root.hoveredIndex >= 0 ? root.hoveredIndex === index : root.selectedIndex === index
 
                     Layout.minimumWidth: 48
                     Layout.preferredWidth: 48
                     Layout.maximumWidth: 48
                     implicitHeight: 48
                     radius: Palette.Theme.radiusMedium
-                    scale: actionMouse.pressed ? 0.90 : 1
+                    scale: actionMouse.pressed ? 0.97 : (actionMouse.containsMouse ? 1.04 : 1)
                     Behavior on scale {
-                        SpatialMotion {
-                            fast: true
+                        NumberAnimation {
+                            duration: actionMouse.pressed ? Palette.Theme.effectFast : 220
+                            easing.type: Easing.OutCubic
                         }
                     }
 
-                    color: index === root.selectedIndex ? Palette.Theme.accent : Palette.Theme.surfaceContainerHigh
-                    border.width: recording ? 1 : 0
-                    border.color: Palette.Theme.errorColor
+                    color: highlighted ? Palette.Theme.accent : Palette.Theme.surfaceContainerHigh
+                    border.width: recording || actionMouse.containsMouse ? 1 : 0
+                    border.color: recording ? Palette.Theme.errorColor : Qt.alpha(Palette.Theme.accent, 0.55)
+
+                    Behavior on border.width {
+                        NumberAnimation {
+                            duration: 180
+                            easing.type: Easing.OutCubic
+                        }
+                    }
 
                     Behavior on color {
-                        ColorMotion {}
+                        ColorMotion {
+                            fast: false
+                        }
+                    }
+
+                    Behavior on border.color {
+                        ColorMotion {
+                            fast: false
+                        }
                     }
 
                     StateLayer {
                         radius: parent.radius
-                        tone: index === root.selectedIndex ? Palette.Theme.accentText : Palette.Theme.textPrimary
+                        tone: highlighted ? Palette.Theme.accentText : Palette.Theme.textPrimary
                         hovered: actionMouse.containsMouse
                         pressed: actionMouse.pressed
                     }
@@ -191,10 +210,16 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         text: modelData.icon
-                        color: recording || index === root.selectedIndex ? Palette.Theme.accentText : Palette.Theme.textPrimary
+                        color: recording || parent.highlighted ? Palette.Theme.accentText : Palette.Theme.textPrimary
                         font.family: Palette.Theme.fontIcons
                         font.weight: Palette.Theme.iconWeight
                         font.pixelSize: Palette.Theme.iconSize
+
+                        Behavior on color {
+                            ColorMotion {
+                                fast: false
+                            }
+                        }
                     }
 
                     Rectangle {
@@ -223,7 +248,14 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onEntered: root.selectedIndex = index
+                        onContainsMouseChanged: {
+                            if (containsMouse) {
+                                root.hoveredIndex = index;
+                                root.selectedIndex = index;
+                            } else if (root.hoveredIndex === index) {
+                                root.hoveredIndex = -1;
+                            }
+                        }
                         onClicked: root.choose(index)
                     }
                 }

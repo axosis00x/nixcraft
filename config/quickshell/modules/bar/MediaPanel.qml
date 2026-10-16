@@ -36,6 +36,7 @@ Item {
 
     implicitWidth: 460
     implicitHeight: body.implicitHeight + 32
+    property bool island: false
 
     // ── MPRIS player selection ────────────────────────────────────────────────
     // Follows whatever is playing, unless a player was picked with the
@@ -210,8 +211,8 @@ Item {
     // Gives each track its own mood. The blurred cover is drawn larger than
     // the panel (by `bleed` on every side) so the blur has real image to
     // sample at the edges instead of fading to a dark rim, then masked back
-    // to the panel's exact silhouette: flat top, the notch's 20px bottom
-    // corners.
+    // to the panel's exact silhouette: flat top corners in notch mode, with
+    // all four corners rounded when the bar is in island mode.
     Item {
         id: backdrop
         anchors.fill: parent
@@ -247,6 +248,8 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 anchors.margins: backdrop.bleed
+                topLeftRadius: root.island ? 20 : 0
+                topRightRadius: root.island ? 20 : 0
                 bottomLeftRadius: 20
                 bottomRightRadius: 20
                 antialiasing: true

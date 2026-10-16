@@ -371,6 +371,7 @@ PanelWindow {
 
         MediaPanel {
             id: mediaPanelItem
+            island: root.island
         }
 
         PolkitPanel {

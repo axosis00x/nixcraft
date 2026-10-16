@@ -39,7 +39,10 @@ Item {
     readonly property real groupRadius: Palette.Theme.radiusMedium
     readonly property bool morph: mouse.pressed && interactive
 
-    implicitHeight: kind === "slider" ? 82 : (kind === "segment" ? 80 : (subtitle !== "" ? 58 : 48))
+    // The non-compact layout has 12px vertical insets, a 28px heading,
+    // 8px spacing, and a 36–38px control. Reserve the full 98px so sliders
+    // and segmented controls don't spill into the next section.
+    implicitHeight: kind === "slider" || kind === "segment" ? 98 : (subtitle !== "" ? 58 : 48)
 
     Rectangle {
         id: shape
@@ -49,9 +52,9 @@ Item {
         topRightRadius: topLeftRadius
         bottomLeftRadius: root.dangerous || root.morph ? Palette.Theme.radiusMedium : (root.last ? root.groupRadius : 0)
         bottomRightRadius: bottomLeftRadius
-        color: root.dangerous ? Qt.alpha(Palette.Theme.errorColor, mouse.containsMouse ? 0.16 : 0.08) : (root.morph ? Palette.Theme.surfaceContainerHigh : "transparent")
-        border.width: root.dangerous ? 1 : 0
-        border.color: Qt.alpha(Palette.Theme.errorColor, mouse.containsMouse ? 0.48 : 0.24)
+        color: root.dangerous ? Qt.alpha(Palette.Theme.errorColor, mouse.containsMouse ? 0.14 : 0.07) : (root.morph ? Palette.Theme.surfaceContainerHigh : "transparent")
+        border.width: root.dangerous ? (mouse.containsMouse ? 1.5 : 1) : 0
+        border.color: Qt.alpha(Palette.Theme.errorColor, mouse.containsMouse ? 0.58 : 0.3)
 
         Behavior on anchors.margins {
             SpatialMotion {
@@ -66,6 +69,15 @@ Item {
         }
         Behavior on color {
             ColorMotion {}
+        }
+        Behavior on border.color {
+            ColorMotion {}
+        }
+        Behavior on border.width {
+            NumberAnimation {
+                duration: Palette.Theme.effectDefault
+                easing.type: Easing.OutCubic
+            }
         }
 
         StateLayer {
@@ -111,7 +123,7 @@ Item {
         visible: root.compactRow
 
         Text {
-            visible: root.icon !== ""
+            visible: root.icon !== "" && !root.dangerous
             Layout.alignment: Qt.AlignVCenter
             Layout.preferredWidth: Palette.Theme.iconSize
             text: root.icon
@@ -119,6 +131,39 @@ Item {
             font.family: Palette.Theme.fontIcons
             font.weight: Palette.Theme.iconWeight
             font.pixelSize: Palette.Theme.iconSize
+        }
+
+        Rectangle {
+            visible: root.dangerous && root.icon !== ""
+            Layout.alignment: Qt.AlignVCenter
+            Layout.preferredWidth: 32
+            Layout.preferredHeight: 32
+            radius: height / 2
+            color: Qt.alpha(Palette.Theme.errorColor, mouse.containsMouse ? 0.2 : 0.13)
+            border.width: 1
+            border.color: Qt.alpha(Palette.Theme.errorColor, mouse.containsMouse ? 0.38 : 0.22)
+            scale: mouse.containsMouse ? 1.04 : 1
+
+            Behavior on color {
+                ColorMotion {}
+            }
+            Behavior on border.color {
+                ColorMotion {}
+            }
+            Behavior on scale {
+                SpatialMotion {
+                    fast: true
+                }
+            }
+
+            Text {
+                anchors.centerIn: parent
+                text: root.icon
+                color: Palette.Theme.errorColor
+                font.family: Palette.Theme.fontIcons
+                font.weight: Palette.Theme.iconWeight
+                font.pixelSize: Palette.Theme.iconSize
+            }
         }
 
         ColumnLayout {
@@ -133,6 +178,10 @@ Item {
                 font.family: Palette.Theme.fontSans
                 font.pixelSize: Palette.Theme.fontSizeBody
                 elide: Text.ElideRight
+
+                Behavior on color {
+                    ColorMotion {}
+                }
             }
 
             Text {
@@ -143,6 +192,10 @@ Item {
                 font.family: Palette.Theme.fontSans
                 font.pixelSize: Palette.Theme.fontSizeXs
                 elide: Text.ElideRight
+
+                Behavior on color {
+                    ColorMotion {}
+                }
             }
         }
 

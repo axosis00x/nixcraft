@@ -17,6 +17,7 @@ Item {
     property var launcher: null
     property var controlCenter: null
     property int selectedIndex: 0
+    property int hoveredIndex: -1
     property string confirmAction: ""
     property bool confirmChoiceSelected: false
 
@@ -77,6 +78,7 @@ Item {
         if (visible && !closing)
             return;
         selectedIndex = 0;
+        hoveredIndex = -1;
         confirmAction = "";
         confirmChoiceSelected = false;
         closeTimer.stop();
@@ -181,34 +183,51 @@ Item {
                 delegate: Rectangle {
                     required property var modelData
                     required property int index
+                    readonly property bool highlighted: root.hoveredIndex >= 0 ? root.hoveredIndex === index : root.selectedIndex === index
 
                     Layout.minimumWidth: 48
                     Layout.preferredWidth: 48
                     Layout.maximumWidth: 48
                     implicitHeight: 48
                     radius: Palette.Theme.radiusMedium
-                    scale: actionMouse.pressed ? 0.92 : 1
+                    scale: actionMouse.pressed ? 0.97 : (actionMouse.containsMouse ? 1.04 : 1)
                     Behavior on scale {
-                        SpatialMotion {
-                            fast: true
+                        NumberAnimation {
+                            duration: actionMouse.pressed ? Palette.Theme.effectFast : 220
+                            easing.type: Easing.OutCubic
                         }
                     }
 
                     color: {
                         if (modelData.dangerous)
-                            return Qt.alpha(Palette.Theme.errorColor, index === root.selectedIndex ? 0.22 : 0.09);
-                        return index === root.selectedIndex ? Palette.Theme.accent : Palette.Theme.surfaceContainerHigh;
+                            return Qt.alpha(Palette.Theme.errorColor, highlighted ? 0.22 : 0.09);
+                        return highlighted ? Palette.Theme.accent : Palette.Theme.surfaceContainerHigh;
                     }
-                    border.width: modelData.dangerous ? 1 : 0
-                    border.color: Qt.alpha(Palette.Theme.errorColor, index === root.selectedIndex ? 0.55 : 0.25)
+                    border.width: modelData.dangerous || actionMouse.containsMouse ? 1 : 0
+                    border.color: modelData.dangerous ? Qt.alpha(Palette.Theme.errorColor, highlighted ? 0.55 : 0.25) : Qt.alpha(Palette.Theme.accent, 0.55)
+
+                    Behavior on border.width {
+                        NumberAnimation {
+                            duration: 180
+                            easing.type: Easing.OutCubic
+                        }
+                    }
 
                     Behavior on color {
-                        ColorMotion {}
+                        ColorMotion {
+                            fast: false
+                        }
+                    }
+
+                    Behavior on border.color {
+                        ColorMotion {
+                            fast: false
+                        }
                     }
 
                     StateLayer {
                         radius: parent.radius
-                        tone: modelData.dangerous ? Palette.Theme.errorColor : (index === root.selectedIndex ? Palette.Theme.accentText : Palette.Theme.textPrimary)
+                        tone: modelData.dangerous ? Palette.Theme.errorColor : (parent.highlighted ? Palette.Theme.accentText : Palette.Theme.textPrimary)
                         hovered: actionMouse.containsMouse
                         pressed: actionMouse.pressed
                     }
@@ -216,10 +235,16 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         text: modelData.icon
-                        color: modelData.dangerous ? Palette.Theme.errorColor : (index === root.selectedIndex ? Palette.Theme.accentText : Palette.Theme.textPrimary)
+                        color: modelData.dangerous ? Palette.Theme.errorColor : (parent.highlighted ? Palette.Theme.accentText : Palette.Theme.textPrimary)
                         font.family: Palette.Theme.fontIcons
                         font.weight: Palette.Theme.iconWeight
                         font.pixelSize: Palette.Theme.iconSize
+
+                        Behavior on color {
+                            ColorMotion {
+                                fast: false
+                            }
+                        }
                     }
 
                     MouseArea {
@@ -227,7 +252,14 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onEntered: root.selectedIndex = index
+                        onContainsMouseChanged: {
+                            if (containsMouse) {
+                                root.hoveredIndex = index;
+                                root.selectedIndex = index;
+                            } else if (root.hoveredIndex === index) {
+                                root.hoveredIndex = -1;
+                            }
+                        }
                         onClicked: root.choose(index)
                     }
                 }
@@ -250,10 +282,16 @@ Item {
                     color: root.confirmChoiceSelected ? Qt.alpha(Palette.Theme.errorColor, 0.20) : Palette.Theme.surfaceContainerLow
                     border.width: 1
                     border.color: Qt.alpha(Palette.Theme.errorColor, root.confirmChoiceSelected ? 0.55 : 0.25)
-                    scale: confirmMouse.pressed ? 0.94 : 1
+                    Behavior on border.color {
+                        ColorMotion {
+                            fast: false
+                        }
+                    }
+                    scale: confirmMouse.pressed ? 0.98 : (confirmMouse.containsMouse ? 1.015 : 1)
                     Behavior on scale {
-                        SpatialMotion {
-                            fast: true
+                        NumberAnimation {
+                            duration: confirmMouse.pressed ? Palette.Theme.effectFast : 180
+                            easing.type: Easing.OutCubic
                         }
                     }
 
@@ -271,6 +309,11 @@ Item {
                             font.family: Palette.Theme.fontIcons
                             font.weight: Palette.Theme.iconWeight
                             font.pixelSize: Palette.Theme.iconSizeSmall
+                            Behavior on color {
+                                ColorMotion {
+                                    fast: false
+                                }
+                            }
                         }
                         Text {
                             Layout.alignment: Qt.AlignHCenter
@@ -279,6 +322,11 @@ Item {
                             font.family: Palette.Theme.fontSans
                             font.pixelSize: Palette.Theme.fontSizeXs
                             font.weight: Font.Medium
+                            Behavior on color {
+                                ColorMotion {
+                                    fast: false
+                                }
+                            }
                         }
                     }
 
@@ -287,7 +335,8 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onEntered: root.confirmChoiceSelected = true
+                        onContainsMouseChanged: if (containsMouse)
+                            root.confirmChoiceSelected = true
                         onClicked: root.confirm()
                     }
                 }
@@ -299,10 +348,11 @@ Item {
                     // The primary background follows keyboard/mouse focus,
                     // including the X/Cancel choice.
                     color: !root.confirmChoiceSelected ? Palette.Theme.accent : Palette.Theme.surfaceContainerLow
-                    scale: cancelMouse.pressed ? 0.94 : 1
+                    scale: cancelMouse.pressed ? 0.98 : (cancelMouse.containsMouse ? 1.015 : 1)
                     Behavior on scale {
-                        SpatialMotion {
-                            fast: true
+                        NumberAnimation {
+                            duration: cancelMouse.pressed ? Palette.Theme.effectFast : 180
+                            easing.type: Easing.OutCubic
                         }
                     }
 
@@ -320,6 +370,11 @@ Item {
                             font.family: Palette.Theme.fontIcons
                             font.weight: Palette.Theme.iconWeight
                             font.pixelSize: Palette.Theme.iconSizeSmall
+                            Behavior on color {
+                                ColorMotion {
+                                    fast: false
+                                }
+                            }
                         }
                         Text {
                             Layout.alignment: Qt.AlignHCenter
@@ -328,6 +383,11 @@ Item {
                             font.family: Palette.Theme.fontSans
                             font.pixelSize: Palette.Theme.fontSizeXs
                             font.weight: Font.Medium
+                            Behavior on color {
+                                ColorMotion {
+                                    fast: false
+                                }
+                            }
                         }
                     }
 
@@ -336,7 +396,8 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onEntered: root.confirmChoiceSelected = false
+                        onContainsMouseChanged: if (containsMouse)
+                            root.confirmChoiceSelected = false
                         onClicked: root.confirmAction = ""
                     }
                 }

@@ -58,7 +58,7 @@ FloatingWindow {
     // in before the window is ever opened.
     Component.onCompleted: aboutProcess.running = true
 
-    readonly property var pageIds: ["overview", "network", "display", "sound", "power", "appearance", "bar", "dock", "widgets", "about", "search"]
+    readonly property var pageIds: ["overview", "network", "display", "sound", "power", "themes", "appearance", "widgets", "about", "search"]
 
     // ── open / close ────────────────────────────────────────────────
     IpcHandler {
@@ -93,6 +93,8 @@ FloatingWindow {
 
     function openPage(name) {
         open();
+        if (name === "bar" || name === "dock")
+            name = "appearance";
         if (pageIds.indexOf(name) !== -1 && name !== "search")
             page = name;
     }
@@ -505,9 +507,8 @@ FloatingWindow {
         var c = controlCenter;
         switch (key) {
         case "bar":
-            return (barLayout ? "Bar: " + barLayout.style + (flag("island") ? ", island" : "") + "  ·  " : "") + "Control center " + levelText("ccwidth");
         case "dock":
-            return flag("dock") ? (flag("dockautohide") ? "Shown, hides over windows" : "Always shown") : "Hidden";
+            return (barLayout ? "Bar: " + barLayout.style + (flag("island") ? ", island" : "") + "  ·  " : "") + "Control center " + levelText("ccwidth") + "  ·  " + (flag("dock") ? (flag("dockautohide") ? "Dock hides over windows" : "Dock always shown") : "Dock hidden");
         case "widgets":
             return ["clock", "weather", "cava"].filter(k => flag(k)).length + " of 3 widgets on";
         case "net":
@@ -519,6 +520,8 @@ FloatingWindow {
         case "power":
             return (batteryPercent >= 0 ? batteryPercent + "%" + (batteryCharging ? " charging" : "") + "  ·  " : "") + (profileNames[choice("powerprofile")] || "");
         case "appearance":
+            return "Bar, control center and dock";
+        case "themes":
             return themeService && themeService.activeTheme ? "Theme: " + themeService.activeTheme : "Theme, wallpaper and corners";
         case "about":
             return about.host || "This device";
@@ -650,9 +653,8 @@ FloatingWindow {
     // ── content ─────────────────────────────────────────────────────
     readonly property var categories: [
         { id: "overview", icon: "", title: "Overview", sub: "overview" },
-        { id: "appearance", icon: "", title: "Appearance", sub: "appearance" },
-        { id: "bar", icon: "toolbar", title: "Bar & control center", sub: "bar" },
-        { id: "dock", icon: "dock_to_bottom", title: "Dock", sub: "dock" },
+        { id: "themes", icon: "", title: "Themes", sub: "themes" },
+        { id: "appearance", icon: "tune", title: "Appearance", sub: "appearance" },
         { id: "widgets", icon: "widgets", title: "Widgets", sub: "widgets" },
         { id: "network", icon: "", title: "Network & internet", sub: "net" },
         { id: "display", icon: "", title: "Display", sub: "display" },
@@ -667,9 +669,8 @@ FloatingWindow {
             "display": "Display",
             "sound": "Sound",
             "power": "Power & performance",
+            "themes": "Themes",
             "appearance": "Appearance",
-            "bar": "Bar & control center",
-            "dock": "Dock",
             "widgets": "Widgets",
             "about": "About device",
             "search": "Search results"
@@ -799,7 +800,7 @@ FloatingWindow {
                     ]
                 }
             ],
-            "bar": [
+            "appearance": [
                 {
                     title: "Layout",
                     rows: [
@@ -815,20 +816,30 @@ FloatingWindow {
                     ]
                 },
                 {
+                    title: "Shape",
+                    rows: [
+                        { kind: "slider", key: "roundness", icon: "rounded_corner", title: "Corner roundness" }
+                    ]
+                },
+                {
                     title: "Control center",
                     rows: [
                         { kind: "slider", key: "ccwidth", icon: "width", title: "Control center width" },
                         { kind: "switch", key: "glyph", icon: "grid_view", title: "Glyph matrix", subtitle: "The animated dot display in Controls" }
                     ]
-                }
-            ],
-            "dock": [
+                },
                 {
                     title: "Dock",
                     rows: [
                         { kind: "switch", key: "dock", icon: "", title: "Show dock", subtitle: "App dock at the bottom of the screen" },
                         { kind: "switch", key: "dockautohide", icon: "visibility_off", title: "Hide over open windows", subtitle: "Reveal it from the bottom edge" },
                         { kind: "slider", key: "dockicons", icon: "apps", title: "Dock icon size" }
+                    ]
+                },
+                {
+                    title: "",
+                    rows: [
+                        { kind: "nav", act: "resetcustom", icon: "restart_alt", title: "Restore layout defaults", subtitle: "Reset corners, dock, control center and widget sizes", dangerous: true }
                     ]
                 }
             ],
@@ -847,26 +858,19 @@ FloatingWindow {
                     ]
                 }
             ],
-            "appearance": [
+            "themes": [
                 {
                     title: "Theme",
                     layout: "themes",
                     rows: [
-                        { kind: "nav", page: "appearance", icon: "", title: "Theme", subtitle: "Color theme for the whole desktop" }
-                    ]
-                },
-                {
-                    title: "Shape",
-                    rows: [
-                        { kind: "slider", key: "roundness", icon: "rounded_corner", title: "Corner roundness" },
-                        { kind: "nav", act: "resetcustom", icon: "restart_alt", title: "Reset layout settings", subtitle: "Corners, dock, control center and widget sizes back to stock", dangerous: true }
+                        { kind: "nav", page: "themes", icon: "", title: "Theme", subtitle: "Color theme for the whole desktop" }
                     ]
                 },
                 {
                     title: "Wallpaper",
                     layout: "wallpapers",
                     rows: [
-                        { kind: "nav", page: "appearance", icon: "", title: "Wallpaper", subtitle: "Pick a wallpaper for this theme" }
+                        { kind: "nav", page: "themes", icon: "", title: "Wallpaper", subtitle: "Pick a wallpaper for this theme" }
                     ]
                 }
             ],
@@ -1148,9 +1152,8 @@ FloatingWindow {
                                 selected: root.activePage === modelData.id
                                 hue: ({
                                         overview: Palette.Theme.accent,
-                                        appearance: Palette.Theme.purple,
-                                        bar: Palette.Theme.blue,
-                                        dock: Palette.Theme.aqua,
+                                        themes: Palette.Theme.purple,
+                                        appearance: Palette.Theme.blue,
                                         widgets: Palette.Theme.yellow,
                                         network: Palette.Theme.blue,
                                         display: Palette.Theme.aqua,

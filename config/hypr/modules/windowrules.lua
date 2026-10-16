@@ -119,6 +119,4 @@ hl.window_rule({
     opacity = "1.0 override",
     no_shadow = true,
     border_size = 0,
-    rounding = 20,
-    rounding_power = 2,
 })

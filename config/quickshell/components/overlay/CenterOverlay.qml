@@ -72,11 +72,8 @@ PanelWindow {
     // quicker than opening, between the theme's fast and default motion.
     readonly property int closeDuration: (Palette.Theme.motionFast + Palette.Theme.motionDefault) / 2
 
-    // What the idle top notch grows into when no top panel is open: a new
-    // notification first, else a live activity (recording, timer,
-    // download). These don't count towards `active`.
-    // A live activity steps aside while a fullscreen app (video, game) is
-    // focused; notifications still come through.
+    // The idle top notch shows a new notification, else a live activity (not
+    // in fullscreen). Neither counts as `active`.
     readonly property var peekPanel: activeTopPanel !== null ? null : (notificationPeek.wanted ? notificationPeek : (liveActivity.wanted && !fullscreenActive ? liveActivity : null))
 
     // Central modules origin edge:
@@ -99,17 +96,13 @@ PanelWindow {
     readonly property var activeTopPanel: currentTargetPanel && currentTargetPanel.visible && isTopModule(currentTargetPanel) ? currentTargetPanel : null
     readonly property var activeBottomPanel: currentTargetPanel && currentTargetPanel.visible && !isTopModule(currentTargetPanel) ? currentTargetPanel : null
 
-    // The dock is the bottom stage's resting state: it shows whenever no
-    // bottom panel is open, and the slab morphs between it and those panels.
-    // It deliberately doesn't count towards `active` (that grabs the whole
-    // screen's input and keyboard focus).
-    //
-    // While the current workspace has windows it auto-hides; hovering the
-    // strip at the bottom edge (dockTrigger) reveals it until the pointer
-    // has left the dock again. An empty workspace keeps it up permanently.
+    // The dock is the bottom stage's resting state; it doesn't count as
+    // `active`. It auto-hides over windows (see dockAutoHide) and the
+    // bottom-edge strip reveals it.
     property bool dockRevealed: false
     readonly property bool dockCanShow: dockItem.wanted && activeBottomPanel === null
-    readonly property bool dockShown: dockCanShow && (!dockItem.workspaceBusy || dockRevealed)
+    // Settings → Customize can keep it up even over busy workspaces.
+    readonly property bool dockShown: dockCanShow && (!Palette.Theme.dockAutoHide || !dockItem.workspaceBusy || dockRevealed)
     readonly property bool dockAutoHidden: dockCanShow && !dockShown
     readonly property bool dockPointerInside: dockTrigger.hovered || dockItem.holdOpen
 
@@ -244,23 +237,16 @@ PanelWindow {
         onClicked: root.closeActive()
     }
 
-    // Seed dimensions: the bar's collapsed notch width and height.
-    // When a panel opens the stage grows from these values, creating a
-    // seamless expansion from the clock/cava notch rather than a separate
-    // overlay appearing on top of it. The vertical bar has no top notch to
-    // seed from, so the stage just starts flat (zero height) and grows
-    // from whichever edge (top or bottom) the next panel opens from.
+    // The stage grows out of the bar's notch (the vertical bar has none,
+    // so it starts flat from the edge).
     readonly property real barSlabWidth: bar ? (bar.centerCapsuleSlabWidth || 120) : 120
     readonly property bool island: barLayout ? barLayout.island : false
     // In island mode the bar's island is inset like the other bar capsules.
     // Notch mode takes the frame's band off the top (the notch hangs below it).
     readonly property real barSlabHeight: root.verticalBar ? 0 : (bar ? bar.height - (root.island ? bar.islandGap : Palette.Theme.screenFrameBorder) : 34)
 
-    // With the left bar in notch mode the screen has a frame (ScreenFrame.qml,
-    // same condition). The stages then grow out of it, Caelestia-style: in
-    // the frame's color, from its inner edge, joined by curves at its radius.
-    // A fullscreen app covers the frame, so panels hang from the screen edge
-    // again instead of leaving a gap where the frame would be.
+    // In notch mode the stages grow out of the screen frame; fullscreen apps
+    // cover the frame, so panels then hang from the screen edge.
     readonly property bool fullscreenActive: ToplevelManager.activeToplevel ? ToplevelManager.activeToplevel.fullscreen : false
     readonly property bool framed: barLayout ? (barLayout.loaded && !root.island && !fullscreenActive) : false
     // Panels hang from the frame's inner edge, top and bottom.
@@ -292,7 +278,7 @@ PanelWindow {
         // activity pill it keeps the bar notch's own radius, so the pill
         // doesn't look rounded at the bottom and closing hands back
         // seamlessly.
-        slabRadius: sized === null || sized === liveActivity ? (root.bar ? root.bar.capsuleRadius : Palette.Theme.radiusSmall) : 20
+        slabRadius: sized === null || sized === liveActivity ? (root.bar ? root.bar.capsuleRadius : Palette.Theme.radiusSmall) : Palette.Theme.radiusLarge
         color: root.stageColor
         tintOpacity: root.stageTint
 
@@ -327,11 +313,8 @@ PanelWindow {
         // the center module's icon and title peek out at the sides.
         slabWidth: sized === liveActivity ? Math.max(liveActivity.implicitWidth, root.barSlabWidth) : (sized ? sized.implicitWidth : root.barSlabWidth)
         slabHeight: sized ? sized.implicitHeight : root.barSlabHeight
-        // Closing, the slab stays opaque while it eases back down to the
-        // bar's notch, so the panel shrinks into the notch (as bottom panels
-        // shrink into the dock) instead of fading where it stood; then it
-        // fades. Only after a real close: the idle notch's width follows
-        // the window title, and that must never show the empty slab.
+        // Closing, the slab stays opaque while it shrinks into the notch, then
+        // fades; only after a real close (title changes resize the idle notch).
         property bool settling: false
         opacity: panel || settling ? 1 : 0
 
@@ -341,13 +324,8 @@ PanelWindow {
             onTriggered: topStage.settling = false
         }
 
-        // barSlabHeight/barSlabWidth are seeded from barLayout.vertical, which
-        // briefly holds its declared default before the persisted bar-layout
-        // file finishes loading on shell startup/reload. Without this guard,
-        // that transient flip plays the OutBack overshoot below — visible as
-        // the idle notch "wobbling" as the bar's real edge resolves.
-        // Opening springs; closing eases in without overshoot, so it
-        // doesn't shrink past the notch and bounce back.
+        // Ignore the startup flip of the bar's edge (no wobble). Opening
+        // springs; closing eases in, so it doesn't overshoot the notch.
         Behavior on slabWidth {
             enabled: !root.barLayout || root.barLayout.loaded
             SpatialMotion {
@@ -429,7 +407,7 @@ PanelWindow {
         island: root.island
         islandGap: 8
         wingSize: root.stageWing
-        slabRadius: 20
+        slabRadius: Palette.Theme.radiusLarge
         color: root.stageColor
         tintOpacity: root.stageTint
 

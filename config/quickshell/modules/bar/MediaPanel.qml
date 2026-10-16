@@ -395,7 +395,7 @@ Item {
                         visible: root.hasPlayer
                         implicitWidth: chipRow.implicitWidth + 16
                         implicitHeight: 22
-                        radius: height / 2
+                        radius: Math.min(height / 2, Palette.Theme.radiusSmall)
                         color: Qt.alpha(Palette.Theme.textPrimary, 0.08)
                         scale: chipMouse.pressed ? 0.92 : 1
 

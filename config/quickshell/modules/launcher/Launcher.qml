@@ -10,12 +10,8 @@ import "../../components/material"
 // Note: DesktopEntries / DesktopEntry and ScriptModel are part of the base
 // "Quickshell" module, already imported above.
 
-// App launcher in the bottom stage, laid out like Caelestia's: the search
-// field sits at the bottom edge and results stack upward from it, best match
-// nearest the field. Results are fuzzy-ranked (boosted by how often an app
-// is launched) and fed through a ScriptModel, so filtering animates rows in,
-// out and into place instead of resetting the list, while the panel itself
-// resizes to fit them.
+// App launcher: search field at the bottom, fuzzy-ranked results above it
+// (best match nearest), boosted by launch count.
 Item {
     id: root
 
@@ -79,8 +75,13 @@ Item {
             })) : []
     readonly property var settingsItems: rank(allSettings, c => c.label, commandArg.trim())
 
+    // The list follows `listMode`, switched together with the row template
+    // in switchList(); changing both at once built "/" command rows with the
+    // app template, which showed nothing.
+    property string listMode: "apps"
+
     readonly property var currentList: {
-        switch (mode) {
+        switch (listMode) {
         case "apps":
             return displayApps;
         case "commands":
@@ -220,7 +221,7 @@ Item {
     // `alt(item)`) matches `q`; an empty query keeps the original order.
     function rank(list, label, q, alt) {
         if (!q)
-            return list;
+            return list.slice();
         var scored = [];
         list.forEach(item => {
             var m = fuzzy(q, label(item));
@@ -365,7 +366,17 @@ Item {
         }
     }
 
-    onModeChanged: {
+    onModeChanged: Qt.callLater(root.switchList)
+
+    // Runs after the mode change settles: empty the list, swap the row
+    // template, then load the new data, so rows never get the other kind's
+    // data (and no binding loop on currentList).
+    function switchList() {
+        if (listMode === mode)
+            return;
+        listMode = "";
+        appList.delegate = mode === "apps" ? appDelegate : commandDelegate;
+        listMode = mode;
         if (mode === "shaders") {
             if (shaderService) {
                 shaderService.refresh();
@@ -934,7 +945,8 @@ Item {
 
                 Keys.onPressed: event => root.handleKey(event)
 
-                delegate: root.mode === "apps" ? appDelegate : commandDelegate
+                // Swapped in switchList(), ahead of the data.
+                delegate: appDelegate
             }
         }
 

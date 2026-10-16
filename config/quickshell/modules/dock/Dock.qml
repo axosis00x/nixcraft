@@ -67,7 +67,8 @@ Item {
     property var menuItem: null
     property Item menuCell: null
 
-    readonly property real cellSize: 40
+    // Icon sizes scale with Settings → Customize (clamped to 0.8–1.3).
+    readonly property real cellSize: Math.round(40 * Palette.Theme.dockIconScale)
     readonly property real cellSpacing: 3
 
     implicitWidth: Math.min(maxWidth - 40, row.implicitWidth + 18)
@@ -413,11 +414,11 @@ Item {
                     Item {
                         id: iconBox
 
-                        readonly property real restSize: 28
-                        readonly property real hoverSize: 36
+                        readonly property real restSize: Math.round(28 * Palette.Theme.dockIconScale)
+                        readonly property real hoverSize: Math.round(36 * Palette.Theme.dockIconScale)
                         readonly property bool zoomed: cell.hovered && !cell.dragging
                         // Shared animated size, in pixels.
-                        property real size: cell.dragging ? 32 : (zoomed ? hoverSize : restSize)
+                        property real size: cell.dragging ? Math.round(32 * Palette.Theme.dockIconScale) : (zoomed ? hoverSize : restSize)
                         Behavior on size {
                             SpatialMotion {
                                 fast: true

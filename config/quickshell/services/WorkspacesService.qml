@@ -62,16 +62,8 @@ Item {
         root.active = false;
     }
 
-    // Quickshell's Hyprland.dispatch() sends the classic "dispatch <name>
-    // <args>" request, but this config runs Hyprland's native Lua parser,
-    // which routes hyprctl dispatch through an `hl.dispatch(hl.dsp...)` Lua
-    // eval bridge instead and rejects the old string form. Go through
-    // `hyprctl eval` directly so these actually take effect.
-    //
-    // Hyprland warps the pointer to whichever window ends up focused, which
-    // made the pointer jump when a window was dropped on another workspace.
-    // Like the dock, turn cursor.no_warps on for just this one dispatch and
-    // put the user's setting back afterwards.
+    // Dispatch through `hyprctl eval` (this Lua config rejects the old string
+    // form), with cursor.no_warps on so the pointer doesn't jump.
     function dispatchWithoutWarp(dispatch) {
         dispatchProcess.exec(["hyprctl", "eval", "local w = hl.get_config('cursor.no_warps') " + "hl.config({ cursor = { no_warps = true } }) " + "hl.dispatch(" + dispatch + ") " + "hl.config({ cursor = { no_warps = w } })"]);
     }

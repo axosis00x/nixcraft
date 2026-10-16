@@ -19,6 +19,10 @@ Item {
     implicitHeight: mainColumn.implicitHeight + 28
     width: implicitWidth
     height: implicitHeight
+    // Size from Settings → Customize, grown from the top-left corner so the
+    // saved position stays put.
+    scale: Palette.Theme.clockScale
+    transformOrigin: Item.TopLeft
 
     // Free-floating on the desktop layer (not laid out by a parent Layout),
     // so position has to be set explicitly — falls back to the caller's
@@ -28,12 +32,14 @@ Item {
 
     SystemClock {
         id: clock
-        precision: SystemClock.Minutes
+        // Ticks every second only while seconds are shown.
+        precision: Palette.Theme.clockSeconds ? SystemClock.Seconds : SystemClock.Minutes
     }
 
     readonly property int hours24: clock.date.getHours()
     readonly property int hours12: (hours24 % 12) === 0 ? 12 : (hours24 % 12)
     readonly property int minutes: clock.date.getMinutes()
+    readonly property int seconds: clock.date.getSeconds()
     readonly property int dayOfMonth: clock.date.getDate()
     readonly property var weekdayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
     readonly property var monthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
@@ -83,6 +89,7 @@ Item {
             }
 
             Text {
+                visible: !Palette.Theme.clock24h
                 text: root.hours24 < 12 ? "AM" : "PM"
                 color: Palette.Theme.textSecondary
                 font.family: Palette.Theme.fontSans
@@ -92,17 +99,37 @@ Item {
             }
         }
 
-        Text {
+        // Time (12- or 24-hour, from Settings → Widgets), with the seconds
+        // smaller beside it when enabled.
+        RowLayout {
             Layout.topMargin: -4
-            textFormat: Text.StyledText
-            text: root.pad(root.hours12) + "<font color='" + Palette.Theme.accent + "'>:</font>" + root.pad(root.minutes)
-            color: Palette.Theme.textPrimary
-            font.family: Palette.Theme.fontSans
-            font.pixelSize: 64
-            font.weight: Font.DemiBold
-            font.letterSpacing: -2
-            font.features: {
-                "tnum": 1
+            spacing: 6
+
+            Text {
+                Layout.alignment: Qt.AlignBaseline
+                textFormat: Text.StyledText
+                text: root.pad(Palette.Theme.clock24h ? root.hours24 : root.hours12) + "<font color='" + Palette.Theme.accent + "'>:</font>" + root.pad(root.minutes)
+                color: Palette.Theme.textPrimary
+                font.family: Palette.Theme.fontSans
+                font.pixelSize: 64
+                font.weight: Font.DemiBold
+                font.letterSpacing: -2
+                font.features: {
+                    "tnum": 1
+                }
+            }
+
+            Text {
+                Layout.alignment: Qt.AlignBaseline
+                visible: Palette.Theme.clockSeconds
+                text: root.pad(root.seconds)
+                color: Palette.Theme.accent
+                font.family: Palette.Theme.fontSans
+                font.pixelSize: Palette.Theme.fontSizeHeadline
+                font.weight: Font.DemiBold
+                font.features: {
+                    "tnum": 1
+                }
             }
         }
 
@@ -124,8 +151,8 @@ Item {
         drag.target: root
         drag.minimumX: 0
         drag.minimumY: 0
-        drag.maximumX: root.parent ? root.parent.width - root.width : 0
-        drag.maximumY: root.parent ? root.parent.height - root.height : 0
+        drag.maximumX: root.parent ? root.parent.width - root.width * root.scale : 0
+        drag.maximumY: root.parent ? root.parent.height - root.height * root.scale : 0
 
         onPressed: root.z = 1000
         onReleased: {

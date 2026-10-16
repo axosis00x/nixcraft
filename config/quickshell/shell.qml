@@ -36,8 +36,13 @@ ShellRoot {
         settingsWindow: settingsWindow
         widgetsService: widgetsService
     }
+    // Settings → Customize: loaded first thing, applied to the theme tokens.
+    ShellSettings {
+        id: shellSettings
+    }
     SettingsWindow {
         id: settingsWindow
+        shellSettings: shellSettings
         controlCenter: overlay.controlCenter
         widgetsService: widgetsService
         themeService: overlay.themes

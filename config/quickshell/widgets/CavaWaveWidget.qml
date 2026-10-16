@@ -30,6 +30,10 @@ Item {
     implicitHeight: 96
     width: implicitWidth
     height: implicitHeight
+    // Size from Settings → Customize, grown from the top-left corner so the
+    // saved position stays put.
+    scale: Palette.Theme.cavaScale
+    transformOrigin: Item.TopLeft
 
     x: widgetsService && widgetsService.hasPosition(widgetId) ? widgetsService.positionX(widgetId) : defaultX
     y: widgetsService && widgetsService.hasPosition(widgetId) ? widgetsService.positionY(widgetId) : defaultY
@@ -123,8 +127,8 @@ Item {
         drag.target: root
         drag.minimumX: 0
         drag.minimumY: 0
-        drag.maximumX: root.parent ? root.parent.width - root.width : 0
-        drag.maximumY: root.parent ? root.parent.height - root.height : 0
+        drag.maximumX: root.parent ? root.parent.width - root.width * root.scale : 0
+        drag.maximumY: root.parent ? root.parent.height - root.height * root.scale : 0
 
         onPressed: root.z = 1000
         onReleased: {

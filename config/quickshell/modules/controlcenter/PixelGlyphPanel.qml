@@ -1,16 +1,11 @@
+import Quickshell
 import QtQuick
 import "../../components/material"
 import "../../theme" as Palette
 
-// Nothing-style glyph matrix: a round-ended field of dots playing a pattern
-// (ripple, radar, rain, heart, clock). It's a toy, and controls nothing else.
-//
-//   hover          dots glow around the pointer; a control bar appears
-//   click          a ring bursts from that spot, then the next pattern
-//   drag           paint dots, which fade out behind you
-//   scroll         previous / next pattern
-//   right click    pause / play
-//   control bar    previous, pause / play, auto-cycle on / off, next
+// Nothing-style glyph matrix playing a pattern. A toy; it controls nothing.
+//   hover: glow and control bar   click: ring + next pattern   drag: paint
+//   scroll: change pattern        right click: pause
 Item {
     id: root
 
@@ -27,9 +22,9 @@ Item {
     }
     readonly property real dotSize: Math.max(2, Math.round(pitch * 0.62))
 
-    readonly property var modeNames: ["Ripple", "Radar", "Rain", "Heart", "Clock"]
+    readonly property var modeNames: ["Ripple", "Radar", "Rain", "Heart", "Clock", "Name", "Sand timer", "Face"]
     // Each pattern glows in its own hue from the theme.
-    readonly property color hue: [Palette.Theme.accent, Palette.Theme.aqua, Palette.Theme.blue, Palette.Theme.purple, Palette.Theme.yellow][mode]
+    readonly property color hue: [Palette.Theme.accent, Palette.Theme.aqua, Palette.Theme.blue, Palette.Theme.purple, Palette.Theme.yellow, Palette.Theme.green, Palette.Theme.orange, Palette.Theme.accent][mode]
 
     // `tick` always runs (so touches answer even while paused); `phase`
     // drives the pattern and stops while paused.
@@ -90,6 +85,59 @@ Item {
     // 3×5 digits for the clock pattern.
     readonly property var digits: [["111", "101", "101", "101", "111"], ["010", "110", "010", "010", "111"], ["111", "001", "111", "100", "111"], ["111", "001", "111", "001", "111"], ["101", "101", "111", "001", "001"], ["111", "100", "111", "001", "111"], ["111", "100", "111", "101", "111"], ["111", "001", "010", "010", "010"], ["111", "101", "111", "101", "111"], ["111", "101", "111", "001", "111"]]
 
+    // A small lowercase pixel font for the name pattern: 3 dots wide, a
+    // 3-dot x-height with short ascenders and a 1-dot descender (6 rows,
+    // top to bottom). Digits use the clock's 3×5 digits; anything else is
+    // a gap.
+    readonly property var letters: ({
+            a: ["000", "000", "011", "101", "011", "000"],
+            b: ["100", "100", "110", "101", "110", "000"],
+            c: ["000", "000", "011", "100", "011", "000"],
+            d: ["001", "001", "011", "101", "011", "000"],
+            e: ["000", "000", "010", "111", "100", "000"],
+            f: ["011", "010", "111", "010", "010", "000"],
+            g: ["000", "000", "011", "101", "011", "110"],
+            h: ["100", "100", "110", "101", "101", "000"],
+            i: ["010", "000", "010", "010", "010", "000"],
+            j: ["001", "000", "001", "001", "001", "110"],
+            k: ["100", "100", "101", "110", "101", "000"],
+            l: ["100", "100", "100", "100", "011", "000"],
+            m: ["000", "000", "110", "111", "101", "000"],
+            n: ["000", "000", "110", "101", "101", "000"],
+            o: ["000", "000", "010", "101", "010", "000"],
+            p: ["000", "000", "110", "101", "110", "100"],
+            q: ["000", "000", "011", "101", "011", "001"],
+            r: ["000", "000", "011", "100", "100", "000"],
+            s: ["000", "000", "011", "010", "110", "000"],
+            t: ["000", "010", "111", "010", "011", "000"],
+            u: ["000", "000", "101", "101", "011", "000"],
+            v: ["000", "000", "101", "101", "010", "000"],
+            w: ["000", "000", "101", "111", "111", "000"],
+            x: ["000", "000", "101", "010", "101", "000"],
+            y: ["000", "000", "101", "101", "011", "110"],
+            z: ["000", "000", "110", "010", "011", "000"]
+        })
+
+    // The username (whoever is logged in, read from $USER when the shell
+    // starts), as written, as a strip of 6-dot columns with a blank column
+    // between characters.
+    readonly property var nameColumns: {
+        var text = String(Quickshell.env("USER") || "user").toLowerCase();
+        var out = [];
+        for (var i = 0; i < text.length; i++) {
+            var ch = text.charAt(i);
+            var glyph = letters[ch] || (ch >= "0" && ch <= "9" ? digits[Number(ch)].concat(["000"]) : null);
+            for (var c = 0; c < 3; c++) {
+                var column = "";
+                for (var rr = 0; rr < 6; rr++)
+                    column += glyph ? glyph[rr].charAt(c) : "0";
+                out.push(column);
+            }
+            out.push("000000");
+        }
+        return out;
+    }
+
     function digitLit(value, x, y) {
         if (x < 0 || x > 2 || y < 0 || y > 4)
             return false;
@@ -135,6 +183,64 @@ Item {
                 return digitLit(value % 10, col - 4, r) ? 1 : 0;
             return 0;
         }
+        if (mode === 5) {
+            // The name scrolls in from the right, then off to the left.
+            var span = nameColumns.length + cols;
+            var shift = Math.floor(t * 0.45) % span;
+            var ci = x + shift - cols;
+            var gr = y - (Math.round(cy) - 3);
+            if (ci < 0 || ci >= nameColumns.length || gr < 0 || gr > 5)
+                return 0;
+            return nameColumns[ci].charAt(gr) === "1" ? 1 : 0;
+        }
+        if (mode === 6) {
+            // An hourglass: a faint outline, sand draining from the top bulb
+            // through the neck into the bottom one, then starting over.
+            var ady = Math.abs(dy), adx = Math.abs(dx);
+            var halfRows = Math.round(cy);
+            if (ady === halfRows)
+                return adx <= halfRows ? 0.3 : 0;         // caps
+            if (adx > ady)
+                return 0;
+            if (adx === ady && ady > 0)
+                return 0.3;                               // glass walls
+            var period = 140;
+            var progress = (t % period) / period;
+            var bulb = halfRows - 1;                      // sand rows per bulb
+            var topLevel = Math.ceil(bulb * (1 - progress));
+            var bottomLevel = Math.ceil(bulb * progress);
+            if (dy < 0)                                   // top: sits on the neck
+                return -dy <= topLevel ? 1 : 0;
+            if (dy > 0 && dy > bulb - bottomLevel)        // bottom: piles up
+                return 1;
+            // The falling stream, flickering down the middle.
+            if (adx === 0 && progress > 0 && progress < 1 && (y + t) % 2 === 0)
+                return 0.85;
+            return 0;
+        }
+        if (mode === 7) {
+            // A face: faint outline, eyes that blink (and now and then wink),
+            // a smile, or an "o" of surprise while the pointer is on it.
+            var ex = Math.round(cx), ey = Math.round(cy);
+            var ring = Math.hypot(dx, dy);
+            if (ring > 5.4 && ring < 6.4)
+                return 0.3;
+            var beat = t % 90;
+            var blink = beat < 3;
+            var wink = !blink && t % 270 >= 180 && t % 270 < 186;
+            var surprised = hoverCol > -10;
+            for (var side = -1; side <= 1; side += 2) {
+                var eyeX = ex + side * 2;
+                var closed = blink || (wink && side > 0);
+                if (x === eyeX && (closed ? y === ey - 1 : (y === ey - 2 || y === ey - 1)))
+                    return 1;
+            }
+            if (surprised)
+                return Math.abs(Math.hypot(dx, dy - 2.5) - 1.2) < 0.55 ? 1 : 0;
+            if (y === ey + 2 && Math.abs(dx) === 3)
+                return 1;
+            return y === ey + 3 && Math.abs(dx) <= 2 ? 1 : 0;
+        }
         var head = (t * (0.25 + 0.3 * hash(x)) + hash(x + 40) * 30) % (rows + 8);
         var d = head - y;
         return d >= 0 && d < 5 ? 1 - d / 5 : 0;
@@ -164,11 +270,8 @@ Item {
         return v;
     }
 
-    // The controls show exactly while the pointer is inside the square.
-    // One mouse area handles everything (dots, glow and the bar's buttons),
-    // so there's no hand-off between areas to lose track of.
-    // `inside` is cleared whenever the panel stops running (closed, or
-    // another tab), so the bar never lingers from a stale hover.
+    // The control bar shows while the pointer is in the square. One mouse area
+    // handles everything; `inside` resets when the panel stops running.
     readonly property bool shown: root.running && mouse.inside
 
     onRunningChanged: {

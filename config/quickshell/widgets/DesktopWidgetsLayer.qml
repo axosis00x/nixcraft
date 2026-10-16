@@ -44,22 +44,22 @@ PanelWindow {
         Region {
             x: clockWidget.x
             y: clockWidget.y
-            width: clockWidget.width
-            height: clockWidget.height
+            width: clockWidget.width * clockWidget.scale
+            height: clockWidget.height * clockWidget.scale
             intersection: Intersection.Combine
         }
         Region {
             x: weatherWidget.x
             y: weatherWidget.y
-            width: weatherWidget.width
-            height: weatherWidget.height
+            width: weatherWidget.width * weatherWidget.scale
+            height: weatherWidget.height * weatherWidget.scale
             intersection: Intersection.Combine
         }
         Region {
             x: cavaWidget.x
             y: cavaWidget.y
-            width: cavaWidget.width
-            height: cavaWidget.height
+            width: cavaWidget.width * cavaWidget.scale
+            height: cavaWidget.height * cavaWidget.scale
             intersection: Intersection.Combine
         }
     }

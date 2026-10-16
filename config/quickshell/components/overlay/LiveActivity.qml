@@ -5,12 +5,9 @@ import QtQuick.Layouts
 import "../material"
 import "../../theme" as Palette
 
-// "Live activity": while something is running, the top notch widens into a
-// slim pill showing it, Dynamic Island style. Sources, most important
-// first: a screen recording (click the pill to stop it), a countdown timer
-// (`qs ipc call timer start <seconds>`, `... timer stop`), and browser
-// downloads in progress (.part / .crdownload files in the Downloads
-// folder; click to open the folder). More than one shows a "+N".
+// Live activity: the top notch widens into a pill while something runs:
+// a recording (click to stop), a timer (`qs ipc call timer start <s>`,
+// `... timer stop`) or a download (click to open the folder).
 Item {
     id: root
 

@@ -62,20 +62,32 @@ QtObject {
     // One weight for every icon glyph (Material Symbols is variable).
     readonly property int iconWeight: Font.Medium
 
-    // ── Design tokens ────────────────────────────────────────────────
-    // Every surface in the shell is built from these, so the bar, panels,
-    // pickers, settings and widgets share one shape, type and motion
-    // language. Prefer a token over a literal; add a token before adding
-    // a new literal.
+    // ── User customization ──────────────────────────────────────────
+    // Set by services/ShellSettings.qml (Settings → Customize), which clamps
+    // every value to a safe range and saves it. The defaults here are the
+    // stock look, so a missing or broken settings file changes nothing.
+    property real roundness: 1.0          // scales every radius* token
+    property int controlCenterWidth: 480  // px, kept even
+    property real dockIconScale: 1.0      // scales the dock's icon sizes
+    property bool dockAutoHide: true      // hide the dock over busy workspaces
+    property bool showGlyph: true         // the control center's glyph matrix
+    property bool clockSeconds: false     // desktop clock format
+    property bool clock24h: false
+    property real clockScale: 1.0         // desktop widget sizes
+    property real weatherScale: 1.0
+    property real cavaScale: 1.0
+
+    // ── Design tokens ──────────────────────────────────────────────────
+    // The shared shape, type and motion values. Prefer a token over a literal.
 
     // Shape. Interactive things morph between these (e.g. a tile rounds
     // into a pill when switched on); radiusFull is "as round as the item
     // is tall", resolved by the user as height / 2.
-    readonly property int radiusXs: 6
-    readonly property int radiusSmall: 13
-    readonly property int radiusMedium: 13
-    readonly property int radiusLarge: 20
-    readonly property int radiusExtraLarge: 28
+    readonly property int radiusXs: Math.round(6 * roundness)
+    readonly property int radiusSmall: Math.round(13 * roundness)
+    readonly property int radiusMedium: Math.round(13 * roundness)
+    readonly property int radiusLarge: Math.round(20 * roundness)
+    readonly property int radiusExtraLarge: Math.round(28 * roundness)
 
     // Spacing.
     readonly property int spacingXs: 4
@@ -97,25 +109,16 @@ QtObject {
 
     readonly property int iconButtonSize: 30
 
-    // Shell layout. The bar's thickness when vertical (see
-    // services/BarLayoutService.qml for the persisted top/left choice) and
-    // its height when horizontal; the width shared by the list panels
-    // (launcher, theme picker, clipboard, calendar, service manager) so they
-    // open at one size; and the screen frame shown in notch mode
-    // (components/overlay/ScreenFrame.qml): its width along each edge and
-    // the radius of its inner corners, which the left bar's curved joins
-    // reuse so the two meet without a seam.
+    // Shell layout: vertical bar thickness, horizontal bar height, list
+    // panel width, and the notch-mode screen frame's edge and corner radius.
     readonly property int barThickness: 40
     readonly property int barHeight: 34
     readonly property int listPanelWidth: 440
     readonly property int screenFrameBorder: 4
     readonly property int screenFrameRadius: 10
 
-    // Motion (Material 3 Expressive). "Spatial" motion — position, size,
-    // shape, scale — springs past its target and settles; "effects" motion
-    // — color, opacity — eases without overshoot. Use the atoms in
-    // components/material (SpatialMotion, EffectMotion, ColorMotion)
-    // rather than these numbers directly.
+    // Motion: spatial (size, position) springs and settles; effects (color,
+    // opacity) ease without overshoot. Use the atoms in components/material.
     readonly property int motionFast: 180
     readonly property int motionDefault: 320
     readonly property int motionSlow: 480

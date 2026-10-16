@@ -9,12 +9,8 @@ import "../../services"
 import "../controlcenter"
 import "../../theme" as Palette
 
-// System settings as an ordinary floating window (a real toplevel, so it
-// stacks, focuses and closes like any app and never sits over the bar): a
-// menu on the left, the selected page's dashboard on the right. The window
-// rule in hypr/modules/windowrules.lua makes it float, centered. It hosts no
-// logic of its own for volume, brightness, network etc. — it drives the
-// control center's existing, tested handlers.
+// System settings as a normal floating window: a menu on the left, the
+// selected page on the right. Changes go through the control center's handlers.
 FloatingWindow {
     id: root
 
@@ -22,6 +18,7 @@ FloatingWindow {
     property var widgetsService: null
     property var themeService: null
     property var barLayout: null
+    property var shellSettings: null
 
     property string page: "overview"
     property string query: ""
@@ -48,8 +45,8 @@ FloatingWindow {
     color: "transparent"
     implicitWidth: cardWidth
     implicitHeight: cardHeight
-    minimumSize: Qt.size(cardWidth, cardHeight)
-    maximumSize: Qt.size(cardWidth, cardHeight)
+    // Resizable (no fixed size), so Hyprland can tile it; Super+V toggles.
+    minimumSize: Qt.size(640, 420)
 
     // The window can also be closed by the compositor (e.g. SUPER+Q).
     onVisibleChanged: {
@@ -61,7 +58,7 @@ FloatingWindow {
     // in before the window is ever opened.
     Component.onCompleted: aboutProcess.running = true
 
-    readonly property var pageIds: ["overview", "network", "display", "sound", "notifications", "power", "appearance", "about", "search"]
+    readonly property var pageIds: ["overview", "network", "display", "sound", "power", "appearance", "bar", "dock", "widgets", "about", "search"]
 
     // ── open / close ────────────────────────────────────────────────
     IpcHandler {
@@ -127,6 +124,12 @@ FloatingWindow {
     // ── live state (all delegated to the control center) ────────────
     function flag(key) {
         var c = controlCenter;
+        if (key === "dockautohide")
+            return shellSettings ? shellSettings.get("dockAutoHide") : true;
+        if (key === "glyph")
+            return shellSettings ? shellSettings.get("showGlyph") : true;
+        if (key === "clockseconds" || key === "clock24h")
+            return shellSettings ? shellSettings.get(shellFlagKey[key]) : false;
         switch (key) {
         case "wifi":
             return c ? c.wifiEnabled : false;
@@ -158,10 +161,134 @@ FloatingWindow {
         }
     }
 
+    // ── confirmations ───────────────────────────────────────────────
+    // Changes apply right away as a preview; a bar at the bottom asks to
+    // Save (keep) or Cancel (revert all unsaved changes).
+    // Switch rows backed by ShellSettings → their keys.
+    readonly property var shellFlagKey: ({
+            dockautohide: "dockAutoHide",
+            glyph: "showGlyph",
+            clockseconds: "clockSeconds",
+            clock24h: "clock24h"
+        })
+    readonly property var widgetScaleKey: ({
+            clocksize: "clockScale",
+            weathersize: "weatherScale",
+            cavasize: "cavaScale"
+        })
+    property var pending: ({}) // key -> { kind, original }
+    readonly property int pendingCount: Object.keys(pending).length
+    // A question with its own confirm button (e.g. Reset), or a short note.
+    property string promptText: ""
+    property string promptAction: ""
+    property var promptCallback: null
+    property string noteText: ""
+
+    function track(key, kind, original) {
+        if (pending[key] !== undefined)
+            return;
+        var next = Object.assign({}, pending);
+        next[key] = { kind: kind, original: original };
+        pending = next;
+    }
+
+    function savePending() {
+        pending = {};
+    }
+
+    function cancelPending() {
+        var list = pending;
+        pending = {};
+        for (var key in list) {
+            var p = list[key];
+            if (p.kind === "flag")
+                applyFlag(key, p.original);
+            else if (p.kind === "choice")
+                applyChoice(key, p.original);
+            else
+                applyLevel(key, p.original);
+        }
+    }
+
+    function ask(text, action, callback) {
+        promptText = text;
+        promptAction = action;
+        promptCallback = callback;
+    }
+
+    function note(text) {
+        noteText = text;
+        noteTimer.restart();
+    }
+
+    Timer {
+        id: noteTimer
+        interval: 2500
+        onTriggered: root.noteText = ""
+    }
+
+    function rowFor(key) {
+        for (var id in pageSections) {
+            var sections = pageSections[id];
+            for (var i = 0; i < sections.length; i++) {
+                var rows = sections[i].rows || [];
+                for (var j = 0; j < rows.length; j++) {
+                    if (rows[j].key === key)
+                        return rows[j];
+                }
+            }
+        }
+        return null;
+    }
+
+    // "Island mode on", "Bar style: Compact", "Corner radius 13 px".
+    function describe(key) {
+        var row = rowFor(key);
+        var title = row ? row.title : key;
+        var p = pending[key];
+        if (!p)
+            return title;
+        if (p.kind === "flag")
+            return title + (flag(key) ? " on" : " off");
+        if (p.kind === "choice") {
+            var option = row && row.options ? row.options.find(o => o.id === choice(key)) : null;
+            return title + ": " + (option ? option.label : choice(key));
+        }
+        return title + " " + (levelText(key) || Math.round(level(key) * 100) + "%");
+    }
+
+    readonly property string noticeText: promptText !== "" ? promptText : (pendingCount === 1 ? describe(Object.keys(pending)[0]) : (pendingCount > 1 ? pendingCount + " unsaved changes" : noteText))
+
     function setFlag(key, on) {
+        if (flag(key) === on)
+            return;
+        track(key, "flag", flag(key));
+        applyFlag(key, on);
+    }
+
+    function setChoice(key, id) {
+        if (choice(key) === id)
+            return;
+        track(key, "choice", choice(key));
+        applyChoice(key, id);
+    }
+
+    function setLevel(key, value) {
+        if (Math.abs(level(key) - value) < 0.001)
+            return;
+        track(key, "level", level(key));
+        applyLevel(key, value);
+    }
+
+    function applyFlag(key, on) {
         var c = controlCenter;
         if (flag(key) === on)
             return;
+        if (shellFlagKey[key]) {
+            if (shellSettings)
+                shellSettings.set(shellFlagKey[key], on);
+            return;
+        }
         switch (key) {
         case "wifi":
             c.toggleWifi();
@@ -226,6 +353,16 @@ FloatingWindow {
             return cpuUsage;
         case "ram":
             return memUsage;
+        case "roundness":
+            return shellSettings ? shellSettings.get("roundness") / 1.5 : 1 / 1.5;
+        case "dockicons":
+            return shellSettings ? (shellSettings.get("dockIconScale") - 0.8) / 0.5 : 0.4;
+        case "ccwidth":
+            return shellSettings ? (shellSettings.get("controlCenterWidth") - 420) / 140 : 0.43;
+        case "clocksize":
+        case "weathersize":
+        case "cavasize":
+            return shellSettings ? (shellSettings.get(widgetScaleKey[key]) - 0.8) / 0.6 : 1 / 3;
         case "nightwarmth":
             // 4500 K (barely warm) .. 1900 K (very warm), warmer to the right.
             return (4500 - c.nightTemperature) / 2600;
@@ -236,9 +373,63 @@ FloatingWindow {
         }
     }
 
+    // A typed value (e.g. "480 px", "2800 K", "80%") for a slider, in its own unit.
+    function enterLevel(key, text) {
+        var n = parseFloat(String(text).replace(",", "."));
+        if (isNaN(n))
+            return;
+        var v = ({
+                roundness: n / 19.5,
+                dockicons: (n / 28 - 0.8) / 0.5,
+                ccwidth: (n - 420) / 140,
+                clocksize: (n / 248 - 0.8) / 0.6,
+                weathersize: (n / 248 - 0.8) / 0.6,
+                cavasize: (n / 320 - 0.8) / 0.6,
+                nightwarmth: (4500 - n) / 2600,
+                nightgamma: (n - 50) / 50
+            })[key];
+        if (v !== undefined)
+            setLevel(key, Math.max(0, Math.min(1, v)));
+    }
+
+    // Where a slider's default sits on its track (0–1), shown as a tick;
+    // -1 for none.
+    function levelDefault(key) {
+        switch (key) {
+        case "roundness":
+            return 1 / 1.5;
+        case "dockicons":
+            return 0.4;
+        case "ccwidth":
+            return 60 / 140;
+        case "clocksize":
+        case "weathersize":
+        case "cavasize":
+            return 0.2 / 0.6;
+        case "nightwarmth":
+            return 1700 / 2600;
+        case "nightgamma":
+            return 0.7;
+        default:
+            return -1;
+        }
+    }
+
     // A slider's label when a percentage of its track isn't the real value.
     function levelText(key) {
         var c = controlCenter;
+        if (shellSettings) {
+            if (key === "roundness")
+                return Math.round(shellSettings.get("roundness") * 13) + " px";
+            if (key === "dockicons")
+                return Math.round(shellSettings.get("dockIconScale") * 28) + " px";
+            if (key === "ccwidth")
+                return shellSettings.get("controlCenterWidth") + " px";
+            if (key === "clocksize" || key === "weathersize")
+                return Math.round(shellSettings.get(widgetScaleKey[key]) * 248) + " px";
+            if (key === "cavasize")
+                return Math.round(shellSettings.get(widgetScaleKey[key]) * 320) + " px";
+        }
         if (key === "nightwarmth" && c)
             return c.nightTemperature + " K";
         if (key === "nightgamma" && c)
@@ -246,8 +437,18 @@ FloatingWindow {
         return "";
     }
 
-    function setLevel(key, value) {
+    function applyLevel(key, value) {
         var c = controlCenter;
+        if (shellSettings) {
+            if (key === "roundness")
+                return shellSettings.set("roundness", value * 1.5);
+            if (key === "dockicons")
+                return shellSettings.set("dockIconScale", 0.8 + value * 0.5);
+            if (key === "ccwidth")
+                return shellSettings.set("controlCenterWidth", 420 + value * 140);
+            if (widgetScaleKey[key])
+                return shellSettings.set(widgetScaleKey[key], 0.8 + value * 0.6);
+        }
         if (!c)
             return;
         switch (key) {
@@ -277,7 +478,7 @@ FloatingWindow {
         return "";
     }
 
-    function setChoice(key, id) {
+    function applyChoice(key, id) {
         if (key === "powerprofile" && controlCenter)
             controlCenter.setPowerProfile(id);
         else if (key === "barstyle" && barLayout)
@@ -303,18 +504,22 @@ FloatingWindow {
     function subtitleFor(key) {
         var c = controlCenter;
         switch (key) {
+        case "bar":
+            return (barLayout ? "Bar: " + barLayout.style + (flag("island") ? ", island" : "") + "  ·  " : "") + "Control center " + levelText("ccwidth");
+        case "dock":
+            return flag("dock") ? (flag("dockautohide") ? "Shown, hides over windows" : "Always shown") : "Hidden";
+        case "widgets":
+            return ["clock", "weather", "cava"].filter(k => flag(k)).length + " of 3 widgets on";
         case "net":
             return "Wi-Fi " + (flag("wifi") ? "on" : "off") + "  ·  Bluetooth " + (flag("bluetooth") ? "on" : "off");
         case "display":
             return "Brightness " + pct(level("brightness")) + (flag("nightlight") ? "  ·  Night light on" : "");
         case "sound":
             return flag("mute") ? "Muted" : "Volume " + pct(level("volume"));
-        case "notifications":
-            return flag("dnd") ? "Do not disturb is on" : (c ? c.notificationCount + " new" : "");
         case "power":
             return (batteryPercent >= 0 ? batteryPercent + "%" + (batteryCharging ? " charging" : "") + "  ·  " : "") + (profileNames[choice("powerprofile")] || "");
         case "appearance":
-            return themeService && themeService.activeTheme ? "Theme: " + themeService.activeTheme : "Theme, wallpaper, dock";
+            return themeService && themeService.activeTheme ? "Theme: " + themeService.activeTheme : "Theme, wallpaper and corners";
         case "about":
             return about.host || "This device";
         case "mirror":
@@ -427,6 +632,14 @@ FloatingWindow {
             Quickshell.execDetached([Quickshell.env("HOME") + "/.config/quickshell/scripts/pfp.sh", spec.act === "pfp" ? "pick" : "reset"]);
             return;
         }
+        if (spec.act === "resetcustom" && shellSettings) {
+            ask("Reset layout settings to stock?", "Reset", () => {
+                savePending();
+                shellSettings.reset();
+                note("Layout settings reset");
+            });
+            return;
+        }
         var c = controlCenter;
         if (spec.act === "clearnotifs" && c)
             c.clearAllNotifications();
@@ -438,10 +651,12 @@ FloatingWindow {
     readonly property var categories: [
         { id: "overview", icon: "", title: "Overview", sub: "overview" },
         { id: "appearance", icon: "", title: "Appearance", sub: "appearance" },
+        { id: "bar", icon: "toolbar", title: "Bar & control center", sub: "bar" },
+        { id: "dock", icon: "dock_to_bottom", title: "Dock", sub: "dock" },
+        { id: "widgets", icon: "widgets", title: "Widgets", sub: "widgets" },
         { id: "network", icon: "", title: "Network & internet", sub: "net" },
         { id: "display", icon: "", title: "Display", sub: "display" },
         { id: "sound", icon: "", title: "Sound", sub: "sound" },
-        { id: "notifications", icon: "", title: "Notifications", sub: "notifications" },
         { id: "power", icon: "", title: "Power & performance", sub: "power" },
         { id: "about", icon: "", title: "About device", sub: "about" }
     ]
@@ -451,9 +666,11 @@ FloatingWindow {
             "network": "Network & internet",
             "display": "Display",
             "sound": "Sound",
-            "notifications": "Notifications",
             "power": "Power & performance",
             "appearance": "Appearance",
+            "bar": "Bar & control center",
+            "dock": "Dock",
+            "widgets": "Widgets",
             "about": "About device",
             "search": "Search results"
         })
@@ -550,15 +767,6 @@ FloatingWindow {
                     ]
                 }
             ],
-            "notifications": [
-                {
-                    title: "",
-                    rows: [
-                        { kind: "switch", key: "dnd", icon: "", title: "Do not disturb", subtitle: "Silence notification popups" },
-                        { kind: "nav", act: "clearnotifs", icon: "", title: "Clear all notifications" }
-                    ]
-                }
-            ],
             "power": [
                 {
                     title: "Power mode",
@@ -591,16 +799,9 @@ FloatingWindow {
                     ]
                 }
             ],
-            "appearance": [
+            "bar": [
                 {
-                    title: "Theme",
-                    layout: "themes",
-                    rows: [
-                        { kind: "nav", page: "appearance", icon: "", title: "Theme", subtitle: "Color theme for the whole desktop" }
-                    ]
-                },
-                {
-                    title: "Bar",
+                    title: "Layout",
                     rows: [
                         {
                             kind: "segment", key: "barstyle", title: "Bar style",
@@ -614,19 +815,58 @@ FloatingWindow {
                     ]
                 },
                 {
+                    title: "Control center",
+                    rows: [
+                        { kind: "slider", key: "ccwidth", icon: "width", title: "Control center width" },
+                        { kind: "switch", key: "glyph", icon: "grid_view", title: "Glyph matrix", subtitle: "The animated dot display in Controls" }
+                    ]
+                }
+            ],
+            "dock": [
+                {
+                    title: "Dock",
+                    rows: [
+                        { kind: "switch", key: "dock", icon: "", title: "Show dock", subtitle: "App dock at the bottom of the screen" },
+                        { kind: "switch", key: "dockautohide", icon: "visibility_off", title: "Hide over open windows", subtitle: "Reveal it from the bottom edge" },
+                        { kind: "slider", key: "dockicons", icon: "apps", title: "Dock icon size" }
+                    ]
+                }
+            ],
+            "widgets": [
+                {
                     title: "Desktop widgets",
                     rows: [
-                        { kind: "switch", key: "dock", icon: "", title: "Dock", subtitle: "App dock at the bottom of the screen" },
-                        { kind: "switch", key: "clock", icon: "", title: "Clock widget" },
-                        { kind: "switch", key: "weather", icon: "", title: "Weather widget" },
-                        { kind: "switch", key: "cava", icon: "graphic_eq", title: "Audio wave widget", subtitle: "Visualizes whatever is playing" }
+                        { kind: "switch", key: "clock", icon: "schedule", title: "Clock widget" },
+                        { kind: "switch", key: "clockseconds", icon: "timer", title: "Show seconds" },
+                        { kind: "switch", key: "clock24h", icon: "schedule", title: "24-hour time" },
+                        { kind: "slider", key: "clocksize", icon: "schedule", title: "Clock size" },
+                        { kind: "switch", key: "weather", icon: "partly_cloudy_day", title: "Weather widget" },
+                        { kind: "slider", key: "weathersize", icon: "partly_cloudy_day", title: "Weather size" },
+                        { kind: "switch", key: "cava", icon: "graphic_eq", title: "Audio wave widget", subtitle: "Visualizes whatever is playing" },
+                        { kind: "slider", key: "cavasize", icon: "graphic_eq", title: "Audio wave size" }
+                    ]
+                }
+            ],
+            "appearance": [
+                {
+                    title: "Theme",
+                    layout: "themes",
+                    rows: [
+                        { kind: "nav", page: "appearance", icon: "", title: "Theme", subtitle: "Color theme for the whole desktop" }
+                    ]
+                },
+                {
+                    title: "Shape",
+                    rows: [
+                        { kind: "slider", key: "roundness", icon: "rounded_corner", title: "Corner roundness" },
+                        { kind: "nav", act: "resetcustom", icon: "restart_alt", title: "Reset layout settings", subtitle: "Corners, dock, control center and widget sizes back to stock", dangerous: true }
                     ]
                 },
                 {
                     title: "Wallpaper",
                     layout: "wallpapers",
                     rows: [
-                        { kind: "nav", page: "appearance", icon: "", title: "Wallpaper", subtitle: "Pick a wallpaper for this theme" }
+                        { kind: "nav", page: "appearance", icon: "", title: "Wallpaper", subtitle: "Pick a wallpaper for this theme" }
                     ]
                 }
             ],
@@ -696,7 +936,8 @@ FloatingWindow {
             anchors.fill: parent
             // Same panel corner as the shell's notch/island panels; no
             // outline — like the rest of the shell, it separates by tone.
-            radius: Palette.Theme.radiusLarge
+            // Square: Hyprland rounds the window (its decoration rounding).
+            radius: 0
             color: Palette.Theme.bg
         }
 
@@ -856,9 +1097,24 @@ FloatingWindow {
 
                 // The selection is one tonal pill that glides between
                 // entries rather than each entry filling itself in.
-                Item {
+                // Scrolls when the entries don't fit (short or tiled windows).
+                Flickable {
+                    id: navScroll
                     Layout.fillWidth: true
-                    implicitHeight: navColumn.implicitHeight
+                    Layout.fillHeight: true
+                    contentWidth: width
+                    contentHeight: navColumn.implicitHeight + 8
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    WheelHandler {
+                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                        onWheel: event => {
+                            var delta = event.pixelDelta.y !== 0 ? event.pixelDelta.y * 1.35 : event.angleDelta.y / 120 * 56;
+                            navScroll.contentY = Math.max(0, Math.min(navScroll.contentY - delta, navScroll.contentHeight - navScroll.height));
+                            event.accepted = true;
+                        }
+                    }
 
                     MovingHighlight {
                         target: {
@@ -893,10 +1149,12 @@ FloatingWindow {
                                 hue: ({
                                         overview: Palette.Theme.accent,
                                         appearance: Palette.Theme.purple,
+                                        bar: Palette.Theme.blue,
+                                        dock: Palette.Theme.aqua,
+                                        widgets: Palette.Theme.yellow,
                                         network: Palette.Theme.blue,
                                         display: Palette.Theme.aqua,
                                         sound: Palette.Theme.orange,
-                                        notifications: Palette.Theme.yellow,
                                         power: Palette.Theme.green,
                                         about: Palette.Theme.textSecondary
                                     })[modelData.id] || Palette.Theme.accent
@@ -909,9 +1167,6 @@ FloatingWindow {
                     }
                 }
 
-                Item {
-                    Layout.fillHeight: true
-                }
             }
 
             // ── right: page header + content ────────────────────────
@@ -1007,6 +1262,130 @@ FloatingWindow {
                     }
                 }
             }
+        }
+        // Save / Cancel bar for unsaved changes (or a prompt like Reset).
+        // Its shape follows the corner roundness setting.
+        Rectangle {
+            id: notice
+            readonly property bool asking: root.promptText !== ""
+            readonly property bool unsaved: !asking && root.pendingCount > 0
+            readonly property bool shown: root.noticeText !== ""
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: shown ? 18 : 4
+            width: Math.min(parent.width - 48, noticeRow.implicitWidth + 28)
+            height: 48
+            radius: Math.min(height / 2, Palette.Theme.radiusLarge)
+            color: Palette.Theme.surfaceContainerHigh
+            opacity: shown ? 1 : 0
+            visible: opacity > 0
+
+            Behavior on opacity {
+                EffectMotion {}
+            }
+            Behavior on anchors.bottomMargin {
+                SpatialMotion {
+                    fast: true
+                }
+            }
+
+            RowLayout {
+                id: noticeRow
+                anchors.fill: parent
+                anchors.leftMargin: 16
+                anchors.rightMargin: 8
+                spacing: 10
+
+                Text {
+                    text: notice.asking ? "help" : (notice.unsaved ? "edit" : "check_circle")
+                    color: Palette.Theme.accent
+                    font.family: Palette.Theme.fontIcons
+                    font.weight: Palette.Theme.iconWeight
+                    font.pixelSize: Palette.Theme.iconSize
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: root.noticeText
+                    color: Palette.Theme.textPrimary
+                    font.family: Palette.Theme.fontSans
+                    font.pixelSize: Palette.Theme.fontSizeSmall
+                    elide: Text.ElideRight
+                }
+
+                NoticeButton {
+                    visible: notice.asking || notice.unsaved
+                    label: "Cancel"
+                    onClicked: {
+                        if (notice.asking)
+                            root.promptText = "";
+                        else
+                            root.cancelPending();
+                    }
+                }
+
+                NoticeButton {
+                    visible: notice.asking || notice.unsaved
+                    label: notice.asking ? root.promptAction : "Save"
+                    filled: true
+                    onClicked: {
+                        if (notice.asking) {
+                            var callback = root.promptCallback;
+                            root.promptText = "";
+                            if (callback)
+                                callback();
+                        } else {
+                            root.savePending();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // A notice bar button; its corners follow the roundness setting.
+    component NoticeButton: Rectangle {
+        id: button
+        property string label: ""
+        property bool filled: false
+        signal clicked
+
+        implicitWidth: buttonText.implicitWidth + 28
+        implicitHeight: 32
+        radius: Math.min(height / 2, Palette.Theme.radiusSmall)
+        color: filled ? Palette.Theme.accent : "transparent"
+        scale: buttonMouse.pressed ? 0.94 : 1
+
+        Behavior on scale {
+            SpatialMotion {
+                fast: true
+                bouncy: true
+            }
+        }
+
+        StateLayer {
+            radius: button.radius
+            tone: button.filled ? Palette.Theme.accentText : Palette.Theme.textPrimary
+            hovered: buttonMouse.containsMouse
+            pressed: buttonMouse.pressed
+        }
+
+        Text {
+            id: buttonText
+            anchors.centerIn: parent
+            text: button.label
+            color: button.filled ? Palette.Theme.accentText : Palette.Theme.textPrimary
+            font.family: Palette.Theme.fontSans
+            font.pixelSize: Palette.Theme.fontSizeSmall
+            font.weight: Font.DemiBold
+        }
+
+        MouseArea {
+            id: buttonMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: button.clicked()
         }
     }
 }

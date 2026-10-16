@@ -12,7 +12,7 @@ Item {
     property int iconSize: Palette.Theme.iconSize
     // Hover/press shape; a circle by default. Inside a container, set it to
     // the container's radius minus the inset so the corners stay concentric.
-    property real stateRadius: width / 2
+    property real stateRadius: Math.min(width / 2, Palette.Theme.radiusLarge)
     signal clicked
 
     implicitWidth: Palette.Theme.iconButtonSize

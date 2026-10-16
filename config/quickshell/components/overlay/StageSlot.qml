@@ -1,16 +1,8 @@
 import QtQuick
 import "../../theme" as Palette
 
-// One panel's place on a CenterOverlay stage (a Notch).
-//
-// The panel keeps its own size and stays pinned to the stage's screen edge,
-// so while the slab springs to a new size its clip reveals (or hides) the
-// panel instead of squeezing the layout through every in-between size.
-//
-// Switching panels crossfades them, Caelestia-style: the outgoing one fades
-// and sinks back towards the edge, and after a beat the incoming one rises
-// out of it. A panel also fades out on its own close (aboutToClose) before
-// the slab collapses.
+// One panel's place on a stage (a Notch): pinned to the stage's edge so
+// the slab's clip reveals it, and crossfaded when panels switch.
 Item {
     id: slot
 

@@ -5,12 +5,8 @@ import QtQuick.Layouts
 import "../../theme" as Palette
 import "../../components/material"
 
-// The shell's polkit authentication agent. Quickshell registers it with
-// polkitd; when an app asks for privileges (pkexec, systemctl, a settings
-// panel...) this opens from the top notch like the other central panels,
-// asks for the password, and closes once polkit is satisfied or the
-// request is cancelled. Only one agent can be registered per session, so
-// no other polkit agent should be running alongside it.
+// The shell's polkit agent: asks for the password from the top notch
+// when an app needs privileges. Only one agent can run per session.
 Item {
     id: root
 

@@ -110,6 +110,7 @@ Surface {
             right: parent.right
             top: parent.top
             margins: 12
+            rightMargin: 44
         }
         spacing: 12
 
@@ -208,19 +209,6 @@ Surface {
                     }
                 }
 
-                IconButton {
-                    icon: "close"
-                    implicitWidth: 22
-                    implicitHeight: 22
-                    iconSize: Palette.Theme.iconSizeSmall
-                    // Faded, not hidden, so the time doesn't shift on hover.
-                    opacity: cardHover.hovered ? 1 : 0
-                    onClicked: card.dismissNotification()
-
-                    Behavior on opacity {
-                        EffectMotion {}
-                    }
-                }
             }
 
             Text {
@@ -265,6 +253,23 @@ Surface {
                     }
                 }
             }
+        }
+    }
+
+    // Dismiss, centred on the card's right; faded in on hover.
+    IconButton {
+        anchors.right: parent.right
+        anchors.rightMargin: 10
+        anchors.verticalCenter: parent.verticalCenter
+        icon: "close"
+        implicitWidth: 26
+        implicitHeight: 26
+        iconSize: Palette.Theme.iconSizeSmall
+        opacity: cardHover.hovered ? 1 : 0
+        onClicked: card.dismissNotification()
+
+        Behavior on opacity {
+            EffectMotion {}
         }
     }
 }

@@ -147,7 +147,8 @@ Item {
     readonly property real controlsHeight: showingDetail ? Math.max(320, Math.min(maxHeight - 4, 380)) : controlsColumn.implicitHeight + 20
     readonly property real pageHeight: [overviewPage.implicitHeight, controlsHeight, notificationsPage.implicitHeight, performancePage.implicitHeight][tab]
 
-    implicitWidth: Math.max(380, Math.min(maxWidth - 2, 480))
+    // Width from Settings → Customize (clamped there), never wider than the screen.
+    implicitWidth: Math.max(380, Math.min(maxWidth - 2, Palette.Theme.controlCenterWidth))
     // The tab row sits a little below the top edge; count that offset too,
     // or it comes out of the gap at the bottom of every page.
     implicitHeight: Math.min(maxHeight - 4, dashTabs.anchors.topMargin + dashTabs.implicitHeight + pageHeight)
@@ -160,13 +161,7 @@ Item {
     signal aboutToOpen
     signal aboutToClose
 
-    // hyprsunsetEnabled is otherwise pure in-memory UI state, so a
-    // quickshell reload used to forget it even though hyprsunset itself
-    // keeps running unaffected — this just resyncs the toggle's visual
-    // state, no need to re-issue the temperature command. Written to
-    // explicitly (only from toggleHyprsunset()) rather than reactively on
-    // every adapter change — the latter also fires while the file is still
-    // loading, which was clobbering the just-loaded value back to default.
+    // Toggle states, saved explicitly (writes during loading reset them).
     FileView {
         id: toggleStateFile
         path: Quickshell.cachePath("control-center-toggles.json")
@@ -754,11 +749,7 @@ Item {
         if (hyprsunsetEnabled) {
             root.applyScreenTone(true);
         } else {
-            // Back to the soft daylight default, in place. hyprsunset runs
-            // without a schedule (hypr/modules/autostarts.lua starts it at
-            // the same default), so off simply means off. Not restarting the
-            // daemon also avoids a gamma flash: Wayland allows one gamma
-            // client at a time.
+            // Back to the daytime tone, in place (restarting hyprsunset would flash).
             root.applyScreenTone(false);
         }
     }
@@ -1077,9 +1068,12 @@ Item {
 
                         // A square glyph as tall as both cards together.
                         PixelGlyphPanel {
+                            // Can be switched off in Settings → Customize; the
+                            // connection cards then take the whole row.
+                            visible: Palette.Theme.showGlyph
                             Layout.preferredWidth: connectionRows.implicitHeight
                             Layout.preferredHeight: connectionRows.implicitHeight
-                            running: controlsPage.shown && !root.showingDetail && root.visible
+                            running: controlsPage.shown && !root.showingDetail && root.visible && Palette.Theme.showGlyph
                         }
 
                         ColumnLayout {

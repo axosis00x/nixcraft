@@ -142,7 +142,7 @@ Item {
             }
 
             IconButton {
-                Layout.alignment: Qt.AlignTop
+                Layout.alignment: Qt.AlignVCenter
                 icon: "close"
                 implicitWidth: 24
                 implicitHeight: 24

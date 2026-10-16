@@ -14,6 +14,9 @@ Item {
     property string kind: "nav"
     // Slider label; empty shows the value as a percentage.
     property string valueText: ""
+    signal entered(string text)
+    // Slider tick at the default value (0–1), or -1 for none.
+    property real defaultValue: -1
     property string icon: ""
     property string title: ""
     property string subtitle: ""
@@ -21,6 +24,7 @@ Item {
     property bool first: true
     property bool last: true
     property bool checked: false
+    property bool dangerous: false
     property real value: 0
     property var options: []
     property string current: ""
@@ -35,17 +39,19 @@ Item {
     readonly property real groupRadius: Palette.Theme.radiusMedium
     readonly property bool morph: mouse.pressed && interactive
 
-    implicitHeight: kind === "slider" ? 72 : (kind === "segment" ? 80 : (subtitle !== "" ? 58 : 48))
+    implicitHeight: kind === "slider" ? 82 : (kind === "segment" ? 80 : (subtitle !== "" ? 58 : 48))
 
     Rectangle {
         id: shape
         anchors.fill: parent
-        anchors.margins: root.morph ? 3 : 0
-        topLeftRadius: root.morph ? Palette.Theme.radiusMedium : (root.first ? root.groupRadius : 0)
+        anchors.margins: root.dangerous && !root.morph ? 4 : (root.morph ? 3 : 0)
+        topLeftRadius: root.dangerous || root.morph ? Palette.Theme.radiusMedium : (root.first ? root.groupRadius : 0)
         topRightRadius: topLeftRadius
-        bottomLeftRadius: root.morph ? Palette.Theme.radiusMedium : (root.last ? root.groupRadius : 0)
+        bottomLeftRadius: root.dangerous || root.morph ? Palette.Theme.radiusMedium : (root.last ? root.groupRadius : 0)
         bottomRightRadius: bottomLeftRadius
-        color: root.morph ? Palette.Theme.surfaceContainerHigh : "transparent"
+        color: root.dangerous ? Qt.alpha(Palette.Theme.errorColor, mouse.containsMouse ? 0.16 : 0.08) : (root.morph ? Palette.Theme.surfaceContainerHigh : "transparent")
+        border.width: root.dangerous ? 1 : 0
+        border.color: Qt.alpha(Palette.Theme.errorColor, mouse.containsMouse ? 0.48 : 0.24)
 
         Behavior on anchors.margins {
             SpatialMotion {
@@ -67,6 +73,7 @@ Item {
             topRightRadius: parent.topRightRadius
             bottomLeftRadius: parent.bottomLeftRadius
             bottomRightRadius: parent.bottomRightRadius
+            tone: root.dangerous ? Palette.Theme.errorColor : Palette.Theme.textPrimary
             hovered: mouse.containsMouse && root.interactive
         }
     }
@@ -108,7 +115,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             Layout.preferredWidth: Palette.Theme.iconSize
             text: root.icon
-            color: Palette.Theme.textMuted
+            color: root.dangerous ? Palette.Theme.errorColor : Palette.Theme.textMuted
             font.family: Palette.Theme.fontIcons
             font.weight: Palette.Theme.iconWeight
             font.pixelSize: Palette.Theme.iconSize
@@ -122,7 +129,7 @@ Item {
             Text {
                 Layout.fillWidth: true
                 text: root.title
-                color: Palette.Theme.textPrimary
+                color: root.dangerous ? Palette.Theme.errorColor : Palette.Theme.textPrimary
                 font.family: Palette.Theme.fontSans
                 font.pixelSize: Palette.Theme.fontSizeBody
                 elide: Text.ElideRight
@@ -132,7 +139,7 @@ Item {
                 Layout.fillWidth: true
                 visible: text !== ""
                 text: root.subtitle
-                color: Palette.Theme.textMuted
+                color: root.dangerous ? Qt.alpha(Palette.Theme.errorColor, 0.82) : Palette.Theme.textMuted
                 font.family: Palette.Theme.fontSans
                 font.pixelSize: Palette.Theme.fontSizeXs
                 elide: Text.ElideRight
@@ -142,7 +149,7 @@ Item {
         Text {
             visible: root.kind === "nav"
             text: "chevron_right"
-            color: Palette.Theme.textMuted
+            color: root.dangerous ? Palette.Theme.errorColor : Palette.Theme.textMuted
             font.family: Palette.Theme.fontIcons
             font.weight: Palette.Theme.iconWeight
             font.pixelSize: Palette.Theme.iconSize
@@ -194,12 +201,81 @@ Item {
                 font.pixelSize: Palette.Theme.fontSizeBody
             }
 
+            // Plain value for sliders that don't take typed input.
             Text {
-                visible: root.kind === "slider"
+                visible: root.kind === "slider" && root.defaultValue < 0
                 text: root.valueText !== "" ? root.valueText : Math.round(root.value * 100) + "%"
                 color: Palette.Theme.textMuted
                 font.family: Palette.Theme.fontMono
                 font.pixelSize: Palette.Theme.fontSizeXs
+            }
+
+            // A small field for typing an exact value; Enter applies it.
+            Rectangle {
+                id: valueField
+                visible: root.kind === "slider" && root.defaultValue >= 0
+                implicitWidth: Math.max(76, valueInput.contentWidth + 36)
+                implicitHeight: 28
+                radius: Math.min(height / 2, Palette.Theme.radiusSmall)
+                color: Palette.Theme.surfaceContainerHighest
+                border.width: valueInput.activeFocus ? 2 : 1
+                border.color: valueInput.activeFocus ? Palette.Theme.accent : Palette.Theme.outlineSoft
+
+                Behavior on border.color {
+                    ColorMotion {}
+                }
+
+                StateLayer {
+                    radius: parent.radius
+                    hovered: fieldMouse.containsMouse && !valueInput.activeFocus
+                }
+
+                TextInput {
+                    id: valueInput
+                    anchors.left: parent.left
+                    anchors.right: pencil.left
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: TextInput.AlignRight
+                    text: activeFocus ? text : (root.valueText !== "" ? root.valueText : Math.round(root.value * 100) + "%")
+                    color: Palette.Theme.textPrimary
+                    selectionColor: Palette.Theme.accentTonal
+                    selectedTextColor: Palette.Theme.textPrimary
+                    font.family: Palette.Theme.fontMono
+                    font.pixelSize: Palette.Theme.fontSizeSmall
+                    selectByMouse: true
+                    clip: true
+                    onAccepted: {
+                        root.entered(text);
+                        focus = false;
+                    }
+                    Keys.onEscapePressed: focus = false
+                }
+
+                Text {
+                    id: pencil
+                    anchors.right: parent.right
+                    anchors.rightMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: valueInput.activeFocus ? "keyboard_return" : "edit"
+                    color: valueInput.activeFocus ? Palette.Theme.accent : Palette.Theme.textMuted
+                    font.family: Palette.Theme.fontIcons
+                    font.weight: Palette.Theme.iconWeight
+                    font.pixelSize: Palette.Theme.iconSizeSmall - 2
+                }
+
+                MouseArea {
+                    id: fieldMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.IBeamCursor
+                    visible: !valueInput.activeFocus
+                    onClicked: {
+                        valueInput.forceActiveFocus();
+                        valueInput.selectAll();
+                    }
+                }
             }
         }
 
@@ -209,6 +285,8 @@ Item {
             trackHeight: 24
             icon: root.icon
             value: root.value
+            valueText: root.valueText
+            mark: root.defaultValue
             onMoved: value => root.moved(value)
         }
 

@@ -52,8 +52,9 @@ Rectangle {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 10
-        anchors.rightMargin: 6
+        // Even sides: the icon disc and the chevron glyph sit 12 px in.
+        anchors.leftMargin: 12
+        anchors.rightMargin: 7
         spacing: 10
 
         Rectangle {
@@ -102,8 +103,8 @@ Rectangle {
 
         IconButton {
             icon: "chevron_right"
-            implicitWidth: 30
-            implicitHeight: 30
+            implicitWidth: 28
+            implicitHeight: 28
             iconSize: Palette.Theme.iconSize
             onClicked: root.openList()
         }

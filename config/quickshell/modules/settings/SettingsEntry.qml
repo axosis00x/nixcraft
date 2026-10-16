@@ -11,6 +11,7 @@ SettingsItem {
     property bool isLast: true
 
     kind: spec.kind
+    dangerous: !!spec.dangerous
     icon: spec.icon || ""
     title: spec.title
     subtitle: spec.sub ? panel.subtitleFor(spec.sub) : (spec.subtitle || "")
@@ -19,6 +20,7 @@ SettingsItem {
     checked: spec.kind === "switch" ? panel.flag(spec.key) : false
     value: spec.kind === "slider" ? panel.level(spec.key) : 0
     valueText: spec.kind === "slider" ? panel.levelText(spec.key) : ""
+    defaultValue: spec.kind === "slider" ? panel.levelDefault(spec.key) : -1
     options: spec.options || []
     current: spec.kind === "segment" ? panel.choice(spec.key) : ""
     infoText: spec.kind === "info" ? panel.infoFor(spec.key) : ""
@@ -26,5 +28,6 @@ SettingsItem {
     onActivated: panel.activate(spec)
     onToggled: value => panel.setFlag(spec.key, value)
     onMoved: value => panel.setLevel(spec.key, value)
+    onEntered: text => panel.enterLevel(spec.key, text)
     onPicked: id => panel.setChoice(spec.key, id)
 }

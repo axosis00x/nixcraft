@@ -15,7 +15,8 @@ Rectangle {
 
     implicitHeight: root.chipHeight
     implicitWidth: chipText.implicitWidth + root.horizontalPadding
-    radius: root.active ? height / 2 : Palette.Theme.radiusSmall
+    // One shape in both states; follows the corner roundness setting.
+    radius: Math.min(height / 2, Palette.Theme.radiusSmall)
     // Idle chips are filled (tonal) so they read on any surface.
     color: root.active ? Palette.Theme.accent : Palette.Theme.surfaceContainerHighest
 

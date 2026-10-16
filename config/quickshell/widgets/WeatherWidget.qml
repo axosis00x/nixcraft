@@ -25,14 +25,18 @@ Item {
     implicitHeight: 128
     width: implicitWidth
     height: implicitHeight
+    // Size from Settings → Customize, grown from the top-left corner so the
+    // saved position stays put.
+    scale: Palette.Theme.weatherScale
+    transformOrigin: Item.TopLeft
     visible: available
 
     // Free-floating on the desktop layer (not laid out by a parent Layout),
     // so position has to be set explicitly — falls back to the caller's
     // default corner spot until the widget has been dragged at least once.
     // Clamped so a saved spot from a smaller layout stays on screen.
-    x: Math.min(widgetsService && widgetsService.hasPosition(widgetId) ? widgetsService.positionX(widgetId) : defaultX, parent ? parent.width - width : 0)
-    y: Math.min(widgetsService && widgetsService.hasPosition(widgetId) ? widgetsService.positionY(widgetId) : defaultY, parent ? parent.height - height : 0)
+    x: Math.min(widgetsService && widgetsService.hasPosition(widgetId) ? widgetsService.positionX(widgetId) : defaultX, parent ? parent.width - width * scale : 0)
+    y: Math.min(widgetsService && widgetsService.hasPosition(widgetId) ? widgetsService.positionY(widgetId) : defaultY, parent ? parent.height - height * scale : 0)
 
     Rectangle {
         anchors.fill: parent
@@ -190,8 +194,8 @@ Item {
         drag.target: root
         drag.minimumX: 0
         drag.minimumY: 0
-        drag.maximumX: root.parent ? root.parent.width - root.width : 0
-        drag.maximumY: root.parent ? root.parent.height - root.height : 0
+        drag.maximumX: root.parent ? root.parent.width - root.width * root.scale : 0
+        drag.maximumY: root.parent ? root.parent.height - root.height * root.scale : 0
 
         onPressed: root.z = 1000
         onReleased: {

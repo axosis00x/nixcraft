@@ -195,11 +195,12 @@ Item {
                     }
 
                     color: {
-                        if (index === root.selectedIndex)
-                            return modelData.dangerous ? Palette.Theme.errorColor : Palette.Theme.accent;
-                        return modelData.dangerous ? Qt.alpha(Palette.Theme.errorColor, Palette.Theme.stateSelected) : Palette.Theme.surfaceContainerHigh;
+                        if (modelData.dangerous)
+                            return Qt.alpha(Palette.Theme.errorColor, index === root.selectedIndex ? 0.22 : 0.09);
+                        return index === root.selectedIndex ? Palette.Theme.accent : Palette.Theme.surfaceContainerHigh;
                     }
-                    border.width: 0
+                    border.width: modelData.dangerous ? 1 : 0
+                    border.color: Qt.alpha(Palette.Theme.errorColor, index === root.selectedIndex ? 0.55 : 0.25)
 
                     Behavior on color {
                         ColorMotion {}
@@ -207,7 +208,7 @@ Item {
 
                     StateLayer {
                         radius: parent.radius
-                        tone: index === root.selectedIndex ? Palette.Theme.accentText : Palette.Theme.textPrimary
+                        tone: modelData.dangerous ? Palette.Theme.errorColor : (index === root.selectedIndex ? Palette.Theme.accentText : Palette.Theme.textPrimary)
                         hovered: actionMouse.containsMouse
                         pressed: actionMouse.pressed
                     }
@@ -215,9 +216,7 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         text: modelData.icon
-                        color: index === root.selectedIndex
-                            ? (modelData.dangerous ? Palette.Theme.surfaceSolid : Palette.Theme.accentText)
-                            : (modelData.dangerous ? Palette.Theme.errorColor : Palette.Theme.textPrimary)
+                        color: modelData.dangerous ? Palette.Theme.errorColor : (index === root.selectedIndex ? Palette.Theme.accentText : Palette.Theme.textPrimary)
                         font.family: Palette.Theme.fontIcons
                         font.weight: Palette.Theme.iconWeight
                         font.pixelSize: Palette.Theme.iconSize
@@ -248,7 +247,9 @@ Item {
                     Layout.fillWidth: true
                     implicitHeight: 46
                     radius: Palette.Theme.radiusSmall
-                    color: root.confirmChoiceSelected ? Palette.Theme.accent : Palette.Theme.surfaceContainerLow
+                    color: root.confirmChoiceSelected ? Qt.alpha(Palette.Theme.errorColor, 0.20) : Palette.Theme.surfaceContainerLow
+                    border.width: 1
+                    border.color: Qt.alpha(Palette.Theme.errorColor, root.confirmChoiceSelected ? 0.55 : 0.25)
                     scale: confirmMouse.pressed ? 0.94 : 1
                     Behavior on scale {
                         SpatialMotion {
@@ -266,7 +267,7 @@ Item {
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             text: "\ue5ca"
-                            color: root.confirmChoiceSelected ? Palette.Theme.accentText : Palette.Theme.textPrimary
+                            color: Palette.Theme.errorColor
                             font.family: Palette.Theme.fontIcons
                             font.weight: Palette.Theme.iconWeight
                             font.pixelSize: Palette.Theme.iconSizeSmall
@@ -274,7 +275,7 @@ Item {
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             text: confirmAction
-                            color: root.confirmChoiceSelected ? Palette.Theme.accentText : Palette.Theme.textPrimary
+                            color: Palette.Theme.errorColor
                             font.family: Palette.Theme.fontSans
                             font.pixelSize: Palette.Theme.fontSizeXs
                             font.weight: Font.Medium

@@ -13,13 +13,25 @@ Flickable {
     property var sections: []
 
     contentWidth: width
-    contentHeight: column.implicitHeight + 16
+    // Room below the last row for the Save / Cancel bar.
+    contentHeight: column.implicitHeight + 80
     clip: true
     boundsBehavior: Flickable.StopAtBounds
 
+    WheelHandler {
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        onWheel: event => {
+            var delta = event.pixelDelta.y !== 0 ? event.pixelDelta.y * 1.35 : event.angleDelta.y / 120 * 56;
+            root.contentY = Math.max(0, Math.min(root.contentY - delta, root.contentHeight - root.height));
+            event.accepted = true;
+        }
+    }
+
+    // A readable width, centred, when the window is large or tiled.
     Column {
         id: column
-        width: root.width
+        width: Math.min(root.width, 760)
+        x: (root.width - width) / 2
         spacing: Palette.Theme.spacingExtraLarge
 
         Repeater {

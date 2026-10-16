@@ -12,6 +12,8 @@ Item {
 
     property real value: 0
     property string icon: ""
+    // Optional formatted value (for example, a size in px) for the drag bubble.
+    property string valueText: ""
     property bool interactive: true
     // Lowest value the slider can show or be dragged to. The minimum sits
     // just past the inset icon, so the icon always stays on the filled part.
@@ -21,6 +23,8 @@ Item {
     property int trackHeight: 16
     property color accent: Palette.Theme.accent
     property color trackColor: Palette.Theme.surfaceContainerHighest
+    // Optional tick at a reference value (0–1), e.g. a setting's default.
+    property real mark: -1
     signal moved(real value)
 
     // True only once the first drag position is known, so the slider never
@@ -159,7 +163,7 @@ Item {
         Text {
             id: bubbleText
             anchors.centerIn: parent
-            text: Math.round(root.shown * 100)
+            text: root.valueText !== "" ? root.valueText : Math.round(root.shown * 100) + "%"
             color: Palette.Theme.surfaceSolid
             font.family: Palette.Theme.fontSans
             font.pixelSize: Palette.Theme.fontSizeSmall
@@ -192,5 +196,17 @@ Item {
         }
         onReleased: root.dragging = false
         onCanceled: root.dragging = false
+    }
+
+    Rectangle {
+        visible: root.mark >= 0
+        readonly property real markX: root.iconZone + root.handleSpan / 2 + (root.width - root.iconZone - root.handleSpan) * root.mark
+        x: markX - width / 2
+        anchors.verticalCenter: parent.verticalCenter
+        width: 3
+        height: Math.max(6, root.trackHeight - 10)
+        radius: 1.5
+        color: Palette.Theme.textPrimary
+        opacity: 0.45
     }
 }

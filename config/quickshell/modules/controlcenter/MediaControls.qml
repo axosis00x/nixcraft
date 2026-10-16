@@ -34,7 +34,7 @@ Row {
         anchors.verticalCenter: parent.verticalCenter
         width: root.playSize
         height: root.playSize
-        radius: root.playing ? height / 2 : Palette.Theme.radiusMedium
+        radius: Math.min(height / 2, root.playing ? Palette.Theme.radiusLarge : Palette.Theme.radiusMedium)
         color: Palette.Theme.accent
         scale: playMouse.pressed ? 0.9 : 1
 

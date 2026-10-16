@@ -15,7 +15,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: height / 2
+        radius: Math.min(height / 2, Palette.Theme.radiusLarge)
         color: root.checked ? root.accentColor : Palette.Theme.surfaceContainerHighest
         border.width: root.checked ? 0 : 2
         border.color: switchMouse.containsMouse ? Palette.Theme.textSecondary : Palette.Theme.textMuted
@@ -34,7 +34,7 @@ Item {
 
         width: switchMouse.pressed ? root.height - 4 : (root.checked ? root.height - 8 : root.height - 14)
         height: width
-        radius: width / 2
+        radius: Math.min(width / 2, Palette.Theme.radiusLarge)
         anchors.verticalCenter: parent.verticalCenter
         x: centerX - width / 2
         color: root.checked ? Palette.Theme.accentText : (switchMouse.containsMouse ? Palette.Theme.textSecondary : Palette.Theme.textMuted)

@@ -219,27 +219,29 @@ Item {
             return 0;
         }
         if (mode === 7) {
-            // A face: faint outline, eyes that blink (and now and then wink),
-            // a smile, or an "o" of surprise while the pointer is on it.
+            // A friendly face: soft round fill and outline, dot eyes that
+            // blink (and now and then wink), rosy cheeks and a small smile,
+            // or a little "o" while the pointer is on it.
+            var r = Math.hypot(dx, dy);
             var ex = Math.round(cx), ey = Math.round(cy);
-            var ring = Math.hypot(dx, dy);
-            if (ring > 5.4 && ring < 6.4)
-                return 0.3;
+            var ox = x - ex, oy = y - ey;
             var beat = t % 90;
             var blink = beat < 3;
             var wink = !blink && t % 270 >= 180 && t % 270 < 186;
             var surprised = hoverCol > -10;
-            for (var side = -1; side <= 1; side += 2) {
-                var eyeX = ex + side * 2;
-                var closed = blink || (wink && side > 0);
-                if (x === eyeX && (closed ? y === ey - 1 : (y === ey - 2 || y === ey - 1)))
-                    return 1;
+            if (oy === -1 && Math.abs(ox) === 2)
+                return blink || (wink && ox > 0) ? 0.35 : 1;          // eyes
+            if (oy === 1 && Math.abs(ox) === 4)
+                return 0.5;                                           // cheeks
+            if (surprised) {
+                if ((oy === 2 || oy === 4) && ox === 0 || oy === 3 && Math.abs(ox) === 1)
+                    return 1;                                         // "o"
+            } else if ((oy === 3 && Math.abs(ox) <= 1) || (oy === 2 && Math.abs(ox) === 2)) {
+                return 1;                                             // smile
             }
-            if (surprised)
-                return Math.abs(Math.hypot(dx, dy - 2.5) - 1.2) < 0.55 ? 1 : 0;
-            if (y === ey + 2 && Math.abs(dx) === 3)
-                return 1;
-            return y === ey + 3 && Math.abs(dx) <= 2 ? 1 : 0;
+            if (r > 5.3 && r < 6.4)
+                return 0.55;                                          // outline
+            return r <= 5.3 ? 0.14 : 0;                               // face
         }
         var head = (t * (0.25 + 0.3 * hash(x)) + hash(x + 40) * 30) % (rows + 8);
         var d = head - y;

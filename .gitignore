@@ -22,3 +22,4 @@ config/themes/dynamic/*
 config/nvim/colors/dynamic.lua
 # Written by the HyprMod settings app (an empty one is made on first run).
 config/hypr/hyprland-gui.lua
+todo.txt

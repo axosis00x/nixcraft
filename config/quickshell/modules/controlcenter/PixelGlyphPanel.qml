@@ -22,9 +22,9 @@ Item {
     }
     readonly property real dotSize: Math.max(2, Math.round(pitch * 0.62))
 
-    readonly property var modeNames: ["Ripple", "Radar", "Rain", "Heart", "Clock", "Name", "Sand timer", "Face"]
+    readonly property var modeNames: ["Ripple", "Radar", "Rain", "Heart", "Clock", "Name", "Sand timer"]
     // Each pattern glows in its own hue from the theme.
-    readonly property color hue: [Palette.Theme.accent, Palette.Theme.aqua, Palette.Theme.blue, Palette.Theme.purple, Palette.Theme.yellow, Palette.Theme.green, Palette.Theme.orange, Palette.Theme.accent][mode]
+    readonly property color hue: [Palette.Theme.accent, Palette.Theme.aqua, Palette.Theme.blue, Palette.Theme.purple, Palette.Theme.yellow, Palette.Theme.green, Palette.Theme.orange][mode]
 
     // `tick` always runs (so touches answer even while paused); `phase`
     // drives the pattern and stops while paused.
@@ -217,31 +217,6 @@ Item {
             if (adx === 0 && progress > 0 && progress < 1 && (y + t) % 2 === 0)
                 return 0.85;
             return 0;
-        }
-        if (mode === 7) {
-            // A friendly face: soft round fill and outline, dot eyes that
-            // blink (and now and then wink), rosy cheeks and a small smile,
-            // or a little "o" while the pointer is on it.
-            var r = Math.hypot(dx, dy);
-            var ex = Math.round(cx), ey = Math.round(cy);
-            var ox = x - ex, oy = y - ey;
-            var beat = t % 90;
-            var blink = beat < 3;
-            var wink = !blink && t % 270 >= 180 && t % 270 < 186;
-            var surprised = hoverCol > -10;
-            if (oy === -1 && Math.abs(ox) === 2)
-                return blink || (wink && ox > 0) ? 0.35 : 1;          // eyes
-            if (oy === 1 && Math.abs(ox) === 4)
-                return 0.5;                                           // cheeks
-            if (surprised) {
-                if ((oy === 2 || oy === 4) && ox === 0 || oy === 3 && Math.abs(ox) === 1)
-                    return 1;                                         // "o"
-            } else if ((oy === 3 && Math.abs(ox) <= 1) || (oy === 2 && Math.abs(ox) === 2)) {
-                return 1;                                             // smile
-            }
-            if (r > 5.3 && r < 6.4)
-                return 0.55;                                          // outline
-            return r <= 5.3 ? 0.14 : 0;                               // face
         }
         var head = (t * (0.25 + 0.3 * hash(x)) + hash(x + 40) * 30) % (rows + 8);
         var d = head - y;

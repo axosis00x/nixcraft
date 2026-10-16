@@ -5,6 +5,27 @@ All notable changes to nixcraft are recorded here. Versions follow
 `scripts/release.sh` from the [Conventional Commits](https://www.conventionalcommits.org)
 since the previous release.
 
+## [0.1.0-alpha.1] - 2026-10-16
+
+### Features
+
+- **themes:** generate a btop theme from the active palette (eb4dc1b)
+
+### Fixes
+
+- **quickshell:** media panel and icon corners follow the roundness setting (c6e62c7)
+- **overlay:** hidden notification and activity layers no longer block menu hover (827c7aa)
+- **settings:** confirm only layout changes, not toggles (feb6ced)
+- **settings:** restore floating window and tighten level rows (9d9aa84)
+
+### Style
+
+- **controlcenter:** friendlier face glyph (ec18d7e)
+
+### Other
+
+- Polish shell menus and settings layout (4604c44)
+
 ## [0.1.0-pre-alpha.10] - 2026-10-16
 
 ### Features

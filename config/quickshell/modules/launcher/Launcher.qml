@@ -349,7 +349,9 @@ Item {
     function resetList() {
         appList.model = null;
         appList.model = appModel;
-        appList.currentIndex = selected;
+        // Re-bind: reattaching the model resets currentIndex, and a plain
+        // assignment would break the binding hover selection relies on.
+        appList.currentIndex = Qt.binding(() => root.selected);
         if (selected <= 0)
             appList.positionViewAtBeginning();
         else

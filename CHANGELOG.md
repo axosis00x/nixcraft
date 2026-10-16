@@ -5,6 +5,13 @@ All notable changes to nixcraft are recorded here. Versions follow
 `scripts/release.sh` from the [Conventional Commits](https://www.conventionalcommits.org)
 since the previous release.
 
+## [0.1.0-pre-alpha.10] - 2026-10-16
+
+### Features
+
+- **quickshell:** expand settings and polish shell UI (1d57b0c)
+- **hypr:** Super+H swaps the windows of the current split (e2baec2)
+
 ## [0.1.0-pre-alpha.9] - 2026-10-15
 
 ### Features

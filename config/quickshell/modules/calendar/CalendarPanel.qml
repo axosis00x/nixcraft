@@ -297,8 +297,9 @@ Item {
                             anchors.centerIn: parent
                             width: 32
                             height: 32
-                            // Selected/today round fully; hover is a softer square.
-                            radius: cell.today || cell.selected ? 16 : Palette.Theme.radiusSmall
+                            // Keep selected and today markers on the same
+                            // roundness scale as the rest of the interface.
+                            radius: Math.min(width / 2, Palette.Theme.radiusSmall)
                             color: cell.today ? Palette.Theme.accent : (cell.selected ? Palette.Theme.accentTonal : "transparent")
 
                             Behavior on radius {

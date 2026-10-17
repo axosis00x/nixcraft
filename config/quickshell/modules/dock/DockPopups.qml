@@ -55,8 +55,11 @@ Item {
 
         visible: root.dock.visible && root.dock.hoverItem !== null && !root.menuVisible
         width: tipText.implicitWidth + 20
-        height: 26
-        radius: 13
+        readonly property real configuredRadius: Palette.Theme.radiusSmall
+        // Let the label gain a little height at high roundness values, so its
+        // corners can keep growing past the half-height limit of a 26px pill.
+        height: 26 + Math.max(0, configuredRadius - 13)
+        radius: Math.min(configuredRadius, height / 2)
         x: Math.max(6, Math.min(root.width - width - 6, root.hoverPoint.x - width / 2))
         y: root.hoverPoint.y - height - 16
         color: Palette.Theme.surfaceContainer

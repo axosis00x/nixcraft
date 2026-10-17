@@ -60,9 +60,14 @@ Rectangle {
         Rectangle {
             Layout.preferredWidth: 36
             Layout.preferredHeight: 36
-            radius: width / 2
+            radius: Math.min(width / 2, Palette.Theme.radiusMedium)
             color: root.active ? Palette.Theme.accent : Palette.Theme.surfaceContainerHigh
 
+            Behavior on radius {
+                SpatialMotion {
+                    fast: true
+                }
+            }
             Behavior on color {
                 ColorMotion {}
             }

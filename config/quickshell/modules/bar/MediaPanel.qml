@@ -818,7 +818,7 @@ Item {
         }
     }
 
-    // Previous / next: a tonal circle whose icon nudges the way it skips.
+    // Previous / next: theme-rounded controls whose icon nudges the way it skips.
     component SkipControl: Rectangle {
         id: skip
 
@@ -828,7 +828,8 @@ Item {
 
         implicitWidth: 30
         implicitHeight: 30
-        radius: skipMouse.pressed ? Palette.Theme.radiusSmall : width / 2
+        readonly property real restRadius: Math.min(width / 2, Palette.Theme.radiusSmall)
+        radius: skipMouse.pressed ? restRadius * 0.72 : restRadius
         color: Qt.alpha(Palette.Theme.textPrimary, 0.08)
         opacity: enabled ? 1 : 0.35
         scale: skipMouse.pressed ? 0.9 : 1

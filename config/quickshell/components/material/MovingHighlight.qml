@@ -27,6 +27,7 @@ Rectangle {
     property real targetWidth: 0
     property real targetHeight: 0
     property bool instant: true
+    property int motionDuration: Palette.Theme.motionDefault + 60
 
     radius: Palette.Theme.radiusMedium
     color: Palette.Theme.surfaceContainerHigh
@@ -40,11 +41,15 @@ Rectangle {
 
     Behavior on targetX {
         enabled: !root.instant
-        SpatialMotion {}
+        SpatialMotion {
+            duration: root.motionDuration
+        }
     }
     Behavior on targetY {
         enabled: !root.instant
-        SpatialMotion {}
+        SpatialMotion {
+            duration: root.motionDuration
+        }
     }
     Behavior on opacity {
         EffectMotion {}

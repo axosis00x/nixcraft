@@ -13,6 +13,8 @@ Rectangle {
     opacity: pressed ? Palette.Theme.statePressed : (hovered ? Palette.Theme.stateHover : 0)
 
     Behavior on opacity {
-        EffectMotion {}
+        EffectMotion {
+            duration: root.hovered && !root.pressed ? Palette.Theme.effectFast + 35 : Palette.Theme.effectFast
+        }
     }
 }

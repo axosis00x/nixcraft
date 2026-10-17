@@ -309,10 +309,10 @@ Item {
             Layout.preferredWidth: column.implicitHeight
             Layout.preferredHeight: column.implicitHeight
             Layout.alignment: Qt.AlignVCenter
-            // Match the stronger rounding used by browser/app icons so their
-            // own corner treatment blends into the art tile instead of
-            // leaving contrasting square corners around it.
-            radius: Math.min(width / 2, Palette.Theme.radiusLarge)
+            // Keep album art corners softer than the player surface. The size
+            // cap prevents high roundness settings from turning small covers
+            // into pill-shaped tiles.
+            radius: Math.min(Palette.Theme.radiusSmall, Math.min(width, height) * 0.18)
             color: Palette.Theme.surfaceContainerHigh
 
             Image {

@@ -37,7 +37,8 @@ in
       };
 
       shellAliases = {
-        build = "sudo nixos-rebuild switch --flake ${settings.repoPath}";
+        # Pin the newest Helium first (keeps the current one if offline), then rebuild.
+        build = "${settings.repoPath}/modules/user/applications/update-helium.sh; sudo nixos-rebuild switch --flake ${settings.repoPath}";
         clean = "sudo nix-collect-garbage -d";
         ping = "ping -c 5";
         zed = "zeditor";

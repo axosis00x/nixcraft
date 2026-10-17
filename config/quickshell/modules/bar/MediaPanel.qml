@@ -69,6 +69,10 @@ Item {
     }
 
     property bool hasPlayer: player !== null
+    readonly property bool heliumPlaceholderArt: !!player
+        && /helium/i.test((player.identity || "") + " " + (player.desktopEntry || ""))
+        && (!player.trackTitle || player.trackTitle === "Unknown Title")
+        && (!player.trackArtist || player.trackArtist === "Unknown artist")
 
     // ── Album art ─────────────────────────────────────────────────────────────
     // Remote covers (Spotify's https URLs) are fetched with curl into a small
@@ -106,9 +110,20 @@ Item {
     // Quickshell's MPRIS service sometimes misses it, reporting
     // lengthSupported=false and mirroring the position into `length`. When
     // that happens, read the length straight from the player over D-Bus.
-    readonly property bool nativeLength: !!player && player.lengthSupported && player.length > 0
+    // Some browser MPRIS players briefly report length as the current
+    // position even while lengthSupported is stale/true. Don't treat that
+    // mirrored value as a track duration or the progress appears complete.
+    readonly property bool nativeLength: !!player && player.lengthSupported && player.length > player.position + 0.5
     property real fallbackLength: 0
-    readonly property real trackLength: nativeLength ? player.length : fallbackLength
+    // Prefer the raw metadata duration when present. This avoids relying on
+    // lengthSupported, which browser players can update after playback starts.
+    readonly property real metadataLength: {
+        if (!player || !player.metadata)
+            return 0;
+        var value = Number(player.metadata["mpris:length"]);
+        return isFinite(value) && value > 0 ? value / 1000000 : 0;
+    }
+    readonly property real trackLength: metadataLength > 0 ? metadataLength : (nativeLength ? player.length : fallbackLength)
     readonly property bool lengthKnown: !!player && trackLength > 0
 
     // Read once per track (and refreshed while the panel is open, since the
@@ -140,7 +155,7 @@ Item {
     Connections {
         target: root.player
         ignoreUnknownSignals: true
-        function onTrackTitleChanged() {
+        function onPostTrackChanged() {
             root.fallbackLength = 0;
             root.readFallbackLength();
         }
@@ -294,7 +309,10 @@ Item {
             Layout.preferredWidth: column.implicitHeight
             Layout.preferredHeight: column.implicitHeight
             Layout.alignment: Qt.AlignVCenter
-            radius: Palette.Theme.radiusXs
+            // Match the stronger rounding used by browser/app icons so their
+            // own corner treatment blends into the art tile instead of
+            // leaving contrasting square corners around it.
+            radius: Math.min(width / 2, Palette.Theme.radiusLarge)
             color: Palette.Theme.surfaceContainerHigh
 
             Image {
@@ -303,6 +321,9 @@ Item {
                 source: root.artSource
                 sourceSize: Qt.size(240, 240)
                 fillMode: Image.PreserveAspectCrop
+                // icon itself is inset in a square canvas, so crop that canvas
+                // away and let the blue rounded icon fill the tile.
+                scale: root.heliumPlaceholderArt ? 1.32 : 1
                 smooth: true
                 asynchronous: true
                 opacity: status === Image.Ready ? 1 : 0

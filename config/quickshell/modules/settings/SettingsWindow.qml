@@ -1146,6 +1146,13 @@ FloatingWindow {
                         target: {
                             if (navRepeater.count === 0)
                                 return null;
+                            // Like the launcher: follow the hovered entry,
+                            // else rest on the open page.
+                            for (var h = 0; h < navRepeater.count; h++) {
+                                var item = navRepeater.itemAt(h);
+                                if (item && item.hovered)
+                                    return item;
+                            }
                             for (var i = 0; i < root.categories.length; i++) {
                                 if (root.categories[i].id === root.activePage)
                                     return navRepeater.itemAt(i);

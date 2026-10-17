@@ -13,13 +13,15 @@ Item {
     property bool selected: false
     // The category's own hue for its icon.
     property color hue: Palette.Theme.accent
+    // The sidebar's highlight glides here on hover (see SettingsWindow).
+    readonly property bool hovered: mouse.containsMouse
     signal clicked
 
     implicitHeight: 40
 
     StateLayer {
         radius: Palette.Theme.radiusSmall
-        hovered: mouse.containsMouse && !root.selected
+        hovered: false
         pressed: mouse.pressed
     }
 

@@ -37,7 +37,7 @@ hl.window_rule({
     center = true,
 })
 
-for _, class in ipairs({ "brave-browser", "zen-twilight", "vesktop", "helium", "brave" }) do
+for _, class in ipairs({ "zen-twilight", "vesktop", "helium" }) do
     hl.window_rule({
         name = class .. "-full-opacity",
         match = { class = "^(" .. class .. ")$" },
